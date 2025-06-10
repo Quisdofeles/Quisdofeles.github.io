@@ -1,0 +1,146 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0px;
+    font-family: sans-serif;
+}
+
+#color-palette-1
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    text-align: center;
+}
+
+#cp1-color-1
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #5E0B15;
+    color: white;
+    padding: 24px;
+}
+
+#cp1-color-2
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #90323D;
+    color: white;
+    padding: 24px;
+}
+
+#cp1-color-3
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #D9CAB3;
+    color: white;
+    padding: 24px;
+}
+
+#cp1-color-4
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #BC8034;
+    color: white;
+    padding: 24px;
+}
+
+#cp1-color-5
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #9C7A6B;
+    color: white;
+    padding: 24px;
+}
+
+#color-palette-2
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    text-align: center;
+}
+
+#cp2-color-1
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #37123C;
+    color: white;
+    padding: 24px;
+}
+
+#cp2-color-2
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #71677C;
+    color: white;
+    padding: 24px;
+}
+
+#cp2-color-3
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #A99F96;
+    color: white;
+    padding: 24px;
+}
+
+#cp2-color-4
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #DDA77B;
+    color: white;
+    padding: 24px;
+}
+
+#cp2-color-5
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #945D5E;
+    color: white;
+    padding: 24px;
+}
+
+#color-palette-3
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    text-align: center;
+}
+
+#cp3-color-1
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #AF4D98;
+    color: white;
+    padding: 24px;
+}
+
+#cp3-color-2
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #D66BA0;
+    color: white;
+    padding: 24px;
+}
+
+#cp3-color-3
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #E5A9A9;
+    color: white;
+    padding: 24px;
+}
+
+#cp3-color-4
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #F4E4BA;
+    color: white;
+    padding: 24px;
+}
+
+#cp3-color-5
+{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    background-color: #9DF7E5;
+    color: white;
+    padding: 24px;
+}
