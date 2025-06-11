@@ -1,0 +1,90 @@
+/*
+    NOTE TO STUDENTS: 
+
+    This is the file you should be writing your CSS in 
+    for the Bulletin Board assignment.
+
+    Good luck, and have fun!
+*/
+
+.Pink
+{
+    background-color: pink;
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    text-align: center;
+    margin: 24px;
+    padding: 24px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.Blue
+{
+    background-color: paleturquoise;
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    text-align: center;
+    margin: 24px;
+    padding: 24px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.Green
+{
+    background-color: rgb(191, 252, 191);
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    text-align: center;
+    margin: 24px;
+    padding: 24px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.Yellow
+{
+    background-color: rgb(253, 253, 182);
+    display: inline-block;
+    width: 250px;
+    height: 250px;
+    text-align: center;
+    margin: 24px;
+    padding: 24px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#car
+{
+    width: 200px;
+    height: 100px;
+    object-fit: cover;
+}
+
+#sunset
+{
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+}
+
+.Pink
+{
+    box-shadow: -10px 10px 10px  #00000033;
+}
+
+.Blue
+{
+    box-shadow: -10px 10px 10px  #00000033;
+}
+
+.Green
+{
+    box-shadow: -10px 10px 10px  #00000033;
+}
+
+.Yellow
+{
+    box-shadow: -10px 10px 10px  #00000033;
+}
