@@ -1,0 +1,99 @@
+/*
+    NOTE TO STUDENTS: DON'T MODIFY THE CODE IN THIS FILE!
+
+    If you do, you risk messing up the template!
+    However, feel free to look at the CSS Properties used.
+
+    Some of them are relatively advanced, but you are encouraged
+    to do your own research to try to understand how they work.
+
+    If you get stuck, feel free to ask about them in office hours!
+*/
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    overflow: hidden;
+}
+
+.scene {
+    width: 600px;
+    height: 300px;
+    perspective: 500px;
+}
+
+.alley {
+    width: 600px;
+    height: 300px;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: translateZ(500px) translateY(-0px) rotateX(0deg);
+}
+
+.wall {
+    position: absolute;
+    width: 1200px;
+    height: 300px;
+    border: 10px solid #7a7777;
+    border-width: 5px 1px 0px 1px;
+    background: 
+        radial-gradient(#00000011 50%, #00000088),
+        bottom center/50% url("../images/red-brick-wall.jpg");
+}
+
+.sky {
+    position: absolute;
+    width: 2400px;
+    height: 1200px;
+    border-width: 10px 1px;
+    background: center/cover url("../images/sky.jpg");
+}
+
+.floor {
+    position: absolute;
+    width: 1600px;
+    height: 1200px;
+    border: 2px solid #0f0f0f;
+    background: 
+        radial-gradient(
+            #00000088,
+            #00000022
+        ),
+        bottom url("../images/ground.jpg");
+    transform: 
+        translateX(-500px) 
+        translateY(-300px) 
+        rotateX(90deg) 
+        translateZ(-20px);
+}
+
+.left {
+    transform: rotateY(90deg) translateZ(300px);
+    display: none;
+}
+
+.right {
+    transform: rotateY(-90deg) translateZ(300px);
+    display: none;
+} 
+
+.back {
+    transform: rotateY(0deg) translateZ(-300px) translateX(-300px);
+}
+
+.sky {
+    transform: 
+        rotateY(0deg) 
+        translateZ(-600px) 
+        translateX(-900px) 
+        translateY(-900px);
+}
+
+.showing-area {
+    position: absolute;
+    width: 600px;
+    height: 300px;
+    transform: rotateY(0deg) translateZ(-295px);
+}
