@@ -25,23 +25,23 @@ body {
 #small-images-sidebar
 {
     grid-area: small-images-sidebar;
-    background-color: rgb(72, 193, 234);
+    background-color: white;
 }
 #large-image-main
 {
     grid-area: large-image-main;
-    background-color: rgb(61, 151, 180);
+    background-color:white;
 }
 #information-sidebar
 {
     grid-area: information-sidebar;
-    background-color: rgb(31, 135, 170);
+    background-color: white;
 }
 
 /*Header*/
 #header
 {
-
+    text-align: center;
 }
 #m
 {
@@ -64,20 +64,112 @@ body {
     color: 	#86B817;
 }
 
-/*Header*/
+/*Smaller Images*/
 #small-images-sidebar
 {
-
+    margin: auto;
+    text-align: center;
+}
+#img1
+{
+    border: 2px solid black;
+    border-radius: 10%;
+    width: 112px;
+    height: 112px;
+    padding: 5%;
+    background-color: white;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#img2
+{
+    border: 0px solid black;
+    border-radius: 10%;
+    width: 112px;
+    height: 112px;
+    padding: 5%;
+    background-color: rgb(200, 200, 200);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#img3
+{
+    border: 0px solid black;
+    border-radius: 10%;
+    width: 112px;
+    height: 112px;
+    padding: 5%;
+    background-color: rgb(200, 200, 200);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#img4
+{
+    border: 0px solid black;
+    border-radius: 10%;
+    width: 112px;
+    height: 112px;
+    padding: 5%;
+    background-color: rgb(200, 200, 200);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#img5
+{
+    border: 0px solid black;
+    border-radius: 10%;
+    width: 112px;
+    height: 112px;
+    padding: 5%;
+    background-color: rgb(200, 200, 200);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#img6
+{
+    border: 0px solid black;
+    border-radius: 10%;
+    width: 112px;
+    height: 112px;
+    padding: 5%;
+    background-color: rgb(200, 200, 200);
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-/*Header*/
+/*Large Image*/
 #large-image-main
 {
-
+    margin-top: 50px;
+    margin-left: 50px;
+    margin-right: 50px;
+    text-align: center;
+}
+#imglarge
+{
+    border: 0px solid black;
+    border-radius: 10%;
+    width: 475px;
+    height: 475px;
+    padding: 8%;
+    background-color: rgb(200, 200, 200);
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-/*Header*/
-#information-sidebar
-{
+/*Information Sidebar*/
 
+.flex-container-1
+{
+    border: 0px solid black;
+    width: 475px;
+    height: 475px;
+    padding: 5%;
+    background-color: (white);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#dude
+{
+    border-radius: 50%;
 }
