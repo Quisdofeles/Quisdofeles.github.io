@@ -1,0 +1,125 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&family=Fjalla+One&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+* 
+{
+    box-sizing: border-box;
+}
+
+/*Font Styling*/
+h1 
+{
+    font-family: "Boldonse", system-ui;
+    font-weight: 200;
+    font-style: normal;
+}
+h2 
+{
+    font-family: "Boldonse", system-ui;
+    font-weight: 200;
+    font-style: normal;
+}
+h3 
+{
+    font-family: "Boldonse", system-ui;
+    font-weight: 200;
+    font-style: normal;
+}
+a 
+{
+    font-family: "Open Sans", sans-serif;
+}
+
+/*Hero Section*/
+#hero 
+{
+    background-image: url("../images/urban-hi-res-2nse.jpg");
+    height: 75vh;
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: flex-end;
+    position: relative;
+    margin-bottom: 100px;
+}
+#hero h2 
+{
+    font-size: 58px;
+    color: white;
+    margin: 0px 50px 0px 50px;
+}
+#hero a 
+{
+    font-size: 14px;
+    display: inline-block;
+    color: white;
+    border: white;
+    border-style: solid;
+    text-decoration: none;
+    padding: 15px;
+    margin: 20px 50px 0px 50px;
+}
+
+/*Gallery Section*/
+#layout 
+{
+    max-width: 800px;
+    margin: 30px auto;
+    text-align: center;
+}
+.horizontal-masonry-gallery 
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.horizontal-masonry-gallery img 
+{
+    height: 250px;
+    flex: 1;
+    object-fit: cover;
+}
+
+/*Cards Section*/
+.single-column 
+{
+    min-width: 600px;
+    max-width: 1200px;
+    margin: 0px auto;
+}
+#card-section 
+{
+    background-color: #1d1d1d;
+    color: white;
+    padding: 48px;
+}
+.card-container 
+{
+    display: flex;
+    justify-content: space-between;
+}
+.card 
+{
+    flex: 1;
+    border: 3px solid white;
+    padding: 25px;
+    text-align: center;
+    margin: 25px;
+}
+.card h3 
+{
+    font-size: 36px;
+    margin: 0px;
+}
+#card-section a 
+{
+    font-size: 14px;
+    display: inline-block;
+    color: #1d1d1d;
+    background-color: white;
+    border-style: solid;
+    text-decoration: none;
+    padding: 15px;
+    margin: 25px 50px 0px 50px;
+}
