@@ -1,8 +1,31 @@
-* {
+* 
+{
     box-sizing: border-box;
 }
-
-body {
+body 
+{
     margin: 0px;
     font-family: sans-serif;
+}
+
+/*Hero Section*/
+#hero 
+{
+    background-image: url("../images/B&WRadioHero.jpg");
+    height: 75vh;
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: flex-end;
+    position: relative;
+    margin-bottom: 100px;
+}
+#hero h1 
+{
+    font-size: 58px;
+    text-align: left;
+    color: rgb(255, 255, 255);
+    margin: 0px 50px 0px 50px;
 }
