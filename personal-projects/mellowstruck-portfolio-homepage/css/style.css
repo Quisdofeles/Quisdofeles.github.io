@@ -1,30 +1,34 @@
+@font-face
+{
+    font-family: Clash-Display-Bold;
+    src: url(../fonts/ClashDisplay-Bold.otf);
+}
 * 
 {
     box-sizing: border-box;
 }
-body 
+
+/*Font Styling*/
+h1
 {
-    margin: 0px;
-    font-family: sans-serif;
+    font-family: Clash-Display-Bold, sans-serif;
+    font-weight: 100;
 }
 
 /*Hero Section*/
 #hero 
 {
     background-image: url("../images/B&WRadioHero.jpg");
-    height: 75vh;
+    height: 100vh;
     background-size: cover;
-    background-position: center center;
     display: flex;
     flex-direction: column; 
     justify-content: center; 
-    align-items: flex-end;
     position: relative;
-    margin-bottom: 100px;
 }
 #hero h1 
 {
-    font-size: 58px;
+    font-size: 100px;
     text-align: left;
     color: rgb(255, 255, 255);
     margin: 0px 50px 0px 50px;
