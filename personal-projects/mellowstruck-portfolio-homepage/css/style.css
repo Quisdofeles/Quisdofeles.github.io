@@ -22,31 +22,105 @@ h1
     font-family: Clash-Display-Bold, sans-serif;
     font-weight: 100;
 }
+a
+{
+    font-family: Clash-Display-Bold, sans-serif;
+    font-weight: 100;
+}
 p
 {
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
 }
 
+/*Header*/
+#header
+{
+    position: sticky;
+    top: 0px;
+    z-index: 1000;
+}
+#navbar
+{
+    background-color: #222222;
+    display: flex;
+    align-items: center;
+    max-height: 80px;
+}
+#navbar a
+{
+    font-size: 24px;
+    text-decoration: none;
+    color: white;
+    padding: 22px;
+}
+#navbar a:hover
+{
+    color: #9c9c9c;
+}
+#navbar #navbar-wordmark
+{
+    margin-top: 10px;
+    margin-left: 200px;
+    margin-right: auto;
+    padding: 0;
+}
+#navbar #navbar-wordmark img
+{
+    height: 110px;
+}
+#header-vingette
+{
+    display: block;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0));
+    height: 30px;
+}
+
 /*Hero Section*/
-#hero 
+#hero
 {
     background-image: url("../images/B&WRadioHero.jpg");
-    border: none;
-    outline: none;
     height: 100vh;
-    width: 100%;
     background-size: cover;
-    background-position: center center;
+    background-position: center, center;
     display: flex;
-    flex-direction: column; 
-    justify-content: center; 
+    flex-direction: column;
     position: relative;
+    top: -70px;
 }
-#hero h1 
+#hero-text h1 
 {
     font-size: 100px;
     text-align: left;
     color: rgb(255, 255, 255);
-    margin: 0px 50px 0px 50px;
+    margin: 205px 0px 165px 65px;
+    text-shadow: 5px 5px 15px rgba(0,0,0,0.75);
+}
+
+/*Logo Bar*/
+#logo-bar
+{
+    position: relative;
+    top: -175px;
+}
+#logo-bar-vingette-top
+{
+    display: flex;
+    background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.5));
+    height: 30px;
+}
+#logo-bar-images 
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 50px;
+    background-color: #222222;
+    gap: 10px;
+}
+#logo-bar-vingette-bot
+{
+    display: flex;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0));
+    height: 30px;
 }
