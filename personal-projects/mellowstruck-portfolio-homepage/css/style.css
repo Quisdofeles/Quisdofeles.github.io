@@ -67,7 +67,7 @@ p
 }
 #navbar #navbar-wordmark img
 {
-    height: 110px;
+    max-height: 110px;
 }
 #header-vingette
 {
