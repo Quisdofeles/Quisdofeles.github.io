@@ -22,6 +22,11 @@ h1
     font-family: Clash-Display-Bold, sans-serif;
     font-weight: 100;
 }
+h2
+{
+    font-family: Clash-Display-Bold, sans-serif;
+    font-weight: 100;
+}
 a
 {
     font-family: Clash-Display-Bold, sans-serif;
@@ -123,4 +128,17 @@ p
     display: flex;
     background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0));
     height: 30px;
+}
+
+/*About Section*/
+#about
+{
+    background-image: url("../images/PinkSkyHero.jpg");
+    height: 100vh;
+    background-size: cover;
+    background-position: center, center;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    top: 0px;
 }
