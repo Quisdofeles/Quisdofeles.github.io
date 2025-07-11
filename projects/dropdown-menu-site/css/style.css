@@ -115,8 +115,6 @@ body
     align-items: center;
     text-align: center;
     flex-direction: column;
-    margin-left: 50px;
-    margin-right: 50px;
 }
 .card
 {
@@ -127,6 +125,8 @@ body
     min-width: 350px;
     padding: 25px;
     background-color: rgb(150, 16, 16);
+    margin-left: 50px;
+    margin-right: 50px;
 }
 #side-page h2
 {
