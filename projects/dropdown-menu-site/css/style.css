@@ -125,6 +125,7 @@ body
     min-width: 350px;
     padding: 25px;
     background-color: rgb(150, 16, 16);
+    margin-top: 300px;
     margin-left: 50px;
     margin-right: 50px;
 }
@@ -137,4 +138,13 @@ body
 {
     color: white;
     font-size: 18px;
+}
+
+@media screen and (max-width: 600px)
+{
+    #navbar 
+    {
+        flex-direction: column;
+        justify-content: center;
+    }
 }
