@@ -106,7 +106,7 @@ body
 /*About Section*/
 #side-page
 {
-    background-color: rgb(91, 107, 175);
+    background: rgb(91, 107, 175);
     height: 100vh;
     background-size: cover;
     background-position: center, center;
