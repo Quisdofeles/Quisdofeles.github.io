@@ -1,0 +1,101 @@
+* 
+{
+    box-sizing: border-box;
+}
+body 
+{
+    margin: 0px;
+    font-family: sans-serif;
+}
+
+/*NavBar*/
+#navbar 
+{
+    background-color: rgb(150, 16, 16);
+    display: flex;
+    align-items: center;
+}
+#navbar a 
+{
+    display: inline-block;
+    text-decoration: none;
+    color: white;
+    padding: 24px;
+}
+#navbar a:hover 
+{
+    background-color:  rgb(100, 10, 10);
+}
+#navbar #logo 
+{
+    margin-right: auto;
+    font-weight: bold;
+    font-size: 36px;
+    padding-top: 13px;
+    padding-bottom: 12px;
+}
+
+/*DropDowns*/
+.dropdown-container 
+{
+    position: relative;
+}
+.dropdown-menu 
+{
+    position: absolute;
+    opacity: 0;
+    visibility: hidden;
+    transition: 
+        opacity 0.25s,
+        visibility 0.25s;
+    z-index: 10;
+}
+.dropdown-container:last-child .dropdown-menu 
+{
+    right: 0px;
+}
+.dropdown-container:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+}
+.dropdown-menu a 
+{
+    background-color: rgb(150, 16, 16);
+    width: 100%;
+    min-width: 200px;
+}
+#navbar .dropdown-menu a:hover 
+{
+    background-color:  rgb(100, 10, 10);
+}
+
+/*Hero*/
+#hero 
+{
+    background-image: url("../images/cats.jpg");
+    height: 75vh;
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+#hero-text
+{
+    margin-top: 5vh;
+}
+#hero h2 
+{
+    text-align: center;
+    font-size: 54px;
+    color: white;
+    margin: 0px 50px 0px 50px;
+}
+#hero p 
+{
+    text-align: center;
+    font-size: 24px;
+    color: white;
+    margin: 0px 50px 0px 50px;
+}
