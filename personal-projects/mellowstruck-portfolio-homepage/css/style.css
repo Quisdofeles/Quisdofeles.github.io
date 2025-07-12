@@ -8,7 +8,6 @@
     font-family: Clash-Grotesk-Medium;
     src: url(../fonts/ClashGrotesk-Medium.otf);
 }
-
 * 
 {
     margin: 0;
@@ -125,7 +124,7 @@ p
     background-size: cover;
     background-position: center, center;
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
     text-align: center;
     flex-direction: column;
@@ -134,25 +133,70 @@ p
 }
 .about-card
 {
-    display: inline-block;
-    border: solid, 1px, white;
-    border-radius: 60px;
-    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    margin: 50px 0px 0px 0px;
+    border: 0px solid white;
+    border-radius: 25px;
+    max-width: 1200px;
     min-width: 350px;
-    padding: 25px;
+    padding: 50px;
+    height: 450px;
     background-color: transparent;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(25px);
+    justify-content: center;
+}
+.about-card::before 
+{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: 
+        linear-gradient(to bottom right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+        linear-gradient(to bottom right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1));
+        
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
 }
 #about h2
 {
     color: white;
+    font-size: 54px;
 }
 #about p
 {
     color: white;
+    font-size: 27px;
 }
-#about a
-{
+#about a {
+    align-self: center;
+    width: fit-content;
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 27px;
+    border: 3px solid white;
+    border-radius: 75px;
+    padding: 10px 20px;
     text-decoration: none;
     color: white;
+    z-index: 9999;
+    transition: all 0.3s ease;
+}
+#about a:hover 
+{
+    border: 3px solid transparent;
+    background-color: white;
+    color: #222222;
 }
