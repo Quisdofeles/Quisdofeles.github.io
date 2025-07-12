@@ -49,7 +49,7 @@ p
     background-color: #222222;
     display: flex;
     align-items: center;
-    max-height: 80px;
+    max-height: 12vh;
     box-shadow: 0px 10px 25px 0px black;
 }
 #navbar a
@@ -65,8 +65,8 @@ p
 }
 #navbar #navbar-wordmark
 {
-    margin-top: 10px;
-    margin-left: 200px;
+    margin-top: 1.2vh;
+    margin-left: 31vh;
     margin-right: auto;
     padding: 0;
 }
@@ -81,8 +81,9 @@ p
     background-image: url("../images/B&WRadioHero.jpg");
     height: 80vh;
     background-size: 100% auto;
-    background-position: center -110px;
+    background-position: center -16.5vh;
     display: flex;
+    background-repeat: no-repeat;
     flex-direction: column;
     position: relative;
     top: 0px;
@@ -92,7 +93,7 @@ p
     font-size: 100px;
     text-align: left;
     color: rgb(255, 255, 255);
-    margin: 140px 0px 165px 65px;
+    margin: 20vh 0vh 25vh 10vh;
     text-shadow: 5px 5px 15px rgba(0,0,0,0.75);
 }
 
@@ -111,9 +112,9 @@ p
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 50px;
+    padding: 7.5vh;
     background-color: #222222;
-    gap: 10px;
+    gap: 1.2vh;
 }
 
 /*About Section*/
@@ -135,13 +136,13 @@ p
 {
     display: flex;
     flex-direction: column;
-    margin: 50px 0px 0px 0px;
+    margin: 6vh 0vh 0vh 0vh;
     border: 0px solid white;
     border-radius: 25px;
-    max-width: 1200px;
-    min-width: 350px;
-    padding: 50px;
-    height: 450px;
+    max-width: 180vh;
+    min-width: 52.5vh;
+    padding: 7vh;
+    height: 67.5vh;
     background-color: transparent;
     backdrop-filter: blur(25px);
     justify-content: center;
