@@ -131,7 +131,7 @@ p
     flex-direction: column;
     position: relative;
     top: 0px;
-    padding: 10vh;
+    padding: 12vh;
 }
 .about-card
 {
@@ -142,8 +142,7 @@ p
     border-radius: 25px;
     max-width: 180vh;
     min-width: 52.5vh;
-    padding: 3vh;
-    height: 65vh;
+    padding: 5vh;
     background-color: transparent;
     backdrop-filter: blur(25px);
     justify-content: center;
@@ -253,6 +252,7 @@ p
 }
 .contact a {
     align-self: center;
+    justify-self: end;
     width: fit-content;
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
