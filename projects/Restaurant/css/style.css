@@ -1,0 +1,189 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
+@import url("https://use.typekit.net/uwp5sio.css");
+* 
+{
+    box-sizing: border-box;
+}
+body 
+{
+    margin: 0px;
+    font-family: sans-serif;
+}
+
+/*Font Styling*/
+h1
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+h2
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+h3
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+a
+{
+    font-family: "bahnschrift-condensed", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+p
+{
+    font-family: "bahnschrift-condensed", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+/*Header*/
+#header
+{
+    position: sticky;
+    top: 0px;
+    z-index: 1000;
+}
+#navbar
+{
+    background-color: white;
+    display: flex;
+    align-items: center;
+    max-height: 12vh;
+}
+#navbar a
+{
+    font-size: 36px;
+    text-decoration: none;
+    color: black;
+    padding: 20px;
+    margin-right: 3vh;
+}
+#navbar a:hover
+{
+    color: #EF4373;
+}
+#navbar #navbar-logo
+{
+    margin-top: 1.2vh;
+    margin-left: 10vh;
+    margin-right: auto;
+    padding: 0;
+}
+#navbar #navbar-logo img
+{
+    max-height: 110px;
+}
+
+/*Hero Section*/
+#hero 
+{
+    background-image: url("../images/mexican_food_1.png");
+    height: 88vh;
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center;
+    position: relative;
+}
+#logo-white
+{
+    width: 35vh;
+    display: flex;
+    position: relative;
+    top: 7vh;
+}
+#hero h2 
+{
+    font-size: 7.5vh;
+    color: black;
+    text-align: center;
+    padding: 3vh 2vh 2vh 2vh;
+    background-color: white;
+    max-width: 110vh;
+}
+#red-hero-text
+{
+    color: #EF4373;
+}
+#hero a
+{
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    font-size: 36px;
+    color: white;
+    text-decoration: none;
+    background-color: #EF4373;
+    border: white 3px solid;
+    border-radius: 20vh;
+    width: 50vh;
+    height: 10vh;
+    margin-bottom: 50px;
+}
+#hero a:hover
+{
+    text-align: center;
+    justify-content: center;
+    font-size: 36px;
+    color: #EF4373;
+    text-decoration: none;
+    background-color: white;
+    width: 50vh;
+    height: 10vh;
+}
+
+/*Footer*/
+.footer
+{
+    background-color: #EF4373;
+    color: white;
+    text-align: center;
+    padding: 1.5vh;
+    font-size: 2.5vh;
+}
+
+/*Responsive*/
+@media screen and (max-width: 700px)
+{
+    #navbar
+    {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-height: 20vh;
+        width: 100%;
+    }
+    #navbar #navbar-logo
+    {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #links
+    {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        align-content: center;
+        text-align: center;
+        position: relative;
+        bottom: 6vh;
+    }
+    #navbar a
+    {
+        margin: 0;
+    }
+}
