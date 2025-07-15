@@ -106,6 +106,8 @@ p
     display: flex;
     position: relative;
     top: 7vh;
+    margin: 0vh 2vh 2vh 2vh;
+
 }
 #hero h2 
 {
@@ -117,6 +119,7 @@ p
     max-width: 110vh;
     border: solid white 0px;
     border-radius: 1vh;
+    margin: 0vh 2vh 0vh 2vh;
 }
 #red-hero-text
 {
@@ -136,6 +139,7 @@ p
     border-radius: 20vh;
     width: 50vh;
     height: 10vh;
+    margin-top: 2vh;
     margin-bottom: 50px;
 }
 #hero a:hover
