@@ -30,6 +30,12 @@ h3
     font-weight: 400;
     font-style: normal;
 }
+h4
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
 a
 {
     font-family: "bahnschrift-condensed", sans-serif;
@@ -109,6 +115,8 @@ p
     padding: 3vh 2vh 2vh 2vh;
     background-color: white;
     max-width: 110vh;
+    border: solid white 0px;
+    border-radius: 1vh;
 }
 #red-hero-text
 {
@@ -152,6 +160,76 @@ p
     font-size: 2.5vh;
 }
 
+/*Featured Dish*/
+#featured-dish-card
+{
+    display: flex;
+    justify-self: center;
+    margin-bottom: 2vh;
+    border: solid #EF4373 .8vh;
+    border-radius: 1vh;
+    max-width: 100vh;
+    min-width: 50vh;
+}
+#dish-img
+{
+    width: 50vh;
+}
+#dish-description
+{
+    padding: 2vh;
+    width: 50vh;
+    text-align: left;
+}
+
+/*Menu*/
+#menu
+{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+#entrees
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#apetizers
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#sides
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#desserts
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#red-menu-text
+{
+    color: #EF4373;
+}
+
 /*Responsive*/
 @media screen and (max-width: 700px)
 {
@@ -185,5 +263,14 @@ p
     #navbar a
     {
         margin: 0;
+    }
+}
+
+@media screen and (max-width: 750px)
+{
+    #featured-dish-card
+    {
+        display: flex;
+        flex-direction: column;
     }
 }
