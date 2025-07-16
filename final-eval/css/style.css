@@ -1,8 +1,161 @@
-* {
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Black+Han+Sans&family=Lexend:wght@100..900&family=Oswald:wght@200..700&family=Passion+One:wght@400;700;900&family=Special+Gothic+Expanded+One&display=swap');
+
+* 
+{
     box-sizing: border-box;
 }
-
-body {
+body 
+{
     margin: 0px;
     font-family: sans-serif;
+}
+
+/*Text Styling*/
+.black-han-sans-regular 
+{
+  font-family: "Black Han Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.bebas-neue-regular 
+{
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.special-gothic-expanded-one-regular 
+{
+  font-family: "Special Gothic Expanded One", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.passion-one-black 
+{
+  font-family: "Passion One", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+/*Column Layout*/
+.center-column
+{
+    background-color: lightblue;
+    width: 50%; 
+    min-width: 500px;
+    margin: 0px auto; 
+}
+
+/*Top Text*/
+.top
+{
+    display: flex;
+    flex-direction: wrap;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0px 0px 0px 0px;
+    padding: 0px;
+
+    position: relative;
+    top: 0px;
+}
+.top #top-text h4
+{
+    text-align: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 36px;
+}
+.top #top-text h1
+{
+    text-align: center;
+    font-family: "Special Gothic Expanded One", sans-serif;
+    font-size: 50px;
+}
+.top #top-text h3
+{
+    text-align: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 24px;
+}
+
+/*Face Off Section*/
+.face-off
+{
+    display: flex;
+    flex-direction: wrap;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0px 0px 0px 0px;
+    padding: 0px;
+
+    position: relative;
+    top: 0px;
+}
+.face-off h3
+{
+    text-align: center;
+}
+.face-off #middle-text h1
+{
+    text-align: center;
+    font-family: "Passion One", sans-serif;
+    font-size: 50px;
+}
+#chiefs-logo
+{
+    width: 200px;
+}
+#eagles-logo
+{
+    width: 250px;
+}
+
+/*Bottom Text*/
+.bottom
+{
+    display: flex;
+    flex-direction: wrap;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0px 0px 0px 0px;
+    padding: 0px;
+
+    position: relative;
+    top: 0px;
+}
+.bottom #bottom-text h2
+{
+    text-align: center;
+}
+.bottom #bottom-text h3
+{
+    text-align: center;
+}
+.bottom #bottom-text h4
+{
+    text-align: center;
+}
+.buttons
+{
+    display: flex;
+    flex-direction: wrap;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0px 10px 0px 10px;
+    gap: 20px;
+    padding: 0px;
+
+    position: relative;
+    top: 0px;
+}
+.buttons a
+{
+    text-align: center;
+    color: black;
+    border: solid black 2px;
+    text-decoration: none;
+    padding: 15px;
 }
