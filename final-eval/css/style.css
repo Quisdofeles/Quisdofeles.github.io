@@ -113,7 +113,7 @@ body
 }
 #chiefs-logo
 {
-    width: 245px;
+    width: 247px;
 }
 #eagles-logo
 {
@@ -171,7 +171,7 @@ body
     font-family: "Lato", sans-serif;
     font-size: 24px;
     color: black;
-    border: solid black 5px;
+    border: solid black 3px;
     text-decoration: none;
     padding: 10px;
 }
