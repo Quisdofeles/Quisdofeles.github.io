@@ -224,7 +224,7 @@ p
 .featured-works-card-left
 {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background-image: linear-gradient(to left, #333436, #222222, #222222);
     border: 0px solid white;
     border-radius: 25px;
@@ -261,7 +261,7 @@ p
 .featured-works-card-right
 {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background-image: linear-gradient(to right, #333436, #222222, #222222);
     border: 0px solid white;
     justify-content: right;
@@ -298,6 +298,10 @@ p
 .disco
 {
     z-index: 9999;
+}
+#image
+{
+    width: 40vh;
 }
 
 /*Contact Section*/
