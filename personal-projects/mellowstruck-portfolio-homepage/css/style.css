@@ -26,6 +26,11 @@ h2
     font-family: Clash-Display-Bold, sans-serif;
     font-weight: 100;
 }
+h3
+{
+    font-family: Clash-Display-Bold, sans-serif;
+    font-weight: 100;
+}
 a
 {
     font-family: Clash-Display-Bold, sans-serif;
@@ -228,8 +233,7 @@ p
     background-image: linear-gradient(to left, #333436, #222222, #222222);
     border: 0px solid white;
     border-radius: 25px;
-    justify-content: left;
-    align-content: center;
+    justify-content: space-between;
     text-align: left;
     margin: 7.5vh 0vh 0vh 0vh;
     padding: 5vh;
@@ -264,8 +268,7 @@ p
     flex-direction: row;
     background-image: linear-gradient(to right, #333436, #222222, #222222);
     border: 0px solid white;
-    justify-content: right;
-    align-content: center;
+    justify-content: space-between;
     text-align: right;
     border-radius: 25px;
     margin: 7.5vh 0vh 0vh 0vh;
@@ -295,13 +298,75 @@ p
         linear-gradient(#fff 0 0);
     mask-composite: exclude;
 }
+.featured-works-card-text
+{
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+}
+.featured-works-card-text h1
+{
+    color: white;
+    font-size: 54px;
+}
+.featured-works-card-text p
+{
+    color: white;
+    font-size: 27px;
+}
 .disco
 {
     z-index: 9999;
+    width: 400px;
+    height: 105px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 20px;
 }
-#image
+.disco-embed 
+{
+    transform: translate(-10px, -95px);
+    pointer-events: auto;
+    border: none;
+}
+.right-side-wrapper 
+{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+.featured-works-card-left .tags 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+.featured-works-card-right .tags 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.tags p 
+{
+    background-color: #32B57C;
+    color: white;
+    font-size: 18px;
+    text-align: center;
+    border-radius: 50px;
+    padding: 6px 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+#image 
 {
     width: 40vh;
+    height: auto;
+    border-radius: 12px;
+    display: block;
 }
 
 /*Contact Section*/
