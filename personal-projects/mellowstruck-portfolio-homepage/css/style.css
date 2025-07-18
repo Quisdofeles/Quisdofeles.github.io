@@ -206,7 +206,6 @@ p
 .featured-works
 {
     background-color: #222222;
-    height: 100vh;
     position: relative;
     top: 0px;
     z-index: 100;
@@ -221,6 +220,84 @@ p
     font-size: 60px;
     margin: 0vh 0vh 0vh 0vh;
     justify-self: center;
+}
+.featured-works-card-left
+{
+    display: flex;
+    flex-direction: column;
+    background-image: linear-gradient(to left, #333436, #222222, #222222);
+    border: 0px solid white;
+    border-radius: 25px;
+    justify-content: left;
+    align-content: center;
+    text-align: left;
+    margin: 7.5vh 0vh 0vh 0vh;
+    padding: 5vh;
+    position: relative;
+    top: 0px;
+}
+.featured-works-card-left::before 
+{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: 
+        linear-gradient(to left, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05));
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+}
+.featured-works-card-right
+{
+    display: flex;
+    flex-direction: column;
+    background-image: linear-gradient(to right, #333436, #222222, #222222);
+    border: 0px solid white;
+    justify-content: right;
+    align-content: center;
+    text-align: right;
+    border-radius: 25px;
+    margin: 7.5vh 0vh 0vh 0vh;
+    padding: 5vh;
+    position: relative;
+    top: 0px;
+}
+.featured-works-card-right::before 
+{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05));
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+}
+.disco
+{
+    z-index: 9999;
 }
 
 /*Contact Section*/
