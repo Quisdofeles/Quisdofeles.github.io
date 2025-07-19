@@ -47,7 +47,7 @@ p
 {
     position: sticky;
     top: 0px;
-    z-index: 1000;
+    z-index: 9999;
 }
 #navbar
 {
@@ -66,7 +66,7 @@ p
 }
 #navbar a:hover
 {
-    color: #9c9c9c;
+    color: #32B57C;
 }
 #navbar #navbar-wordmark
 {
@@ -197,7 +197,7 @@ p
     padding: 10px 20px;
     text-decoration: none;
     color: white;
-    z-index: 9999;
+    z-index: 8888;
     transition: all 0.3s ease;
 }
 #about a:hover 
@@ -242,7 +242,7 @@ p
     text-align: left;
     margin: 7.5vh 0vh 0vh auto;
     padding: 5vh;
-    width: 175vh;
+    width: 155vh;
     position: relative;
     top: 0px;
 }
@@ -278,7 +278,7 @@ p
     align-items: stretch;
     text-align: right;
     border-radius: 25px;
-    width: 175vh;
+    width: 155vh;
     margin: 7.5vh auto 0vh 0vh;
     padding: 5vh;
     position: relative;
@@ -325,7 +325,7 @@ p
 }
 .disco
 {
-    z-index: 9999;
+    z-index: 7777;
     width: 400px;
     height: 105px;
     overflow: hidden;
@@ -445,7 +445,8 @@ p
     font-size: 28px;
     margin: 0vh 0vh 0vh 0vh;
 }
-.contact a {
+.contact a 
+{
     align-self: center;
     justify-self: end;
     width: fit-content;
@@ -457,7 +458,7 @@ p
     padding: 10px 20px;
     text-decoration: none;
     color: white;
-    z-index: 9999;
+    z-index: 6666;
     transition: all 0.3s ease;
     position: relative;
     top: 55vh;
@@ -472,11 +473,87 @@ p
 /*Footer*/
 .footer
 {
-    background-color: #222222;
-    height: 20vh;
+    background-image: url("../images/WordMark-Transparent-black.png");
+    height: 55vh;
+    background-size: cover;
+    background-position: center, center;
     position: relative;
     top: 0px;
     z-index: 100;
-    box-shadow: 
-    0px 10px 25px 0px #0000007c,
+    box-shadow: 0px -10px 25px 0px #0000007c;
+}
+.footer h2
+{
+    color: white;
+    font-size: 24px;
+}
+.footer-links a
+{
+    font-size: 24px;
+    text-decoration: none;
+    color: white;
+}
+.footer-links a:hover
+{
+    color: #32B57C;
+}
+.footer-content
+{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    top: 0px;
+    z-index: 5555;
+}
+.footer-copyright
+{
+    display: flex;
+    margin: 13vh 0vh 0vh 20vh;
+}
+.footer-icons
+{
+    display: flex;
+    margin: 13vh 0vh 0vh 17.6vh;
+    gap: 0.85vh;
+}
+.footer-icons a 
+{
+    position: relative;
+    display: inline-block;
+    width: 35px;
+    height: 35px;
+}
+.footer-icons .icon-white,
+.footer-icons .icon-green 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 35px;
+    height: 35px;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+}
+.footer-icons .icon-green 
+{
+    opacity: 0;
+}
+.footer-icons a:hover .icon-white 
+{
+    opacity: 0;
+}
+.footer-icons a:hover .icon-green 
+{
+    opacity: 1;
+}
+.footer-icons a
+{
+    text-decoration: none;
+}
+.footer-links
+{
+    display: flex;
+    margin: 13vh 0vh 0vh 35vh;
+    gap: 6.8vh;
 }
