@@ -85,10 +85,9 @@ p
 {
     background-image: url("../images/B&WRadioHero.jpg");
     height: 80vh;
-    background-size: 100% auto;
-    background-position: center -16.5vh;
+    background-size: cover;
+    background-position: center, center;
     display: flex;
-    background-repeat: no-repeat;
     flex-direction: column;
     position: relative;
     top: 0px;
