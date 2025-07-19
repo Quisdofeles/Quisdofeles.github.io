@@ -210,6 +210,10 @@ p
 /*Featured Works Section*/
 .featured-works
 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
     background-color: #222222;
     position: relative;
     top: 0px;
@@ -234,9 +238,11 @@ p
     border: 0px solid white;
     border-radius: 25px;
     justify-content: space-between;
+    align-items: stretch;
     text-align: left;
-    margin: 7.5vh 0vh 0vh 0vh;
+    margin: 7.5vh 0vh 0vh auto;
     padding: 5vh;
+    width: 175vh;
     position: relative;
     top: 0px;
 }
@@ -269,9 +275,11 @@ p
     background-image: linear-gradient(to right, #333436, #222222, #222222);
     border: 0px solid white;
     justify-content: space-between;
+    align-items: stretch;
     text-align: right;
     border-radius: 25px;
-    margin: 7.5vh 0vh 0vh 0vh;
+    width: 175vh;
+    margin: 7.5vh auto 0vh 0vh;
     padding: 5vh;
     position: relative;
     top: 0px;
@@ -298,18 +306,19 @@ p
         linear-gradient(#fff 0 0);
     mask-composite: exclude;
 }
-.featured-works-card-text
+.left-side-wrapper
 {
     display: flex;
     flex-direction: column;
-    padding: 25px;
+    justify-content: space-between;
+    min-height: 100%;
 }
-.featured-works-card-text h1
+.left-side-wrapper h1
 {
     color: white;
     font-size: 54px;
 }
-.featured-works-card-text p
+.left-side-wrapper p
 {
     color: white;
     font-size: 27px;
@@ -333,29 +342,69 @@ p
 {
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 1.5rem;
 }
-.featured-works-card-left .tags 
+.featured-works-card-left .tag-column
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.featured-works-card-right .tag-column
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.featured-works-card-left .top-tags 
 {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 0.5rem;
 }
-.featured-works-card-right .tags 
+.featured-works-card-right .top-tags 
 {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
 }
-.tags p 
+.featured-works-card-left .bottom-tags 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+.featured-works-card-right .bottom-tags 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.top-tags p 
 {
     background-color: #32B57C;
-    color: white;
+    color: #222222;
     font-size: 18px;
     text-align: center;
+    border-radius: 50px;
+    padding: 6px 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+.bottom-tags p 
+{
+    background-color: transparent;
+    color: #32B57C;
+    font-size: 18px;
+    text-align: center;
+    border: 2px solid #32B57C;
     border-radius: 50px;
     padding: 6px 14px;
     margin: 0;
