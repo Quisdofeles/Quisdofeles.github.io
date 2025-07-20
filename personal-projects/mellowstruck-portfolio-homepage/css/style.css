@@ -43,41 +43,44 @@ p
 }
 
 /*Header*/
-#header
+.header
 {
     position: sticky;
     top: 0px;
     z-index: 9999;
-}
-#navbar
-{
     background-color: #222222;
     display: flex;
     align-items: center;
     max-height: 12vh;
     box-shadow: 0px 10px 25px 0px #0000007c;
 }
-#navbar a
+.wordmark
+{
+    margin-top: 1vh;
+    margin-left: 30vh;
+    margin-right: auto;
+    padding: 0;
+}
+.wordmark img
+{
+    height: 110px;
+}
+.navbar
+{
+    display: flex;
+    flex: row;
+    gap: 5vh;
+    margin: 0vh 5vh 0vh 5vh;
+}
+.navbar a
 {
     font-size: 24px;
     text-decoration: none;
     color: white;
-    padding: 22px;
 }
-#navbar a:hover
+.navbar a:hover
 {
     color: #32B57C;
-}
-#navbar #navbar-wordmark
-{
-    margin-top: 1.2vh;
-    margin-left: 31vh;
-    margin-right: auto;
-    padding: 0;
-}
-#navbar #navbar-wordmark img
-{
-    max-height: 110px;
 }
 
 /*Hero Section*/
@@ -555,4 +558,36 @@ p
     display: flex;
     margin: 12vh 0vh 0vh 35vh;
     gap: 7vh;
+}
+
+/*Responsive Header*/
+@media (max-width: 1250px) 
+{
+    .wordmark 
+    {
+        margin-left: auto;
+    }
+}
+@media (max-width: 810px) 
+{
+    .wordmark img
+    {
+        height: 80px;
+    }
+    .header 
+    {
+        flex-direction: column;
+        max-height: none;
+    }
+    .navbar 
+    {
+        margin-bottom: 2vh;
+        gap: 3vh;
+    }
+    .navbar a
+    {
+        font-size: 18px;
+        text-decoration: none;
+        color: white;
+    }
 }
