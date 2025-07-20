@@ -578,6 +578,9 @@ p
     {
         flex-direction: column;
         max-height: none;
+        position: sticky;
+        top: 0px;
+        z-index: 9999;
     }
     .navbar 
     {
