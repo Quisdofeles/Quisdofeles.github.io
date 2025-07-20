@@ -45,6 +45,7 @@ p
 /*Header*/
 .header
 {
+    position: -webkit-sticky;
     position: sticky;
     top: 0px;
     z-index: 9999;
@@ -576,11 +577,12 @@ p
     }
     .header 
     {
-        flex-direction: column;
-        max-height: none;
+        position: -webkit-sticky;
         position: sticky;
         top: 0px;
         z-index: 9999;
+        flex-direction: column;
+        max-height: none;
     }
     .navbar 
     {
