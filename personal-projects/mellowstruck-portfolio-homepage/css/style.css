@@ -472,8 +472,8 @@ p
 /*Footer*/
 .footer
 {
-    background-image: url("../images/WordMark-Transparent-black.png");
-    height: 55vh;
+    background-image: url("../images/Footer-Wordmark.png");
+    height: 40vh;
     background-size: cover;
     background-position: center, center;
     position: relative;
@@ -508,13 +508,13 @@ p
 .footer-copyright
 {
     display: flex;
-    margin: 13vh 0vh 0vh 20vh;
+    margin: 12vh 0vh 0vh 19.7vh;
 }
 .footer-icons
 {
     display: flex;
-    margin: 13vh 0vh 0vh 17.6vh;
-    gap: 0.85vh;
+    margin: 12vh 0vh 0vh 18.4vh;
+    gap: 1vh;
 }
 .footer-icons a 
 {
@@ -553,6 +553,6 @@ p
 .footer-links
 {
     display: flex;
-    margin: 13vh 0vh 0vh 35vh;
-    gap: 6.8vh;
+    margin: 12vh 0vh 0vh 35vh;
+    gap: 7vh;
 }
