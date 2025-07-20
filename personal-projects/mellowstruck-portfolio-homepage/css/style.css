@@ -83,7 +83,7 @@ p
 /*Hero Section*/
 #hero
 {
-    background-image: url("../images/B&WRadioHero.jpg");
+    background-image: url("../images/B&W-Radio-Hero.webp");
     height: 80vh;
     background-size: cover;
     background-position: center, center;
@@ -124,7 +124,7 @@ p
 /*About Section*/
 #about
 {
-    background-image: url("../images/PinkSkyHero.jpg");
+    background-image: url("../images/Pink-Sky-Hero.webp");
     height: 100vh;
     background-size: cover;
     background-position: center, center;
@@ -241,7 +241,7 @@ p
     text-align: left;
     margin: 7.5vh 0vh 0vh auto;
     padding: 5vh;
-    width: 155vh;
+    width: 160vh;
     position: relative;
     top: 0px;
 }
@@ -277,7 +277,7 @@ p
     align-items: stretch;
     text-align: right;
     border-radius: 25px;
-    width: 155vh;
+    width: 160vh;
     margin: 7.5vh auto 0vh 0vh;
     padding: 5vh;
     position: relative;
@@ -420,7 +420,7 @@ p
 /*Contact Section*/
 .contact
 {
-    background-image: url("../images/SaturatedBackShots.jpg");
+    background-image: url("../images/Saturated-Back-Shots.webp");
     height: 90vh;
     background-size: cover;
     background-position: center, center;
@@ -472,7 +472,7 @@ p
 /*Footer*/
 .footer
 {
-    background-image: url("../images/Footer-Wordmark.png");
+    background-image: url("../images/Footer-Wordmark.webp");
     height: 40vh;
     background-size: cover;
     background-position: center, center;
