@@ -610,8 +610,12 @@ p
     }
     #hero-text
     {
-        margin-top: 22vh;
+        margin-top: 20vh;
         margin-left: 7vh;
+    }
+    #hero 
+    {
+        height: 75vh;
     }
 }
 @media (max-width: 1275px) 
@@ -622,8 +626,12 @@ p
     }
     #hero-text
     {
-        margin-top: 24vh;
+        margin-top: 19vh;
         margin-left: 6vh;
+    }
+    #hero 
+    {
+        height: 70vh;
     }
 }
 @media (max-width: 1111px) 
@@ -634,11 +642,15 @@ p
     }
     #hero-text
     {
-        margin-top: 26vh;
+        margin-top: 18.5vh;
         margin-left: 5vh;
     }
+    #hero 
+    {
+        height: 65vh;
+    }
 }
-@media (max-width: 900px) 
+@media (max-width: 990px) 
 {
     #hero-text h1 
     {
@@ -646,11 +658,15 @@ p
     }
     #hero-text
     {
-        margin-top: 28vh;
+        margin-top: 18vh;
         margin-left: 4vh;
     }
+    #hero 
+    {
+        height: 60vh;
+    }
 }
-@media (max-width: 775px) 
+@media (max-width: 810px) 
 {
     #hero-text h1 
     {
@@ -658,11 +674,15 @@ p
     }
     #hero-text
     {
-        margin-top: 30vh;
+        margin-top: 17.5vh;
         margin-left: 3vh;
     }
+    #hero 
+    {
+        height: 55vh;
+    }
 }
-@media (max-width: 650px) 
+@media (max-width: 675px) 
 {
     #hero-text h1 
     {
@@ -670,11 +690,15 @@ p
     }
     #hero-text
     {
-        margin-top: 32vh;
+        margin-top: 17vh;
         margin-left: 2vh;
     }
+    #hero 
+    {
+        height: 50vh;
+    }
 }
-@media (max-width: 520px) 
+@media (max-width: 530px) 
 {
     #hero-text h1 
     {
@@ -682,11 +706,15 @@ p
     }
     #hero-text
     {
-        margin-top: 34vh;
+        margin-top: 16.5vh;
         margin-left: 1vh;
     }
+    #hero 
+    {
+        height: 45vh;
+    }
 }
-@media (max-width: 400px) 
+@media (max-width: 395px) 
 {
     #hero-text h1 
     {
@@ -694,7 +722,11 @@ p
     }
     #hero-text
     {
-        margin-top: 36vh;
+        margin-top: 16.5vh;
         margin-left: 1vh;
+    }
+    #hero 
+    {
+        height: 40vh;
     }
 }
