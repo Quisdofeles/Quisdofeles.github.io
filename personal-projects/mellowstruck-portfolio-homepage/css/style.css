@@ -92,16 +92,20 @@ p
     background-size: cover;
     background-position: center, center;
     display: flex;
-    flex-direction: column;
+    justify-content: flex-start;
     position: relative;
     top: 0px;
+}
+#hero-text
+{
+    margin-top: 20vh;
+    margin-left: 8vh;
 }
 #hero-text h1 
 {
     font-size: 100px;
     text-align: left;
     color: rgb(255, 255, 255);
-    margin: 20vh 0vh 25vh 10vh;
     text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
 
@@ -594,5 +598,103 @@ p
         font-size: 18px;
         text-decoration: none;
         color: white;
+    }
+}
+
+/*Responsive Hero*/
+@media (max-width: 1435px) 
+{
+    #hero-text h1 
+    {
+        font-size: 90px;
+    }
+    #hero-text
+    {
+        margin-top: 22vh;
+        margin-left: 7vh;
+    }
+}
+@media (max-width: 1275px) 
+{
+    #hero-text h1 
+    {
+        font-size: 80px;
+    }
+    #hero-text
+    {
+        margin-top: 24vh;
+        margin-left: 6vh;
+    }
+}
+@media (max-width: 1111px) 
+{
+    #hero-text h1 
+    {
+        font-size: 70px;
+    }
+    #hero-text
+    {
+        margin-top: 26vh;
+        margin-left: 5vh;
+    }
+}
+@media (max-width: 900px) 
+{
+    #hero-text h1 
+    {
+        font-size: 60px;
+    }
+    #hero-text
+    {
+        margin-top: 28vh;
+        margin-left: 4vh;
+    }
+}
+@media (max-width: 775px) 
+{
+    #hero-text h1 
+    {
+        font-size: 50px;
+    }
+    #hero-text
+    {
+        margin-top: 30vh;
+        margin-left: 3vh;
+    }
+}
+@media (max-width: 650px) 
+{
+    #hero-text h1 
+    {
+        font-size: 40px;
+    }
+    #hero-text
+    {
+        margin-top: 32vh;
+        margin-left: 2vh;
+    }
+}
+@media (max-width: 520px) 
+{
+    #hero-text h1 
+    {
+        font-size: 30px;
+    }
+    #hero-text
+    {
+        margin-top: 34vh;
+        margin-left: 1vh;
+    }
+}
+@media (max-width: 400px) 
+{
+    #hero-text h1 
+    {
+        font-size: 20px;
+    }
+    #hero-text
+    {
+        margin-top: 36vh;
+        margin-left: 1vh;
     }
 }
