@@ -110,23 +110,40 @@ p
 }
 
 /*Logo Bar*/
-#logo-bar
+.logo-bar
 {
-    position: relative;
-    top: 0px;
-    z-index: 100;
-    box-shadow: 
-    0px 10px 25px 0px #0000007c,
-    0px -10px 25px 0px #0000007c;
+    z-index: 8888;
+    box-shadow:
+    0px 10px 40px 0px rgba(0, 0, 0, 0.7),
+    0px -10px 40px 0px rgba(0, 0, 0, 0.7);
 }
-#logo-bar-images 
+.logo-bar-images 
 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 7.5vh;
+    padding: 5vh;
     background-color: #222222;
-    gap: 1.2vh;
+}
+#rev-play
+{
+    width: 250px;
+}
+#candl-motors
+{
+    width: 200px;
+}
+#fashion-speaks
+{
+    width: 120px;
+}
+#ocular-sounds
+{
+    width: 200px;
+}
+#le-monde
+{
+    width: 250px;
 }
 
 /*About Section*/
@@ -729,4 +746,109 @@ p
     {
         height: 40vh;
     }
+}
+
+/*Responsive Logo Bar*/
+@media (max-width: 1435px) 
+{
+    .logo-bar-images 
+    {
+        padding: 4vh;
+    }
+    #rev-play { width: 225px; }
+    #candl-motors { width: 180px; }
+    #fashion-speaks { width: 100px; }
+    #ocular-sounds { width: 180px; }
+    #le-monde { width: 225px; }
+}
+
+@media (max-width: 1275px) 
+{
+    .logo-bar-images 
+    {
+        padding: 3.5vh;
+    }
+    #rev-play { width: 200px; }
+    #candl-motors { width: 160px; }
+    #fashion-speaks { width: 90px; }
+    #ocular-sounds { width: 160px; }
+    #le-monde { width: 200px; }
+}
+
+@media (max-width: 1111px) 
+{
+    .logo-bar-images 
+    {
+        padding: 3vh;
+    }
+    #rev-play { width: 175px; }
+    #candl-motors { width: 140px; }
+    #fashion-speaks { width: 80px; }
+    #ocular-sounds { width: 140px; }
+    #le-monde { width: 175px; }
+}
+
+@media (max-width: 990px) 
+{
+    .logo-bar-images 
+    {
+        padding: 2.5vh;
+    }
+    #rev-play { width: 150px; }
+    #candl-motors { width: 120px; }
+    #fashion-speaks { width: 70px; }
+    #ocular-sounds { width: 120px; }
+    #le-monde { width: 150px; }
+}
+
+@media (max-width: 810px) 
+{
+    .logo-bar-images 
+    {
+        padding: 2vh;
+    }
+    #rev-play { width: 125px; }
+    #candl-motors { width: 100px; }
+    #fashion-speaks { width: 60px; }
+    #ocular-sounds { width: 100px; }
+    #le-monde { width: 125px; }
+}
+
+@media (max-width: 675px) 
+{
+    .logo-bar-images 
+    {
+        padding: 1.5vh;
+    }
+    #rev-play { width: 100px; }
+    #candl-motors { width: 80px; }
+    #fashion-speaks { width: 50px; }
+    #ocular-sounds { width: 80px; }
+    #le-monde { width: 100px; }
+}
+
+@media (max-width: 530px) 
+{
+    .logo-bar-images 
+    {
+        padding: 1vh;
+    }
+    #rev-play { width: 80px; }
+    #candl-motors { width: 65px; }
+    #fashion-speaks { width: 40px; }
+    #ocular-sounds { width: 65px; }
+    #le-monde { width: 80px; }
+}
+
+@media (max-width: 395px) 
+{
+    .logo-bar-images 
+    {
+        padding: 0.8vh;
+    }
+    #rev-play { width: 60px; }
+    #candl-motors { width: 50px; }
+    #fashion-speaks { width: 30px; }
+    #ocular-sounds { width: 50px; }
+    #le-monde { width: 60px; }
 }
