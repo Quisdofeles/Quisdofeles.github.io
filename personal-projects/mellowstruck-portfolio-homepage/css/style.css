@@ -976,12 +976,8 @@ p
     .contact a 
     {
         font-size: 18px;
-    } 
-}
-@media (max-width: 500px) 
-{
-    .contact a 
-    {
         margin-top: 44vh;
     } 
 }
+
+/*Responsive Featured Works Section*/
