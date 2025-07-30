@@ -472,7 +472,7 @@ p
 .contact a 
 {
     align-self: center;
-    justify-self: end;
+    justify-self: start;
     width: fit-content;
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
@@ -485,7 +485,8 @@ p
     z-index: 6666;
     transition: all 0.3s ease;
     position: relative;
-    top: 55vh;
+    top: 0vh;
+    margin-top: 50vh;
 }
 .contact a:hover 
 {
@@ -919,12 +920,12 @@ p
     }
     #about p 
     {
-        font-size: 15px;
+        font-size: 16px;
     }
     #about a 
     {
-        font-size: 15px;
-        padding: 5px 15px;
+        font-size: 16px;
+        padding: 6px 16px;
     }
     #about 
     {
@@ -940,3 +941,47 @@ p
 /*Responsive Featured Works Section*/
 
 /*Responsive Contact Section*/
+@media (max-width: 750px) 
+{
+    .contact h2 
+    {
+        font-size: 54px;
+    } 
+    .contact p 
+    {
+        font-size: 24px;
+    } 
+    .contact a 
+    {
+        font-size: 24px;
+    } 
+}
+@media (max-width: 675px) 
+{
+    .contact a 
+    {
+        margin-top: 42vh;
+    } 
+}
+@media (max-width: 500px) 
+{
+    .contact h2 
+    {
+        font-size: 46px;
+    } 
+    .contact p 
+    {
+        font-size: 18px;
+    } 
+    .contact a 
+    {
+        font-size: 18px;
+    } 
+}
+@media (max-width: 500px) 
+{
+    .contact a 
+    {
+        margin-top: 44vh;
+    } 
+}
