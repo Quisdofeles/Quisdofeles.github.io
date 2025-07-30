@@ -210,7 +210,8 @@ p
     color: white;
     font-size: 27px;
 }
-#about a {
+#about a 
+{
     align-self: center;
     width: fit-content;
     font-family: Clash-Grotesk-Medium, sans-serif;
@@ -441,6 +442,28 @@ p
     border-radius: 12px;
     display: block;
 }
+.featured-works a 
+{
+    align-self: center;
+    width: fit-content;
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 27px;
+    border: 3px solid white;
+    border-radius: 75px;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    z-index: 8888;
+    transition: all 0.3s ease;
+    margin-top: 7vh;
+}
+.featured-works a:hover 
+{
+    border: 3px solid transparent;
+    background-color: white;
+    color: #222222;
+}
 
 /*Contact Section*/
 .contact
@@ -486,7 +509,7 @@ p
     transition: all 0.3s ease;
     position: relative;
     top: 0vh;
-    margin-top: 50vh;
+    margin-top: 55vh;
 }
 .contact a:hover 
 {
@@ -971,7 +994,7 @@ p
 {
     .contact a 
     {
-        margin-top: 42vh;
+        margin-top: 48vh;
     } 
 }
 @media (max-width: 500px) 
@@ -987,8 +1010,6 @@ p
     .contact a 
     {
         font-size: 18px;
-        margin-top: 44vh;
+        margin-top: 52vh;
     } 
 }
-
-/*Responsive Featured Works Section*/
