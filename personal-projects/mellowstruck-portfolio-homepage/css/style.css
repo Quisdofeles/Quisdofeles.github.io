@@ -1075,6 +1075,28 @@ p
 }
 @media (max-width: 675px) 
 {
+    .featured-works h2
+    {
+        font-size: 42px;
+    }
+    .featured-works h1
+    {
+        font-size: 42px;
+    }
+    .featured-works p
+    {
+        font-size: 24px;
+    }
+    .top-tags p
+    {
+        font-size: 16px;
+        padding: 5px 13px;
+    }
+    .bottom-tags p
+    {
+        font-size: 16px;
+        padding: 5px 13px;
+    }
     .featured-works-card-left,
     .featured-works-card-right 
     {
@@ -1107,6 +1129,10 @@ p
     {
         height: 40vh;
     }
+    .featured-works a 
+    {
+        font-size: 22px;
+    }
 }
 @media (max-width: 550px) 
 {
@@ -1115,6 +1141,29 @@ p
         justify-self: center !important;
         text-align: center!important;
         align-self: center!important;
+        font-size: 40px;
+    }
+    .featured-works h1
+    {
+        font-size: 40px;
+    }
+    .featured-works p
+    {
+        font-size: 22px;
+    }
+    .top-tags p
+    {
+        font-size: 14px;
+        padding: 4px 12px;
+    }
+    .bottom-tags p
+    {
+        font-size: 14px;
+        padding: 4px 12px;
+    }
+    .featured-works a 
+    {
+        font-size: 20px;
     }
     .featured-works-card-left,
     .featured-works-card-right 
@@ -1149,6 +1198,10 @@ p
     {
         align-items: center !important;
     }
+    #image 
+    {
+        height: 35vh;
+    }
 }
 @media (max-width: 450px) 
 {
@@ -1165,11 +1218,30 @@ p
         justify-self: center !important;
         text-align: center!important;
         align-self: center!important;
+        font-size: 36px;
+    }
+    .featured-works h1
+    {
+        font-size: 36px;
+    }
+    .featured-works p
+    {
+        font-size: 20px;
+    }
+    .top-tags p
+    {
+        font-size: 12px;
+        padding: 3px 11px;
+    }
+    .bottom-tags p
+    {
+        font-size: 12px;
+        padding: 3px 11px;
     }
     .featured-works-card-left,
     .featured-works-card-right 
     {
-        margin: 1.5vh auto; /* add vertical spacing */
+        margin: 1.5vh auto;
         align-items: center;
         text-align: center;
         width: 100%;
@@ -1179,6 +1251,11 @@ p
     {
         margin-top: 3.5vh !important;
         margin-bottom: 5vh !important;
+        font-size: 18px;
+    }
+    #image 
+    {
+        height: 30vh;
     }
 }
 
