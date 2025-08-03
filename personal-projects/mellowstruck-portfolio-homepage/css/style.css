@@ -607,6 +607,69 @@ p
     color: #222222;
 }
 
+/*Contact Page*/
+.contact-page
+{
+    background-image: url("../images/Saturated-Back-Shots-Tall.webp");
+    height: 150vh;
+    background-size: cover;
+    background-position: bottom, center;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    position: relative;
+    top: 0px;
+}
+.contact-page h2
+{
+    color: white;
+    font-size: 60px;
+    margin: 7vh 0vh 0vh 0vh;
+}
+.contact-page h3
+{
+    color: white;
+    font-size: 36px;
+}
+.contact-page p
+{
+    color: white;
+    font-size: 28px;
+}
+.contact-block
+{
+    display: flex;
+    flex-direction: row;
+}
+#contact-instagram
+{
+    margin: 0vh 5vh 0vh 5vh;
+}
+#contact-indeed
+{
+    margin: 0vh 5vh 0vh 5vh;
+}
+#contact-email
+{
+    margin: 0vh 5vh 0vh 5vh;
+}
+#contact-instagram p
+{
+    color: white;
+    font-size: 20px;
+}
+#contact-indeed p
+{
+    color: white;
+    font-size: 20px;
+}
+#contact-email p
+{
+    color: white;
+    font-size: 20px;
+}
 /*Footer*/
 .footer
 {
