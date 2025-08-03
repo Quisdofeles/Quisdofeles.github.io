@@ -231,6 +231,91 @@ p
     background-color: white;
     color: #222222;
 }
+/*About Page*/
+#about-mellowstruck
+{
+    background-image: url("../images/Pink-Sky-Hero-Tall.webp");
+    height: 180vh;
+    background-size: cover;
+    background-position: bottom, center;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    position: relative;
+    top: 0px;
+    padding: 12vh;
+}
+.about-mellowstruck-card
+{
+    display: flex;
+    flex-direction: column;
+    margin: 0vh 0vh 0vh 0vh;
+    border: 0px solid white;
+    border-radius: 25px;
+    max-width: 180vh;
+    min-width: 50vh;
+    padding: 5vh;
+    background-color: transparent;
+    backdrop-filter: blur(25px);
+    justify-content: center;
+}
+.about-mellowstruck-card::before 
+{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: 
+        linear-gradient(to bottom right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+        linear-gradient(to bottom right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1));
+        
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+}
+#about-mellowstruck h2
+{
+    color: white;
+    font-size: 54px;
+}
+#about-mellowstruck p
+{
+    color: white;
+    font-size: 27px;
+}
+#about-mellowstruck a 
+{
+    align-self: center;
+    width: fit-content;
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 27px;
+    border: 3px solid white;
+    border-radius: 75px;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    z-index: 8888;
+    transition: all 0.3s ease;
+}
+#about-mellowstruck a:hover 
+{
+    border: 3px solid transparent;
+    background-color: white;
+    color: #222222;
+}
 
 /*Featured Works Section*/
 .featured-works
@@ -969,6 +1054,104 @@ p
     {
         padding: 4vh;
         min-width: 42vh;
+    }
+}
+
+/*Responsive About Page*/
+@media (max-width: 1300px) 
+{
+    #about-mellowstruck h2 
+    {
+        font-size: 48px;
+    }
+    #about-mellowstruck p 
+    {
+        font-size: 24px;
+    }
+    #about-mellowstruck a 
+    {
+        font-size: 24px;
+        padding: 9px 19px;
+    }
+}
+@media (max-width: 1050px) 
+{
+    #about-mellowstruck h2 
+    {
+        font-size: 42px;
+    }
+    #about-mellowstruck p 
+    {
+        font-size: 21px;
+    }
+    #about-mellowstruck a 
+    {
+        font-size: 21px;
+        padding: 8px 18px;
+    }
+}
+@media (max-width: 850px) 
+{
+    #about-mellowstruck h2 
+    {
+        font-size: 40px;
+    }
+    #about-mellowstruck p 
+    {
+        font-size: 20px;
+    }
+    #about-mellowstruck a 
+    {
+        font-size: 20px;
+        padding: 8px 18px;
+    }
+}
+@media (max-width: 750px) 
+{
+    #about-mellowstruck h2 
+    {
+        font-size: 34px;
+    }
+    #about-mellowstruck p 
+    {
+        font-size: 18px;
+    }
+    #about-mellowstruck a 
+    {
+        font-size: 18px;
+        padding: 7px 17px;
+    }
+}
+@media (max-width: 650px) 
+{
+    #about-mellowstruck h2 
+    {
+        font-size: 28px;
+    }
+    #about-mellowstruck p 
+    {
+        font-size: 16px;
+    }
+    #about-mellowstruck a 
+    {
+        font-size: 16px;
+        padding: 6px 16px;
+    }
+    #about-mellowstruck 
+    {
+        padding: 10vh;
+    }
+    .about-mellowstruck-card
+    {
+        padding: 4vh;
+        min-width: 42vh;
+    }
+}
+@media (max-width: 500px) 
+{
+    #about-mellowstruck
+    {
+        height: 210vh;
     }
 }
 
