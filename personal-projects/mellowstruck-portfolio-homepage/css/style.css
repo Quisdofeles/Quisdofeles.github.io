@@ -110,7 +110,7 @@ p
 {
     font-size: 100px;
     text-align: left;
-    color: rgb(255, 255, 255);
+    color: white;
     text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
 
@@ -615,7 +615,7 @@ p
     background-size: cover;
     background-position: bottom, center;
     display: flex;
-    justify-content: start;
+    justify-content: flex-start;
     align-items: center;
     text-align: center;
     flex-direction: column;
@@ -626,56 +626,94 @@ p
 {
     color: white;
     font-size: 60px;
-    margin: 7vh 0vh 0vh 0vh;
+    text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+    margin: 7vh 0vh 4.5vh 0vh;
 }
 .contact-page h3
 {
     color: white;
     font-size: 36px;
+    text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
 .contact-page p
 {
     color: white;
     font-size: 28px;
+    text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
-.contact-block
+.contact-block 
 {
     display: flex;
     flex-direction: row;
+    justify-content: center; 
+    width: 100%;
+    gap: 30vh;
 }
-#contact-instagram
+#contact-instagram,
+#contact-email 
 {
-    margin: 0vh 5vh 0vh 5vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
-#contact-indeed
-{
-    margin: 0vh 5vh 0vh 5vh;
-}
-#contact-email
-{
-    margin: 0vh 5vh 0vh 5vh;
-}
-#contact-instagram p
-{
-    color: white;
-    font-size: 20px;
-}
-#contact-indeed p
+#contact-instagram p,
+#contact-email p 
 {
     color: white;
     font-size: 20px;
 }
-#contact-email p
+.contact-icons 
 {
-    color: white;
-    font-size: 20px;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin: 2vh 0vh 0vh 0vh;
 }
+.contact-icons a 
+{
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.contact-icons img 
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease-in-out;
+    display: block;
+}
+.contact-icons .icon-white,
+.contact-icons .icon-green 
+{
+    width: 40px;
+    height: 40px;
+    transition: opacity 0.3s ease-in-out;
+    display: block;
+}
+.contact-icons .icon-green 
+{
+    opacity: 0;
+}
+.contact-icons:hover .icon-white 
+{
+    opacity: 0;
+}
+.contact-icons:hover .icon-green 
+{
+    opacity: 1;
+}
+
 /*Footer*/
 .footer
 {
     position: relative;
     width: 100%;
-     height: auto;
+    height: auto;
     aspect-ratio: 3814 / 812;
     background-image: url("../images/Footer-Wordmark.webp");
     background-size: contain;
@@ -1615,4 +1653,18 @@ p
         font-size: 18px;
         margin-top: 52vh;
     } 
+}
+/*Responsive Contact Page*/
+@media (max-width: 650px) 
+{
+    .contact-page h2 
+    {
+        font-size: 46px;
+    }
+    
+    .contact-block 
+    {
+        flex-direction: column;
+        gap: 5vh;
+    }
 }
