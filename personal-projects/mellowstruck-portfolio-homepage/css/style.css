@@ -341,7 +341,7 @@ p
 {
     color: white;
     font-size: 60px;
-    margin: 0vh 0vh 0vh 0vh;
+    margin: 0vh 0vh 5vh 0vh;
     justify-self: center;
 }
 .featured-works-card-left
@@ -611,43 +611,52 @@ p
 .contact-page
 {
     background-image: url("../images/Saturated-Back-Shots-Tall.webp");
-    height: 150vh;
+    height: 135vh;
     background-size: cover;
     background-position: bottom, center;
     display: flex;
-    justify-content: flex-start;
-    align-items: center;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
     text-align: center;
-    flex-direction: column;
     position: relative;
+    gap: 20vh;
     top: 0px;
 }
 .contact-page h2
 {
     color: white;
     font-size: 60px;
-    text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
-    margin: 7vh 0vh 4.5vh 0vh;
 }
 .contact-page h3
 {
     color: white;
     font-size: 36px;
-    text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
 .contact-page p
 {
     color: white;
     font-size: 28px;
-    text-shadow: 5px 5px 15px rgba(0,0,0,0.5);
 }
-.contact-block 
+.contact-block-left
 {
     display: flex;
-    flex-direction: row;
-    justify-content: center; 
+    flex-direction: column;
+    align-items: center;
+    margin: 6vh 0vh 0vh 0vh;
+}
+.contact-block-left h2
+{
+    text-align: center;
+}
+.social-blocks
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     width: 100%;
-    gap: 30vh;
+    gap: 4vh;
+    margin: 1.5vh 0vh 0vh 0vh;
 }
 #contact-instagram,
 #contact-email 
@@ -706,6 +715,37 @@ p
 .contact-icons:hover .icon-green 
 {
     opacity: 1;
+}
+.contact-block-right
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 6vh 0vh 0vh 0vh;
+}
+.contact-block-right h2
+{
+    text-align: center;
+}
+.contact-block-right a 
+{
+    text-decoration: none;
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 28px;
+    color: white;
+    border: 3px solid white;
+    border-radius: 75px;
+    padding: 10px 20px;
+    margin: 2.5vh 0vh 0vh 0vh;
+    z-index: 6666;
+    transition: all 0.3s ease;
+}
+.contact-block-right a:hover 
+{
+    border: 3px solid transparent;
+    background-color: white;
+    color: #222222;
 }
 
 /*Footer*/
@@ -1655,16 +1695,84 @@ p
     } 
 }
 /*Responsive Contact Page*/
-@media (max-width: 650px) 
+@media (max-width: 1000px) 
 {
-    .contact-page h2 
+    .contact-page
     {
-        font-size: 46px;
+        height: 105vh;
     }
-    
-    .contact-block 
+    .contact-page h2
     {
+        color: white;
+        font-size: 54px;
+    }
+    .contact-page h3
+    {
+        color: white;
+        font-size: 30px;
+    }
+    .contact-page p
+    {
+        color: white;
+        font-size: 22px;
+    }
+    .contact-block-right a 
+    {
+        font-size: 22px;
+        border-radius: 75px;
+        padding: 9px 18px;
+    }
+}
+@media (max-width: 900px) 
+{
+    .contact-page
+    {
+        height: 100vh;
+    }
+    .contact-page h2
+    {
+        color: white;
+        font-size: 48px;
+    }
+    .contact-page h3
+    {
+        color: white;
+        font-size: 24px;
+    }
+    .contact-page p
+    {
+        color: white;
+        font-size: 16px;
+    }
+    .contact-block-right a 
+    {
+        font-size: 16px;
+        border-radius: 75px;
+        padding: 8px 16px;
+    }
+}
+@media (max-width: 700px) 
+{
+    .contact-page
+    {
+        height: 110vh;
         flex-direction: column;
-        gap: 5vh;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: center;
+        gap: 10vh;
+    }
+    .contact-block-left
+    {
+        margin: 8vh 0vh 0vh 0vh;
+    }
+    .contact-block-right
+    {
+        margin: 5vh 0vh 0vh 0vh;
+    }
+    .contact-page h2
+    {
+        color: white;
+        font-size: 42px;
     }
 }
