@@ -593,7 +593,7 @@ p
 .tracks-description-dmt p
 {
     color: white;
-    font-size: 18px;
+    font-size: 16px;
     text-align: right;
 }
 .tracks-mediaplayer-dmt
@@ -660,21 +660,21 @@ p
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: flex-start;
     height: 100%;
 }
 .tracks-top-tags-dmt 
 {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 0.5rem;
 }
 .tracks-top-tags-dmt p 
 {
     background-color: #32B57C;
     color: #222222;
-    font-size: 18px;
+    font-size: 20px;
     text-align: center;
     border: 0px solid #32B57C;
     border-radius: 50px;
@@ -686,14 +686,14 @@ p
 {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 0.5rem;
 }
 .tracks-bottom-tags-dmt p 
 {
     background-color: transparent;
     color: #32B57C;
-    font-size: 18px;
+    font-size: 20px;
     text-align: center;
     border: 2px solid #32B57C;
     border-radius: 50px;
@@ -719,7 +719,7 @@ p
 .tracks-description-tmd p
 {
     color: white;
-    font-size: 18px;
+    font-size: 16px;
     text-align: left;
 }
 .tracks-mediaplayer-tmd
@@ -786,21 +786,21 @@ p
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: flex-end;
     height: 100%;
 }
 .tracks-top-tags-tmd 
 {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 0.5rem;
 }
 .tracks-top-tags-tmd p 
 {
     background-color: #32B57C;
     color: #222222;
-    font-size: 18px;
+    font-size: 20px;
     text-align: center;
     border: 0px solid #32B57C;
     border-radius: 50px;
@@ -812,14 +812,14 @@ p
 {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: flex-end;
     gap: 0.5rem;
 }
 .tracks-bottom-tags-tmd p 
 {
     background-color: transparent;
     color: #32B57C;
-    font-size: 18px;
+    font-size: 20px;
     text-align: center;
     border: 2px solid #32B57C;
     border-radius: 50px;
