@@ -848,6 +848,32 @@ p
     background-color: white;
     color: #222222;
 }
+.tracks-description-tmd a
+{
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 16px;
+    color: white;
+    z-index: 8888;
+    transition: all 0.3s ease;
+}
+.tracks-description-dmt a
+{
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 16px;
+    color: white;
+    z-index: 8888;
+    transition: all 0.3s ease;
+}
+.tracks-description-tmd a:hover
+{
+    color:#32B57C;
+}
+.tracks-description-dmt a:hover 
+{
+    color:#32B57C;
+}
 
 /*Contact Section*/
 .contact
@@ -2011,6 +2037,16 @@ p
     {
         font-size: 20px;
     }
+    #tracks-contact-button 
+    {
+        font-size: 24px;
+        padding: 9px 18px;
+    }
+    .tracks-description-tmd a,
+    .tracks-description-dmt a
+    {
+        font-size: 14px;
+    }
 }
 @media (max-width: 900px) 
 {
@@ -2187,6 +2223,16 @@ p
     {
         font-size: 16px;
     }
+    #tracks-contact-button 
+    {
+        font-size: 20px;
+        padding: 8px 16px;
+    }
+    .tracks-description-tmd a,
+    .tracks-description-dmt a
+    {
+        font-size: 14px;
+    }
 }
 @media (max-width: 500px)
 {
@@ -2218,6 +2264,16 @@ p
     {
         font-size: 15px;
     }
+    #tracks-contact-button 
+    {
+        font-size: 19px;
+        padding: 7.5px 15px;
+    }
+    .tracks-description-tmd a,
+    .tracks-description-dmt a
+    {
+        font-size: 13px;
+    }
 }
 @media (max-width: 400px)
 {
@@ -2248,6 +2304,16 @@ p
     .tracks-mediaplayer-tmd p 
     {
         font-size: 14px;
+    }
+    #tracks-contact-button 
+    {
+        font-size: 18px;
+        padding: 7px 14px;
+    }
+    .tracks-description-tmd a,
+    .tracks-description-dmt a
+    {
+        font-size: 12px;
     }
 }
 
