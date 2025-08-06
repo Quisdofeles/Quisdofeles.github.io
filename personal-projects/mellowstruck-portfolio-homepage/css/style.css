@@ -610,12 +610,12 @@ p
 .tracks-mediaplayer-dmt p
 {
     color: white;
-    font-size: 27px;
+    font-size: 24px;
 }
 .tracks-mediaplayer-dmt h3
 {
     color: white;
-    font-size: 54px;
+    font-size: 48px;
 }
 .mediaplayer-dmt
 {
@@ -736,12 +736,12 @@ p
 .tracks-mediaplayer-tmd p
 {
     color: white;
-    font-size: 27px;
+    font-size: 24px;
 }
 .tracks-mediaplayer-tmd h3
 {
     color: white;
-    font-size: 54px;
+    font-size: 48px;
 }
 .mediaplayer-tmd
 {
@@ -1595,7 +1595,7 @@ p
     }
 }
 
-/*Responsive Featured Works Section*/
+/*Responsive Featured Tracks Section*/
 @media (max-width: 1235px) 
 {
     .featured-works-card-left
@@ -1950,6 +1950,307 @@ p
     }
 }
 
+/*Responsive Tracks Page*/
+@media (max-width: 1300px) 
+{
+    .tracks-dmt,
+    .tracks-tmd 
+    {
+        flex-wrap: wrap;
+        justify-content: center;
+        height: 100vh;
+    }
+    .tracks-mediaplayer-dmt, 
+    .tracks-mediaplayer-tmd
+    {
+        min-width: 480px;
+        max-width: 480px;
+        height: 50%;
+    }
+    .tracks-tags-dmt, 
+    .tracks-tags-tmd
+    {
+        min-width: 220px;
+        max-width: 220px;
+        height: 50%;
+    }
+    .tracks-description-dmt, 
+    .tracks-description-tmd
+    {
+        flex: 0 0 100%;
+        order: 3;
+        max-width: 600px;
+        min-width: 600px;
+        height: auto;
+    }
+    .tracks-page h2
+    {
+        font-size: 54px;
+    }
+    .tracks-description-dmt p,
+    .tracks-description-tmd p 
+    {
+        font-size: 14px;
+        text-align: center;
+    }
+    .tracks-top-tags-dmt p,
+    .tracks-bottom-tags-dmt p,
+    .tracks-top-tags-tmd p,
+    .tracks-bottom-tags-tmd p 
+    {
+        font-size: 18px;
+        padding: 5px 12px;
+    }
+    .tracks-mediaplayer-dmt h3,
+    .tracks-mediaplayer-tmd h3 
+    {
+        font-size: 42px;
+    }
+    .tracks-mediaplayer-dmt p,
+    .tracks-mediaplayer-tmd p 
+    {
+        font-size: 20px;
+    }
+}
+@media (max-width: 900px) 
+{
+    .tracks-dmt,
+    .tracks-tmd 
+    {
+        flex-wrap: wrap;
+        flex-direction: row;
+        justify-content: center;
+        height: auto;
+    }
+    .tracks-mediaplayer-dmt,
+    .tracks-mediaplayer-tmd 
+    {
+        order: 1;
+        min-width: 90%;
+        max-width: 90%;
+        height: auto;
+    }
+    .tracks-tags-dmt,
+    .tracks-tags-tmd 
+    {
+        order: 2;
+        min-width: 90%;
+        max-width: 90%;
+        height: auto;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1vh;
+    }
+    .tracks-top-tags-dmt
+    {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1vh;
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+    .tracks-bottom-tags-dmt
+    {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1vh;
+        justify-content: flex-end;
+        align-items: flex-end;
+    }
+    .tracks-top-tags-tmd 
+    {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1vh;
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+    .tracks-bottom-tags-tmd 
+    {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1vh;
+        align-items: flex-end;
+        justify-content: flex-end;
+    }
+    .tracks-description-dmt,
+    .tracks-description-tmd 
+    {
+        order: 3;
+        flex: 0 0 100%;
+        max-width: 90%;
+        min-width: 90%;
+        height: auto;
+    }
+    .tracks-description-dmt p,
+    .tracks-description-tmd p,
+    .tracks-mediaplayer-dmt p,
+    .tracks-mediaplayer-tmd p,
+    .tracks-mediaplayer-dmt h3,
+    .tracks-mediaplayer-tmd h3
+    {
+        text-align: center;
+    }
+    .tracks-mediaplayer-dmt:before 
+    {
+        background: 
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05));
+    }
+    .tracks-mediaplayer-tmd:before 
+    {
+        background: 
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05));
+    }
+}
+@media (max-width: 700px) 
+{
+    .tracks-tags-dmt,
+    .tracks-tags-tmd 
+    {
+        order: 2;
+        display: flex;
+        flex-direction: column;
+        min-width: 90%;
+        max-width: 90%;
+        height: auto;
+        justify-content: center;
+        align-items: center;
+        gap: 1vh;
+    }
+    .tracks-top-tags-dmt,
+    .tracks-top-tags-tmd 
+    {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1vh;
+    }
+    .tracks-bottom-tags-dmt,
+    .tracks-bottom-tags-tmd 
+    {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1vh;
+    }
+    .tracks-description-dmt,
+    .tracks-description-tmd 
+    {
+        order: 3;
+        flex: 0 0 100%;
+        max-width: 90%;
+        min-width: 90%;
+        height: auto;
+    }
+    .mediaplayer-dmt,
+    .mediaplayer-tmd
+    {
+        align-self: center !important;
+        justify-self: center !important;
+        z-index: 7777;
+        width: 135px;
+        height: 60px;
+        overflow: hidden;
+        position: relative;
+        margin-top: 20px;
+    }
+    .tracks-page h2
+    {
+        font-size: 48px;
+    }
+    .tracks-description-dmt p,
+    .tracks-description-tmd p 
+    {
+        font-size: 14px;
+        text-align: center;
+    }
+    .tracks-top-tags-dmt p,
+    .tracks-bottom-tags-dmt p,
+    .tracks-top-tags-tmd p,
+    .tracks-bottom-tags-tmd p 
+    {
+        font-size: 14px;
+        padding: 4px 10px;
+    }
+    .tracks-mediaplayer-dmt h3,
+    .tracks-mediaplayer-tmd h3 
+    {
+        font-size: 36px;
+    }
+    .tracks-mediaplayer-dmt p,
+    .tracks-mediaplayer-tmd p 
+    {
+        font-size: 16px;
+    }
+}
+@media (max-width: 500px)
+{
+    .tracks-page h2
+    {
+        font-size: 42px;
+    }
+    .tracks-description-dmt p,
+    .tracks-description-tmd p 
+    {
+        font-size: 13px;
+        text-align: center;
+    }
+    .tracks-top-tags-dmt p,
+    .tracks-bottom-tags-dmt p,
+    .tracks-top-tags-tmd p,
+    .tracks-bottom-tags-tmd p 
+    {
+        font-size: 13px;
+        padding: 3.5px 9px;
+    }
+    .tracks-mediaplayer-dmt h3,
+    .tracks-mediaplayer-tmd h3 
+    {
+        font-size: 33px;
+    }
+    .tracks-mediaplayer-dmt p,
+    .tracks-mediaplayer-tmd p 
+    {
+        font-size: 15px;
+    }
+}
+@media (max-width: 400px)
+{
+    .tracks-page h2
+    {
+        font-size: 36px;
+    }
+    .tracks-description-dmt p,
+    .tracks-description-tmd p 
+    {
+        font-size: 12px;
+        text-align: center;
+    }
+    .tracks-top-tags-dmt p,
+    .tracks-bottom-tags-dmt p,
+    .tracks-top-tags-tmd p,
+    .tracks-bottom-tags-tmd p 
+    {
+        font-size: 12px;
+        padding: 3px 8px;
+    }
+    .tracks-mediaplayer-dmt h3,
+    .tracks-mediaplayer-tmd h3 
+    {
+        font-size: 30px;
+    }
+    .tracks-mediaplayer-dmt p,
+    .tracks-mediaplayer-tmd p 
+    {
+        font-size: 14px;
+    }
+}
+
 /*Responsive Contact Section*/
 @media (max-width: 750px) 
 {
@@ -2071,5 +2372,3 @@ p
         font-size: 42px;
     }
 }
-
-/*Responsive Tracks Page*/
