@@ -554,6 +554,301 @@ p
     color: #222222;
 }
 
+/*Tracks Page*/
+.tracks-page
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #222222;
+    position: relative;
+    top: 0px;
+    z-index: 1;
+    padding: 10vh;
+    gap: 10vh;
+}
+.tracks-page h2
+{
+    color: white;
+    font-size: 60px;
+    margin: 0vh 0vh 0vh 0vh;
+    justify-self: center;
+    text-align: center;
+}
+.tracks-dmt
+{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 2vw;
+    height: 50vh;
+}
+.tracks-description-dmt
+{
+    flex: 1.5;
+    height: 100%;
+    width: 100%;
+}
+.tracks-description-dmt p
+{
+    color: white;
+    font-size: 18px;
+    text-align: right;
+}
+.tracks-mediaplayer-dmt
+{
+    flex: 1;
+    border: 0px solid white;
+    border-radius: 25px;
+    width: auto;
+    height: 100%;
+    padding: 5vh;
+    position: relative;
+    top: 0px;
+}
+.tracks-mediaplayer-dmt p
+{
+    color: white;
+    font-size: 27px;
+}
+.tracks-mediaplayer-dmt h3
+{
+    color: white;
+    font-size: 54px;
+}
+.mediaplayer-dmt
+{
+    z-index: 7777;
+    width: 400px;
+    height: 105px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 20px;
+}
+.disco-embed 
+{
+    transform: translate(-10px, -95px);
+    pointer-events: auto;
+    border: none;
+}
+.tracks-mediaplayer-dmt:before 
+{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05));
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+}
+.tracks-tags-dmt
+{
+    flex: 0.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 100%;
+}
+.tracks-top-tags-dmt 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+.tracks-top-tags-dmt p 
+{
+    background-color: #32B57C;
+    color: #222222;
+    font-size: 18px;
+    text-align: center;
+    border: 0px solid #32B57C;
+    border-radius: 50px;
+    padding: 6px 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+.tracks-bottom-tags-dmt 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+.tracks-bottom-tags-dmt p 
+{
+    background-color: transparent;
+    color: #32B57C;
+    font-size: 18px;
+    text-align: center;
+    border: 2px solid #32B57C;
+    border-radius: 50px;
+    padding: 6px 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+.tracks-tmd
+{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 2vw;
+    height: 50vh;
+}
+.tracks-description-tmd
+{
+    flex: 1.5;
+    height: 100%;
+    width: 100%;
+}
+.tracks-description-tmd p
+{
+    color: white;
+    font-size: 18px;
+    text-align: left;
+}
+.tracks-mediaplayer-tmd
+{
+    flex: 1;
+    border: 0px solid white;
+    border-radius: 25px;
+    width: auto;
+    height: 100%;
+    padding: 5vh;
+    position: relative;
+    top: 0px;
+}
+.tracks-mediaplayer-tmd p
+{
+    color: white;
+    font-size: 27px;
+}
+.tracks-mediaplayer-tmd h3
+{
+    color: white;
+    font-size: 54px;
+}
+.mediaplayer-tmd
+{
+    z-index: 7777;
+    width: 400px;
+    height: 105px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 20px;
+}
+.disco-embed 
+{
+    transform: translate(-10px, -95px);
+    pointer-events: auto;
+    border: none;
+}
+.tracks-mediaplayer-tmd:before 
+{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: 
+        linear-gradient(to left, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.05));
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+              mask-composite: exclude;
+    mask:
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+}
+.tracks-tags-tmd
+{
+    flex: 0.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 100%;
+}
+.tracks-top-tags-tmd 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.tracks-top-tags-tmd p 
+{
+    background-color: #32B57C;
+    color: #222222;
+    font-size: 18px;
+    text-align: center;
+    border: 0px solid #32B57C;
+    border-radius: 50px;
+    padding: 6px 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+.tracks-bottom-tags-tmd 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.tracks-bottom-tags-tmd p 
+{
+    background-color: transparent;
+    color: #32B57C;
+    font-size: 18px;
+    text-align: center;
+    border: 2px solid #32B57C;
+    border-radius: 50px;
+    padding: 6px 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+#tracks-contact-button 
+{
+    align-self: center;
+    width: fit-content;
+    font-family: Clash-Grotesk-Medium, sans-serif;
+    font-weight: 100;
+    font-size: 27px;
+    border: 3px solid white;
+    border-radius: 75px;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    z-index: 8888;
+    transition: all 0.3s ease;
+}
+#tracks-contact-button:hover 
+{
+    border: 3px solid transparent;
+    background-color: white;
+    color: #222222;
+}
+
 /*Contact Section*/
 .contact
 {
@@ -1776,3 +2071,5 @@ p
         font-size: 42px;
     }
 }
+
+/*Responsive Tracks Page*/
