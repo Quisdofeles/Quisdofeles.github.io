@@ -2372,9 +2372,14 @@ p
 }
 @media (max-width: 1190px) 
 {
+    .social-cards
+    {
+        gap: 15vw;
+        margin: 25vh 0vh 0vh 0vh;
+    }
     #link-card
     {
-        margin: 20vh 0vh 0vh 0vh;
+        margin: 25vh 0vh 0vh 0vh;
     }
 }
 @media (max-width: 900px) 
@@ -2391,7 +2396,6 @@ p
 }
 @media (max-width: 750px) 
 {
-    /*Contact Page*/
     .contact-page
     {
         background-image: url("../images/Saturated-Back-Shots-Tall.webp");
@@ -2443,8 +2447,8 @@ p
         justify-content: center;
         align-items: center;
         text-align: center;
-        gap: 10vw;
-        margin: 17vh 0vh 0vh 0vh;
+        gap: 12vw;
+        margin: 20vh 0vh 0vh 0vh;
     }
     #email-card 
     {
