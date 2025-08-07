@@ -2375,11 +2375,11 @@ p
     .social-cards
     {
         gap: 15vw;
-        margin: 25vh 0vh 0vh 0vh;
+        margin: 28vh 0vh 0vh 0vh;
     }
     #link-card
     {
-        margin: 25vh 0vh 0vh 0vh;
+        margin: 22vh 0vh 0vh 0vh;
     }
 }
 @media (max-width: 900px) 
@@ -2448,7 +2448,7 @@ p
         align-items: center;
         text-align: center;
         gap: 12vw;
-        margin: 20vh 0vh 0vh 0vh;
+        margin: 23vh 0vh 0vh 0vh;
     }
     #email-card 
     {
@@ -2474,7 +2474,7 @@ p
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin: 15vh 0vh 0vh 0vh;
+        margin: 18vh 0vh 0vh 0vh;
     }
     #contact-button
     {
