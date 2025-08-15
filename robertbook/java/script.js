@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () =>
     const intro = document.getElementById('intro-animation');
     const logoAnim = document.getElementById('logo-animation');
     logoAnim.playbackRate = 1.5;
-    const headerLogo = document.querySelector('.wordmark img');
+    const headerLogo = document.querySelector('.navbar-logo img');
 
     logoAnim.addEventListener('ended', () => 
     {
