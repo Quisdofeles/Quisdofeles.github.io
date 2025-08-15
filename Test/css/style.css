@@ -1,24 +1,3 @@
-* 
-{
-    box-sizing: border-box;
-}
-body 
-{
-    margin: 0px;
-    font-family: sans-serif;
-}
-
-/*Test*/
-.iframe-cropper 
-{
-  width: 400px;
-  height: 105px;
-  overflow: hidden;
-  position: relative;
-}
-.cropped-iframe 
-{
-  transform: translate(-10px, -95px);
-  pointer-events: auto;
-  border: none;
+*{
+  
 }
