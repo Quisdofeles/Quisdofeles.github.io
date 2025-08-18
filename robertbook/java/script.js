@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () =>
         document.body.appendChild(logoAnim);
 
         const headerRect = headerLogo.getBoundingClientRect();
-        const videoRect = logoAnim.getBoundingClientRect();
         const scrollX = window.scrollX;
         const scrollY = window.scrollY;
 
@@ -30,47 +29,106 @@ document.addEventListener('DOMContentLoaded', () =>
         }, 1000);
     });
 
-    // ---Hero Slider Section---
-    const slider1 = document.getElementById("slider1");
-    const slider2 = document.getElementById("slider2");
     const lofi = document.querySelector(".layer-lofi");
     const mifi = document.querySelector(".layer-mifi");
     const hifi = document.querySelector(".layer-hifi");
+    const hero = document.querySelector(".hero-slider");
 
-    let lastVal1 = parseInt(slider1.value, 10);
-    let lastVal2 = parseInt(slider2.value, 10);
+    const handle1 = document.getElementById("handle1");
+    const handle2 = document.getElementById("handle2");
 
-    function updateClips() 
-    {
-        let val1 = parseInt(slider1.value, 10);
-        let val2 = parseInt(slider2.value, 10);
+    let dragging = null;
 
-        const delta1 = val1 - lastVal1;
-        const delta2 = val2 - lastVal2;
+    // Initial positions (percent)
+    let pos1 = 4.5;
+    let pos2 = 9;
 
-        if (val1 >= val2) 
-        {
-            val2 += delta1;
-            if (val2 > 100) val2 = 100;
-            slider2.value = val2;
-        }
+    function updateLayers() {
+        // Prevent overlap
+        if (pos1 > pos2) pos1 = pos2;
+        if (pos2 < pos1) pos2 = pos1;
 
-        if (val2 <= val1) 
-        {
-            val1 += delta2;
-            if (val1 < 0) val1 = 0;
-            slider1.value = val1;
-        }
+        // Clip layers horizontally
+        lofi.style.clipPath = `inset(0 ${100 - pos1}% 0 0)`;
+        mifi.style.clipPath = `inset(0 ${100 - pos2}% 0 ${pos1}%)`;
+        hifi.style.clipPath = `inset(0 0 0 ${pos2}%)`;
 
-        lofi.style.clipPath = `inset(0 ${100 - val1}% 0 0)`;
-        mifi.style.clipPath = `inset(0 ${100 - val2}% 0 ${val1}%)`;
-        hifi.style.clipPath = `inset(0 0 0 ${val2}%)`;
-
-        lastVal1 = parseInt(slider1.value, 10);
-        lastVal2 = parseInt(slider2.value, 10);
+        // Position handles horizontally
+        handle1.style.left = `${pos1}%`;
+        handle2.style.left = `${pos2}%`;
     }
 
-    slider1.addEventListener("input", updateClips);
-    slider2.addEventListener("input", updateClips);
-    updateClips();
+    function startDrag(e) {
+        dragging = e.target;
+    }
+
+    function stopDrag() {
+        dragging = null;
+    }
+
+    function drag(e) {
+        if (!dragging) return;
+        const rect = hero.getBoundingClientRect();
+        const percent = ((e.clientX - rect.left) / rect.width) * 100;
+
+        if (dragging === handle1) pos1 = Math.max(0, Math.min(percent, pos2));
+        if (dragging === handle2) pos2 = Math.min(100, Math.max(percent, pos1));
+
+        updateLayers();
+    }
+
+    // Mouse events
+    handle1.addEventListener('mousedown', startDrag);
+    handle2.addEventListener('mousedown', startDrag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('mousemove', drag);
+
+    // Touch events for mobile
+    handle1.addEventListener('touchstart', startDrag);
+    handle2.addEventListener('touchstart', startDrag);
+    document.addEventListener('touchend', stopDrag);
+    document.addEventListener('touchmove', (e) => {
+        drag(e.touches[0]);
+    });
+
+    // Initial render
+    updateLayers();
+
+    // --- NEW: Set hero height and handles vertical positions relative to hero ---
+    const images = hero.querySelectorAll("img");
+    let maxHeight = 0;
+    let loaded = 0;
+
+    function positionHandles() {
+        const heroHeight = hero.offsetHeight;
+        handle1.style.top = `${heroHeight * 0.6 - handle1.offsetHeight / 2}px`; // 60%
+        handle2.style.top = `${heroHeight * 0.7 - handle2.offsetHeight / 2}px`; // 70%
+    }
+
+    images.forEach(img => {
+        img.onload = () => {
+            maxHeight = Math.max(maxHeight, img.offsetHeight);
+            loaded++;
+            if (loaded === images.length) {
+                hero.style.height = maxHeight + "px";
+                positionHandles(); // position handles after hero height is known
+            }
+        };
+        if (img.complete) img.onload();
+    });
+
+    // Adjust handles and hero height on window resize
+    window.addEventListener('resize', () => {
+        maxHeight = 0;
+        images.forEach(img => {
+            maxHeight = Math.max(maxHeight, img.offsetHeight);
+        });
+        hero.style.height = maxHeight + "px";
+        positionHandles();
+        updateLayers();
+    });
+
+    // Prevent default dragging behavior
+    handle1.ondragstart = () => false;
+    handle2.ondragstart = () => false;
 });
