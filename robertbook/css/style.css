@@ -170,30 +170,28 @@ p
     color: #BA5052;
 }
 
-/* Hero container */
-.hero-slider {
+/*Hero*/
+.hero-slider 
+{
     position: relative;
     width: 100%;
     overflow: hidden;
 }
-
-/* Layers stacked absolutely */
-.hero-slider .layer {
+.hero-slider .layer 
+{
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
 }
-
-/* Images keep aspect ratio and fill width */
-.hero-slider .layer img {
+.hero-slider .layer img 
+{
     width: 100%;
     height: auto;
     display: block;
 }
-
-/* Custom draggable handles */
-.hero-slider .handle {
+.hero-slider .handle 
+{
     position: absolute;
     width: 40px;
     height: 40px;
@@ -204,19 +202,17 @@ p
     transform: translate(-50%, -50%);
     transition: transform 0.1s ease-in-out;
 }
-
-/* Hover effect */
-.hero-slider .handle:hover {
+.hero-slider .handle:hover 
+{
     transform: translate(-50%, -50%) scale(1.2);
 }
-
-/* Prevent selection on hero and layers */
 .hero-slider,
 .hero-slider .layer,
 .hero-slider img,
-.hero-slider .handle {
+.hero-slider .handle 
+{
     user-select: none;
-    -webkit-user-drag: none; /* prevents image dragging in WebKit */
+    -webkit-user-drag: none;
     -moz-user-select: none;
     -ms-user-select: none;
     -khtml-user-select: none;
