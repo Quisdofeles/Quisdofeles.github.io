@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () =>
     let dragging = null;
 
     let pos1 = 4;
-    let pos2 = 8.5;
+    let pos2 = 8;
 
     const buffer = 2;
 

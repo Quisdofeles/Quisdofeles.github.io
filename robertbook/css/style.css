@@ -97,7 +97,7 @@ p
 }
 .navbar-logo
 {
-    margin-left: 6rem;
+    margin-left: 1.5rem;
     margin-right: auto;
 }
 .navbar-logo img
@@ -114,7 +114,7 @@ p
     display: flex;
     flex: row;
     gap: 3rem;
-    margin: 0rem 6rem 0rem 0rem;
+    margin: 0rem 1.5rem 0rem 0rem;
     align-items: center;
 }
 .navbar-links a
