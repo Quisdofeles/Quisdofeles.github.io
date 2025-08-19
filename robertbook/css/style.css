@@ -1,12 +1,7 @@
 @font-face
 {
-    font-family: Basement-Grotesque-Black;
-    src: url(../fonts/BasementGrotesque-Black_v1.202.otf);
-}
-@font-face
-{
     font-family: D-DIN-Bold;
-    src: url(../fonts/D-DINCondensed-Bold.otf);
+    src: url(../fonts/D-DIN-Bold.otf);
 }
 * 
 {
@@ -28,17 +23,17 @@ html, body
 /*Font Styling*/
 h1
 {
-    font-family: Basement-Grotesque-Black, sans-serif;
+    font-family: D-DIN-Bold, sans-serif;
     font-weight: 100;
 }
 h2
 {
-    font-family: Basement-Grotesque-Black, sans-serif;
+    font-family: D-DIN-Bold, sans-serif;
     font-weight: 100;
 }
 h3
 {
-    font-family: Basement-Grotesque-Black, sans-serif;
+    font-family: D-DIN-Bold, sans-serif;
     font-weight: 100;
 }
 a
@@ -97,7 +92,7 @@ p
 }
 .navbar-logo
 {
-    margin-left: 1.5rem;
+    margin-left: 1.2rem;
     margin-right: auto;
 }
 .navbar-logo img
@@ -114,28 +109,28 @@ p
     display: flex;
     flex: row;
     gap: 3rem;
-    margin: 0rem 1.5rem 0rem 0rem;
+    margin: 0rem 1.2rem 0rem 0rem;
     align-items: center;
 }
 .navbar-links a
 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     text-decoration: none;
     color: #F1E8E3;
     transition: height 0.1s ease-in-out;
 }
 .navbar-links a:hover
 {
-    text-decoration: underline;
+    color: #BA5052;
 }
 
 #contact-cta {
     position: relative;
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     color: #F1E8E3;
     text-decoration: none;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-family: D-DIN-Bold, sans-serif;
     font-weight: 100;
 }
