@@ -1,0 +1,280 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap');
+@import url("https://use.typekit.net/uwp5sio.css");
+* 
+{
+    box-sizing: border-box;
+}
+body 
+{
+    margin: 0px;
+    font-family: sans-serif;
+}
+
+/*Font Styling*/
+h1
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+h2
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+h3
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+h4
+{
+    font-family: "Black Han Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}
+a
+{
+    font-family: "bahnschrift-condensed", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+p
+{
+    font-family: "bahnschrift-condensed", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+}
+
+/*Header*/
+#header
+{
+    position: sticky;
+    top: 0px;
+    z-index: 1000;
+}
+#navbar
+{
+    background-color: white;
+    display: flex;
+    align-items: center;
+    max-height: 12vh;
+}
+#navbar a
+{
+    font-size: 36px;
+    text-decoration: none;
+    color: black;
+    padding: 20px;
+    margin-right: 3vh;
+}
+#navbar a:hover
+{
+    color: #EF4373;
+}
+#navbar #navbar-logo
+{
+    margin-top: 1.2vh;
+    margin-left: 10vh;
+    margin-right: auto;
+    padding: 0;
+}
+#navbar #navbar-logo img
+{
+    max-height: 110px;
+}
+
+/*Hero Section*/
+#hero 
+{
+    background-image: url("../images/mexican_food_1.png");
+    height: 88vh;
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center;
+    position: relative;
+}
+#logo-white
+{
+    width: 35vh;
+    display: flex;
+    position: relative;
+    top: 7vh;
+    margin: 0vh 2vh 2vh 2vh;
+
+}
+#hero h2 
+{
+    font-size: 7.5vh;
+    color: black;
+    text-align: center;
+    padding: 3vh 2vh 2vh 2vh;
+    background-color: white;
+    max-width: 110vh;
+    border: solid white 0px;
+    border-radius: 1vh;
+    margin: 0vh 2vh 0vh 2vh;
+}
+#red-hero-text
+{
+    color: #EF4373;
+}
+#hero a
+{
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    font-size: 36px;
+    color: white;
+    text-decoration: none;
+    background-color: #EF4373;
+    border: white 3px solid;
+    border-radius: 20vh;
+    width: 50vh;
+    height: 10vh;
+    margin-top: 2vh;
+    margin-bottom: 50px;
+}
+#hero a:hover
+{
+    text-align: center;
+    justify-content: center;
+    font-size: 36px;
+    color: #EF4373;
+    text-decoration: none;
+    background-color: white;
+    width: 50vh;
+    height: 10vh;
+}
+
+/*Footer*/
+.footer
+{
+    background-color: #EF4373;
+    color: white;
+    text-align: center;
+    padding: 1.5vh;
+    font-size: 2.5vh;
+}
+
+/*Featured Dish*/
+#featured-dish-card
+{
+    display: flex;
+    justify-self: center;
+    margin: 2vh 0vh 2vh 0vh;
+    border: solid #EF4373 .8vh;
+    border-radius: 1vh;
+    max-width: 100vh;
+    min-width: 50vh;
+}
+#dish-img
+{
+    width: 50vh;
+}
+#dish-description
+{
+    padding: 2vh;
+    width: 50vh;
+    text-align: left;
+}
+
+/*Menu*/
+#menu
+{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+#entrees
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#apetizers
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#sides
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#desserts
+{
+    background-color: #C1DFA6;
+    padding: 5vh;
+    margin: 2vh 2vh 2vh 2vh;
+    border: white solid 0vh;
+    border-radius: 1vh;
+    width: 75vh;
+}
+#red-menu-text
+{
+    color: #EF4373;
+}
+
+/*Responsive*/
+@media screen and (max-width: 775px)
+{
+    #navbar
+    {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-height: 20vh;
+        width: 100%;
+    }
+    #navbar #navbar-logo
+    {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #links
+    {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        align-content: center;
+        text-align: center;
+        position: relative;
+        bottom: 45px;
+    }
+    #navbar a
+    {
+        margin: 0;
+    }
+}
+
+@media screen and (max-width: 900px)
+{
+    #featured-dish-card
+    {
+        display: flex;
+        flex-direction: column;
+    }
+}
