@@ -54,19 +54,19 @@ h1
 }
 h2
 {
-    font-family: Boldonese-Regular, sans-serif;
+    font-family: Barlow-Black, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 h3
 {
-    font-family: Boldonese-Regular, sans-serif;
+    font-family: Barlow-ExtraBold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 h4
 {
-    font-family: Boldonese-Regular, sans-serif;
+    font-family: Barlow-Bold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
@@ -86,6 +86,8 @@ p
 /*Header*/
 #header
 {
+    height: 80px;
+    background-color: white;
     position: sticky;
     top: 0px;
     z-index: 1000;
@@ -94,17 +96,43 @@ p
 /*Hero Section*/
 #hero 
 {
-    background-image: url("../images/mexican_food_1.png");
-    height: 90vh;
+    background-image: url("../images/Hero.webp");
+    height: 80vh;
     background-size: cover;
-    background-position: center center;
+    background-position: center;
     display: flex;
-    flex-direction: column; 
     justify-content: center; 
     align-items: center;
     position: relative;
 }
-
+.hero-box 
+{
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(7.5px);
+  border-radius: 24px;
+  padding: 50px 50px;
+  text-align: center;
+}
+.hero-text
+{
+    text-align: center;
+    color: #E63946;
+}
+.hero-text h1 
+{
+    font-size: 4rem;
+    line-height: 1;
+}
+.hero-text h4 
+{
+    font-size: 2.5rem;
+    line-height: 0.5;
+}
+.hero-text p 
+{
+    font-size: 1.5rem;
+    line-height: 0.4;
+}
 
 /*Responsive*/
 @media screen and (max-width: 000px)
