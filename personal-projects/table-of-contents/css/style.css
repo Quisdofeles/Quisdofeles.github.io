@@ -87,7 +87,7 @@ p
 /*Header*/
 #header
 {
-    height: 80px;
+    height: 70px;
     background-color: #2B323F;
     position: sticky;
     top: 0px;
@@ -117,7 +117,7 @@ p
 {
     color: #2B323F;
     position: absolute;
-    top: 50%;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
