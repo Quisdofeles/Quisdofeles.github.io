@@ -1,38 +1,38 @@
 
 @font-face
 {
-    font-family: Boldonese-Regular;
-    src: url(../fonts/Boldonse-Regular.ttf);
+    font-family: Tonnelier-Heavy;
+    src: url(../fonts/Tonnelier-Heavy.ttf);
 }
 @font-face
 {
-    font-family: Barlow-Regular;
-    src: url(../fonts/Barlow-Regular.ttf);
+    font-family: Tonnelier-Bold;
+    src: url(../fonts/Tonnelier-Bold.ttf);
 }
 @font-face
 {
-    font-family: Barlow-Medium;
-    src: url(../fonts/Barlow-Medium.ttf);
+    font-family: BarTonnelierlow-SemiBold;
+    src: url(../fonts/Tonnelier-Semibold.ttf);
 }
 @font-face
 {
-    font-family: Barlow-SemiBold;
-    src: url(../fonts/Barlow-SemiBold.ttf);
+    font-family: Tonnelier-Medium;
+    src: url(../fonts/Tonnelier-Medium.ttf);
 }
 @font-face
 {
-    font-family: Barlow-Bold;
-    src: url(../fonts/Barlow-Bold.ttf);
+    font-family: Tonnelier-Regular;
+    src: url(../fonts/Tonnelier-Regular.ttf);
 }
 @font-face
 {
-    font-family: Barlow-ExtraBold;
-    src: url(../fonts/Barlow-ExtraBold.ttf);
+    font-family: BarTonnelierlow-Thin;
+    src: url(../fonts/Tonnelier-Thin.ttf);
 }
 @font-face
 {
-    font-family: Barlow-Black;
-    src: url(../fonts/Barlow-Black.ttf);
+    font-family: BarTonnelierlow-Light;
+    src: url(../fonts/Tonnelier-Light.ttf);
 }
 
 * 
@@ -43,102 +43,92 @@ body
 {
     margin: 0px;
     font-family: sans-serif;
-    background-color: #FFFAF6;
+    background-color: #D8D2C6;
 }
 
 /*Font Styling*/
 h1
 {
-    font-family: Boldonese-Regular, sans-serif;
+    font-family: Tonnelier-Bold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 h2
 {
-    font-family: Barlow-Black, sans-serif;
+    font-family: Tonnelier-Bold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 h3
 {
-    font-family: Barlow-ExtraBold, sans-serif;
+    font-family: Tonnelier-SemiBold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 h4
 {
-    font-family: Barlow-Bold, sans-serif;
+    font-family: Tonnelier-SemiBold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 a
 {
-    font-family: Barlow-Bold, sans-serif;
+    font-family: Tonnelier-SemiBold, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 p
 {
-    font-family: Barlow-Medium, sans-serif;
+    font-family: Tonnelier-Regular, sans-serif;
     font-weight: 400;
     font-style: normal;
 }
 
 /*Header*/
-#header
+#header-thick
 {
-    height: 70px;
-    background-color: #2B323F;
+    height: 300px;
+    background-color: whitesmoke;
     position: sticky;
     top: 0px;
     z-index: 1000;
+
+    border: 3px solid grey;
+}
+#header-narrow
+{
+    height: 300px;
+    background-color: whitesmoke;
+    position: sticky;
+    top: 0px;
+    z-index: 1000;
+
+    border: 3px solid grey;
+}
+.header-text 
+{
+    color: #2F2F30;
+    text-align: center;
+}
+.header-text h1 
+{
+    font-size: 3.5rem;
+    line-height: 0.5;
+}
+.header-text h4 
+{
+    font-size: 1.5rem;
+    line-height: 0.2;
+}
+.header-text p 
+{
+    font-size: 1rem;
+    line-height: 0.4;
 }
 
 /*Hero Section*/
 #hero 
 {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-#hero-img img 
-{
-    width: 100%;
-    height: auto;
-    display: block;
-    max-height: 100%;
-    object-fit: contain; 
-    object-position: center;
-}
-.hero-text 
-{
-    color: #2B323F;
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-}
-
-.hero-text h1 
-{
-    font-size: 4rem;
-    line-height: 1;
-}
-
-.hero-text h4 
-{
-    font-size: 2.5rem;
-    line-height: 0.5;
-}
-
-.hero-text p 
-{
-    font-size: 1.5rem;
-    line-height: 0.4;
 }
 
 /*Responsive*/
