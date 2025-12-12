@@ -53,11 +53,117 @@ p
     font-style: normal;
 }
 
-/*Header*/
+/*Navigation*/
+#navigation
+{
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background-color: #ffffff;
+    z-index: 1000;
+}
+#header
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1rem 1rem 1rem;
+    border-bottom: 1px solid #000000;
+}
+#robert-book-design-logo img
+{
+    height: 50px;
+    width: auto;
+}
+#header-title 
+{
+    
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    text-decoration: none;
+    color: #000000;
+    font-size: 2rem;
+}
+#nav-links 
+{
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: #000000;
+    font-size: 1.2rem;
+}
+#nav-links li 
+{
+    margin-left: 1rem;
+}
+#nav-links a 
+{
+    text-decoration: none;
+    color: #000;
+    font-size: 1.2rem;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+#nav-links a:hover 
+{
+    font-size: 1.3rem;
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
+}
+#breadcrumb-nav 
+{
+    padding: 1rem 1rem 1rem 1rem;
+    background-color: #ffffff;
+    border-bottom: 1px solid #000000;
+}
+#breadcrumb-nav a 
+{
+    text-decoration: none;
+    color: #000;
+    font-size: 1.2rem;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+#breadcrumb-nav a:hover 
+{
+    font-size: 1.3rem;
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
+}
 
-
-/*Hero Section*/
-
+/*For Testing*/
+#mellowstruck-page 
+{
+    min-height: 2000px;
+    background-color: yellow;
+    padding: 2rem;
+}
+#mellowstruck-objective 
+{
+    height: 500px;
+    background-color: orange;
+    margin-bottom: 2rem;
+}
+#mellowstruck-ideation 
+{
+    height: 500px;
+    background-color: orangered;
+    margin-bottom: 2rem;
+}
+#mellowstruck-solution 
+{
+    height: 500px;
+    background-color: red;
+    margin-bottom: 2rem;
+}
+#mellowstruck-mockups 
+{
+    height: 500px;
+    background-color: darkred;
+}
 
 /*Responsive*/
 @media screen and (max-width: 000px)
