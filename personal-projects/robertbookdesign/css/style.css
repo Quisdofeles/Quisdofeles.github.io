@@ -1,12 +1,12 @@
 @font-face
 {
     font-family: D-Din;
-    src: url(../fonts/Tonnelier-Heavy.ttf);
+    src: url(../fonts/D-DIN.otf);
 }
 @font-face
 {
     font-family: D-Din-Bold;
-    src: url(../fonts/Tonnelier-Bold.ttf);
+    src: url(../fonts/D-DIN-Bold.otf);
 }
 * 
 {
