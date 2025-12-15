@@ -72,7 +72,7 @@ p
 }
 #robert-book-design-logo img
 {
-    height: 50px;
+    height: 40px;
     width: auto;
 }
 #header-title 
@@ -134,35 +134,80 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
-/*For Testing*/
-#mellowstruck-page 
+/* Mellowstruck Portfolio Website Page */
+.project-objective 
 {
-    min-height: 2000px;
-    background-color: yellow;
-    padding: 2rem;
+    display: flex;
+    gap: 3rem;
+    padding: 3.75rem;
 }
-#mellowstruck-objective 
+.project-ideation 
 {
-    height: 500px;
-    background-color: orange;
-    margin-bottom: 2rem;
+    display: flex;
+    gap: 3rem;
+    padding: 3.75rem;
 }
-#mellowstruck-ideation 
+.project-solution 
 {
-    height: 500px;
-    background-color: orangered;
-    margin-bottom: 2rem;
+    display: flex;
+    gap: 3rem;
+    padding: 3.75rem;
 }
-#mellowstruck-solution 
+.image-block 
 {
-    height: 500px;
-    background-color: red;
-    margin-bottom: 2rem;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
 }
-#mellowstruck-mockups 
+.image-block img 
 {
-    height: 500px;
-    background-color: darkred;
+    width: 80%;
+    height: auto;
+    display: block;
+}
+.text-block 
+{
+    flex: 0.5;
+    display: flex;
+    gap: 1rem;
+}
+.text-block-titles 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.text-block-titles h2 
+{
+    font-size: 4.5rem;
+    margin: 0 0 0 0;
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
+}
+.text-block-titles h1 
+{
+    color: #000000;
+    -webkit-text-stroke: 1px #000000;
+    -moz-text-stroke: 1px #000000;
+    font-size: 5rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    margin: 0 0 0 0;
+}
+.text-block-copy 
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 350px;
+}
+.text-block-copy p 
+{
+    text-decoration: none;
+    color: #000;
+    font-size: 1.2rem;
 }
 
 /*Responsive*/
