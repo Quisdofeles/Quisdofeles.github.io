@@ -84,6 +84,8 @@ p
     margin: 0;
     text-decoration: none;
     color: #000000;
+    -webkit-text-stroke: 1px #000000;
+    -moz-text-stroke: 1px #000000;
     font-size: 2rem;
 }
 #nav-links 
@@ -97,18 +99,17 @@ p
 }
 #nav-links li 
 {
-    margin-left: 1rem;
+    margin-left: 0.5rem;
 }
 #nav-links a 
 {
     text-decoration: none;
     color: #000;
     font-size: 1.2rem;
-    transition: color 0.15s ease, transform 0.15s ease;
 }
 #nav-links a:hover 
 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     color: transparent;
     -webkit-text-stroke: 1px #DD1212;
     -moz-text-stroke: 1px #DD1212;
@@ -124,11 +125,10 @@ p
     text-decoration: none;
     color: #000;
     font-size: 1.2rem;
-    transition: color 0.15s ease, transform 0.15s ease;
 }
 #breadcrumb-nav a:hover 
 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
     color: transparent;
     -webkit-text-stroke: 1px #DD1212;
     -moz-text-stroke: 1px #DD1212;
