@@ -134,24 +134,45 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
-/* Mellowstruck Portfolio Website Page */
+/*Project Pages*/
+.project-hero 
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.project-hero-title 
+{
+    color: #000000;
+    -webkit-text-stroke: 1px #000000;
+    -moz-text-stroke: 1px #000000;
+    font-size: 5rem;
+    margin: 3rem 0rem 0rem 0rem;
+}
+.project-hero-image 
+{
+    width: 80vw;
+    height: auto;
+    margin: 0rem 0rem 0rem 0rem;
+}
 .project-objective 
 {
     display: flex;
     gap: 3rem;
-    padding: 3.75rem;
+    margin: 0rem 5rem 10rem 5rem;
 }
 .project-ideation 
 {
     display: flex;
     gap: 3rem;
-    padding: 3.75rem;
+    margin: 10rem 5rem 10rem 5rem;
 }
 .project-solution 
 {
     display: flex;
     gap: 3rem;
-    padding: 3.75rem;
+    margin: 10rem 5rem 10rem 5rem;
 }
 .image-block 
 {
@@ -180,10 +201,10 @@ p
 .text-block-titles h2 
 {
     font-size: 4.5rem;
-    margin: 0 0 0 0;
+    margin: 0rem 0rem 0rem 0rem;
     color: transparent;
-    -webkit-text-stroke: 1px #DD1212;
-    -moz-text-stroke: 1px #DD1212;
+    -webkit-text-stroke: 2px #DD1212;
+    -moz-text-stroke: 2px #DD1212;
 }
 .text-block-titles h1 
 {
@@ -194,7 +215,7 @@ p
     writing-mode: vertical-rl;
     text-orientation: mixed;
     transform: rotate(180deg);
-    margin: 0 0 0 0;
+    margin: 0rem 0rem 0rem 0rem;
 }
 .text-block-copy 
 {
