@@ -68,7 +68,7 @@ p
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1rem 1rem 1rem;
-    border-bottom: 1px solid #000000;
+    border-bottom: 2px solid #000000;
 }
 #robert-book-design-logo img
 {
@@ -109,7 +109,6 @@ p
 }
 #nav-links a:hover 
 {
-    font-size: 1.25rem;
     color: transparent;
     -webkit-text-stroke: 1px #DD1212;
     -moz-text-stroke: 1px #DD1212;
@@ -118,7 +117,7 @@ p
 {
     padding: 1rem 1rem 1rem 1rem;
     background-color: #ffffff;
-    border-bottom: 1px solid #000000;
+    border-bottom: 2px solid #000000;
 }
 #breadcrumb-nav a 
 {
@@ -128,10 +127,54 @@ p
 }
 #breadcrumb-nav a:hover 
 {
-    font-size: 1.25rem;
     color: transparent;
     -webkit-text-stroke: 1px #DD1212;
     -moz-text-stroke: 1px #DD1212;
+}
+
+/*Project Title*/
+.project-title
+{
+    position: fixed;
+    z-index: 1000;
+    width: 100%;
+    height: 86px;
+    background-color: #ffffff;
+    margin: 0rem 0rem 0rem 0rem;
+}
+.project-title h1
+{
+    color: #000000;
+    -webkit-text-stroke: 1px #000000;
+    -moz-text-stroke: 1px #000000;
+    font-size: 5rem;
+    margin: 0rem 0rem 0rem 1rem;
+}
+.gradient-block 
+{
+    height: 30px;
+    background: linear-gradient(to bottom, #ffffff, transparent);
+    padding: 0rem;
+    margin: 0rem 0rem 0rem 0rem;
+}
+.project-title a
+{
+    position: fixed;
+    top: 14rem;
+    background-color: #FFFFFF;
+    text-decoration: none;
+    color: #000;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border: solid 2px #000000;
+    margin: 0rem 0rem 0rem 1rem;
+}
+.project-title a:hover 
+{
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
+    border: solid 2px #DD1212;
 }
 
 /*Project Pages*/
@@ -142,37 +185,23 @@ p
     align-items: center;
     justify-content: center;
 }
-.project-hero-title 
-{
-    color: #000000;
-    -webkit-text-stroke: 1px #000000;
-    -moz-text-stroke: 1px #000000;
-    font-size: 5rem;
-    margin: 3rem 0rem 0rem 0rem;
-}
-.project-hero-image 
-{
-    width: 80vw;
-    height: auto;
-    margin: 0rem 0rem 0rem 0rem;
-}
 .project-objective 
 {
     display: flex;
     gap: 3rem;
-    margin: 0rem 5rem 10rem 5rem;
+    margin: 6.5rem 5rem 5rem 5rem;
 }
 .project-ideation 
 {
     display: flex;
     gap: 3rem;
-    margin: 10rem 5rem 10rem 5rem;
+    margin: 5rem 5rem 5rem 5rem;
 }
 .project-solution 
 {
     display: flex;
     gap: 3rem;
-    margin: 10rem 5rem 10rem 5rem;
+    margin: 5rem 5rem 5rem 5rem;
 }
 .image-block 
 {
@@ -200,7 +229,7 @@ p
 }
 .text-block-titles h2 
 {
-    font-size: 4.5rem;
+    font-size: 4rem;
     margin: 0rem 0rem 0rem 0rem;
     color: transparent;
     -webkit-text-stroke: 2px #DD1212;
@@ -217,11 +246,21 @@ p
     transform: rotate(180deg);
     margin: 0rem 0rem 0rem 0rem;
 }
+.text-block-ruler 
+{
+    width: 2px;
+    background-color: #000000;
+    margin: 0rem 0.5rem 0rem 0rem;
+    justify-self: center;
+    align-self: center;
+    height: 350px;
+}
 .text-block-copy 
 {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-content: center;
     width: 350px;
 }
 .text-block-copy p 
