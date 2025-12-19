@@ -266,16 +266,8 @@ p
     font-size: 1.2rem;
 }
 
-.image-test
-{
-    background-color: #DD1212;
-    width: 800px;
-    height: 350px;
-    margin: 0rem 0rem 0rem 0rem;
-}
-
 /*Footer*/
-#footer
+.footer
 {
     height: 50px;
     display: flex;
@@ -284,18 +276,18 @@ p
     padding: 1rem 1rem 1rem 1rem;
     border-top: 2px solid #000000; 
 }
-#footer h2
+.footer h2
 {
     color: #000000;
     font-size: 1.2rem;
 }
-#footer a
+.footer a
 {
     text-decoration: underline;
     color: #000000;
     font-size: 1.2rem;
 }
-#footer a:hover 
+.footer a:hover 
 {
     font-size: 1.2rem;
     color: transparent;
