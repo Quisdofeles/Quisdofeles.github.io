@@ -138,7 +138,7 @@ p
     position: fixed;
     z-index: 1000;
     width: 100%;
-    height: 86px;
+    height: 88px;
     background-color: #ffffff;
     margin: 0rem 0rem 0rem 0rem;
 }
@@ -178,30 +178,26 @@ p
 }
 
 /*Project Pages*/
-.project-hero 
-{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
 .project-objective 
 {
     display: flex;
     gap: 3rem;
     margin: 6.5rem 5rem 5rem 5rem;
+    align-items: center;
 }
 .project-ideation 
 {
     display: flex;
     gap: 3rem;
     margin: 5rem 5rem 5rem 5rem;
+    align-items: center;
 }
 .project-solution 
 {
     display: flex;
     gap: 3rem;
     margin: 5rem 5rem 2.5rem 5rem;
+    align-items: center;
 }
 .image-block 
 {
@@ -211,9 +207,9 @@ p
 }
 .image-block img 
 {
-    width: 80%;
-    height: auto;
-    display: block;
+    width: 800px;
+    height: 350px;
+    margin: 0rem 0rem 0rem 0rem;
 }
 .text-block 
 {
@@ -268,6 +264,14 @@ p
     text-decoration: none;
     color: #000;
     font-size: 1.2rem;
+}
+
+.image-test
+{
+    background-color: #DD1212;
+    width: 800px;
+    height: 350px;
+    margin: 0rem 0rem 0rem 0rem;
 }
 
 /*Footer*/
