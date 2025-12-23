@@ -1,8 +1,63 @@
-* {
-    box-sizing: border-box;
+@font-face
+{
+    /*Enter Font Name*/
+    font-family: font-name;
+    /*Choose Font From Folder*/
+    src: url(../fonts/);
 }
 
-body {
+* 
+{
+    box-sizing: border-box;
+}
+body 
+{
     margin: 0px;
     font-family: sans-serif;
+    background-color: #FFFFFF;
+}
+
+/*Font Styling*/
+h1
+{
+    font-family: font-name, sans-serif;
+    font-style: normal;
+}
+h2
+{
+    font-family: font-name, sans-serif;
+    font-style: normal;
+}
+h3
+{
+    font-family: font-name, sans-serif;
+    font-style: normal;
+}
+h4
+{
+    font-family: font-name, sans-serif;
+    font-style: normal;
+}
+a
+{
+    font-family: font-name, sans-serif;
+    font-style: normal;
+}
+p
+{
+    font-family: font-name, sans-serif;
+    font-style: normal;
+}
+
+/*Header*/
+
+/*Hero*/
+
+/*Footer*/
+
+
+/*Responsive*/
+@media screen and (max-width: 000px)
+{
+    
 }
