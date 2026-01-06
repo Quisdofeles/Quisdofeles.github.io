@@ -295,8 +295,54 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
-/*Responsive*/
-@media screen and (max-width: 000px)
+/*Responsive Header*/
+@media (max-width: 000px)
 {
     
+}
+
+/*Responsive Footer*/
+@media (max-width: 800px)
+{
+    .footer h2
+    {
+        font-size: 1rem;
+    }
+    .footer a
+    {
+        font-size: 1rem;
+    }
+    .footer a:hover
+    {
+        font-size: 1rem;
+    }
+}
+@media (max-width: 675px)
+{
+    .footer h2
+    {
+        font-size: 0.8rem;
+    }
+    .footer a
+    {
+        font-size: 0.8rem;
+    }
+    .footer a:hover
+    {
+        font-size: 0.8rem;
+    }
+}
+@media (max-width: 550px)
+{
+    .footer 
+    {
+        flex-direction: column;
+        height: auto;
+        align-items: center;
+    }
+    .footer a:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
 }
