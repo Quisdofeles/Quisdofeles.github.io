@@ -77,7 +77,6 @@ p
 }
 #header-title 
 {
-    
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
@@ -119,6 +118,9 @@ p
     background: none;
     border: none;
     font-size: 2rem;
+    -webkit-text-stroke: 0.5px #000000;
+    -moz-text-stroke: 0.5px #000000;
+
     cursor: pointer;
 }
 #mobile-menu 
@@ -382,6 +384,33 @@ p
         -moz-text-stroke: 0.75px #DD1212;
     }
 }
+@media (max-width: 620px)
+{
+    #header-title 
+    {
+        -webkit-text-stroke: 0.75px #000000;
+        -moz-text-stroke: 0.75px #000000;
+        font-size: 1.5rem;
+    }
+    #robert-book-design-logo img
+    {
+        height: 35px;
+        width: auto;
+    }
+}
+@media (max-width: 475px)
+{
+    #header-title 
+    {
+        font-size: 1.2rem;
+    }
+    #robert-book-design-logo img
+    {
+        height: 30px;
+        width: auto;
+    }
+}
+
 /*Responsive Breadcrumb Navigation*/
 @media (max-width: 800px)
 {
