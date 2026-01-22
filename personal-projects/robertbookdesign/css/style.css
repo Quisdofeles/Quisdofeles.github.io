@@ -113,6 +113,18 @@ p
     -webkit-text-stroke: 1px #DD1212;
     -moz-text-stroke: 1px #DD1212;
 }
+#hamburger 
+{
+    display: none;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+}
+#mobile-menu 
+{
+    display: none;
+}
 #breadcrumb-nav 
 {
     padding: 1rem 1rem 1rem 1rem;
@@ -296,11 +308,80 @@ p
 }
 
 /*Responsive Header*/
-@media (max-width: 000px)
+@media (max-width: 1000px)
 {
-    
+    #nav-links 
+    {
+        display: none;
+    }
+    #hamburger 
+    {
+        display: block;
+        position: relative;
+        z-index: 9999;
+    }
+    #mobile-menu 
+    {
+        position: fixed;
+        top: 76px;
+        right: 0;
+        width: 150px;
+        display: none;
+        flex-direction: column;
+        background-color: #ffffff;
+        border-left: 2px solid #000000;
+        border-bottom: 2px solid #000000;
+        z-index: 9999;
+    }
+    #mobile-menu a 
+    {
+        padding: 1rem;
+        text-decoration: none;
+        color: #000000;
+        font-size: 1.2rem;
+        border-top: 2px solid #000000;
+        text-align: right;
+    }
+    #mobile-menu a:hover 
+    {
+        color: transparent;
+        -webkit-text-stroke: 1px #DD1212;
+        -moz-text-stroke: 1px #DD1212;
+    }
+    #mobile-menu.open 
+    {
+        display: flex;
+    }
 }
-
+@media (max-width: 800px)
+{
+    #mobile-menu 
+    {
+        width: 120px;
+    }
+    #mobile-menu a 
+    {
+        font-size: 1rem;
+    }
+}
+@media (max-width: 675px)
+{
+    #mobile-menu 
+    {
+        width: 100px;
+    }
+    #mobile-menu a 
+    {
+        padding-top: 1.25rem;
+        font-size: 0.8rem;
+    }
+    #mobile-menu a:hover 
+    {
+        color: transparent;
+        -webkit-text-stroke: 0.75px #DD1212;
+        -moz-text-stroke: 0.75px #DD1212;
+    }
+}
 /*Responsive Breadcrumb Navigation*/
 @media (max-width: 800px)
 {
