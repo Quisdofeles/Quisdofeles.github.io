@@ -120,8 +120,13 @@ p
     font-size: 2rem;
     -webkit-text-stroke: 0.5px #000000;
     -moz-text-stroke: 0.5px #000000;
-
     cursor: pointer;
+}
+#hamburger:hover 
+{
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
 }
 #mobile-menu 
 {
@@ -145,6 +150,8 @@ p
     -webkit-text-stroke: 1px #DD1212;
     -moz-text-stroke: 1px #DD1212;
 }
+
+/*Project Pages*/
 
 /*Project Title*/
 .project-title
@@ -191,44 +198,47 @@ p
     border: solid 2px #DD1212;
 }
 
-/*Project Pages*/
+/*Project Portfolio Pieces*/
 .project-objective 
 {
     display: flex;
     gap: 3rem;
-    margin: 6.5rem 5rem 5rem 5rem;
+    margin: 9rem 5rem 0rem 5rem;
     align-items: center;
 }
 .project-ideation 
 {
     display: flex;
     gap: 3rem;
-    margin: 5rem 5rem 5rem 5rem;
+    margin: 0rem 5rem 0rem 5rem;
     align-items: center;
 }
 .project-solution 
 {
     display: flex;
     gap: 3rem;
-    margin: 5rem 5rem 2.5rem 5rem;
+    margin: 0rem 5rem 5rem 5rem;
     align-items: center;
 }
 .image-block 
 {
+    display: flex;
     flex: 1;
+    height: 600px;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
 }
 .image-block img 
 {
-    width: 800px;
-    height: 350px;
+    width: 900px;
+    height: auto;
     margin: 0rem 0rem 0rem 0rem;
 }
 .text-block 
 {
-    flex: 0.5;
     display: flex;
+    flex: 0.5;
+    height: 600px;
     gap: 1rem;
 }
 .text-block-titles 
@@ -236,6 +246,7 @@ p
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
 }
 .text-block-titles h2 
 {
@@ -256,14 +267,32 @@ p
     transform: rotate(180deg);
     margin: 0rem 0rem 0rem 0rem;
 }
-.text-block-ruler 
+.project-objective .text-block-ruler 
 {
     width: 2px;
     background-color: #000000;
     margin: 0rem 0.5rem 0rem 0rem;
     justify-self: center;
     align-self: center;
-    height: 350px;
+    height: 425px;
+}
+.project-ideation .text-block-ruler 
+{
+    width: 2px;
+    background-color: #000000;
+    margin: 0rem 0.5rem 0rem 0rem;
+    justify-self: center;
+    align-self: center;
+    height: 380px;
+}
+.project-solution .text-block-ruler 
+{
+    width: 2px;
+    background-color: #000000;
+    margin: 0rem 0.5rem 0rem 0rem;
+    justify-self: center;
+    align-self: center;
+    height: 405px;
 }
 .text-block-copy 
 {
@@ -271,13 +300,13 @@ p
     flex-direction: column;
     justify-content: center;
     align-content: center;
-    width: 350px;
+    width: 375px;
 }
 .text-block-copy p 
 {
     text-decoration: none;
     color: #000;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
 }
 
 /*Footer*/
@@ -437,6 +466,8 @@ p
     }
 }
 
+/*Responsive Project Pages*/
+
 /*Responsive Project Title*/
 @media (max-width: 1350px)
 {
@@ -567,24 +598,366 @@ p
     }
 }
 
-/*Responsive Project Objective*/
-@media (max-width: 000px)
+/*Responsive Portfolio Pieces*/
+@media (max-width: 1650px)
 {
-
+    .image-block img 
+    {
+        width: 800px;
+    }
+    .text-block-copy 
+    {
+        width: 350px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 1.2rem;
+    }
 }
-
-/*Responsive Project Ideation*/
-@media (max-width: 000px)
+@media (max-width: 1500px)
 {
-
+    .image-block img 
+    {
+        width: 700px;
+    }
+    .text-block-copy 
+    {
+        width: 350px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 1.2rem;
+    }
 }
-
-/*Responsive Project Solution*/
-@media (max-width: 000px)
+@media (max-width: 1400px)
 {
-
+    .image-block 
+    {
+        height: 550px;
+    }
+    .image-block img 
+    {
+        width: 600px;
+    }
+    .text-block 
+    {
+        height: 550px;
+        gap: 1rem;
+    }
+    .text-block-titles h2 
+    {
+        font-size: 4rem;
+    }
+    .text-block-titles h1 
+    {
+        font-size: 5rem;
+    }
+    .project-objective .text-block-ruler 
+    {
+        height: 425px;
+    }
+    .project-ideation .text-block-ruler 
+    {
+        height: 380px;
+    }
+    .project-solution .text-block-ruler 
+    {
+        height: 405px;
+    }
+    .text-block-copy 
+    {
+        width: 350px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 1.2rem;
+    }
 }
-
+@media (max-width: 1300px)
+{
+    .project-objective 
+    {
+        gap: 2rem;
+    }
+    .project-ideation 
+    {
+        gap: 2rem;
+    }
+    .project-solution 
+    {
+        gap: 2rem;
+    }
+    .image-block 
+    {
+        height: 500px;
+    }
+    .image-block img 
+    {
+        width: 550px;
+    }
+    .text-block 
+    {
+        height: 500px;
+        gap: 1rem;
+    }
+    .text-block-titles h2 
+    {
+        font-size: 3.2rem;
+    }
+    .text-block-titles h1 
+    {
+        font-size: 4rem;
+    }
+    .project-objective .text-block-ruler 
+    {
+        height: 340px;
+    }
+    .project-ideation .text-block-ruler 
+    {
+        height: 304px;
+    }
+    .project-solution .text-block-ruler 
+    {
+        height: 324px;
+    }
+    .text-block-copy 
+    {
+        width: 330px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 1.1rem;
+    }
+}
+@media (max-width: 1200px)
+{
+    .image-block img 
+    {
+        width: 500px;
+    }
+}
+@media (max-width: 1150px)
+{
+    .project-objective 
+    {
+        gap: 1rem;
+    }
+    .project-ideation 
+    {
+        gap: 1rem;
+    }
+    .project-solution 
+    {
+        gap: 1rem;
+    }
+    .image-block 
+    {
+        height: 500px;
+    }
+    .image-block img 
+    {
+        width: 450px;
+    }
+    .text-block 
+    {
+        height: 500px;
+        gap: 1rem;
+    }
+    .text-block-titles h2 
+    {
+        font-size: 2.4rem;
+    }
+    .text-block-titles h1 
+    {
+        font-size: 3rem;
+    }
+    .project-objective .text-block-ruler 
+    {
+        height: 255px;
+    }
+    .project-ideation .text-block-ruler 
+    {
+        height: 228px;
+    }
+    .project-solution .text-block-ruler 
+    {
+        height: 243px;
+    }
+    .text-block-copy 
+    {
+        width: 300px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 0.9rem;
+    }
+}
+@media (max-width: 1030px)
+{
+    .project-objective 
+    {
+        margin: 6rem 2rem 0rem 2rem;
+    }
+    .project-ideation 
+    {
+        margin: 0rem 2rem 0rem 2rem;
+    }
+    .project-solution 
+    {
+        margin: 0rem 2rem 2rem 2rem;
+    }
+    .image-block 
+    {
+        height: 400px;
+    }
+    .text-block 
+    {
+        height: 400px;
+    }
+}
+@media (max-width: 950px)
+{
+    .project-objective
+    {
+        flex-direction: column;
+        align-items: center;
+        gap: 4rem;
+        margin: 8rem 4rem 4rem 4rem;
+    }
+    .project-ideation
+    {
+        flex-direction: column;
+        align-items: center;
+        gap: 4rem;
+        margin: 4rem 4rem 4rem 4rem;
+    }
+    .project-solution
+    {
+        flex-direction: column;
+        align-items: center;
+        gap: 4rem;
+        margin: 4rem 4rem 4rem 4rem;
+    }
+    .image-block
+    {
+        justify-content: center;
+        height: 600px;
+    }
+    .image-block img 
+    {
+        width: 600px;
+    }
+    .text-block
+    {
+        justify-content: center;
+        height: 600px;
+    }
+    .text-block-titles h2 
+    {
+        font-size: 3rem;
+    }
+    .text-block-titles h1 
+    {
+        font-size: 3.5rem;
+    }
+    .project-objective .text-block-ruler 
+    {
+        height: 300px;
+    }
+    .project-ideation .text-block-ruler 
+    {
+        height: 266px;
+    }
+    .project-solution .text-block-ruler 
+    {
+        height: 284px;
+    }
+    .text-block-copy 
+    {
+        width: 350px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 1rem;
+    }
+}
+@media (max-width: 550px)
+{
+    .image-block img 
+    {
+        width: 500px;
+    }
+}
+@media (max-width: 650px)
+{
+    .image-block img 
+    {
+        width: 400px;
+    }
+    .text-block-titles h2 
+    {
+        font-size: 2.6rem;
+    }
+    .text-block-titles h1 
+    {
+        font-size: 3rem;
+    }
+    .project-objective .text-block-ruler 
+    {
+        height: 260px;
+    }
+    .project-ideation .text-block-ruler 
+    {
+        height: 230px;
+    }
+    .project-solution .text-block-ruler 
+    {
+        height: 250px;
+    }
+    .text-block-copy 
+    {
+        width: 300px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 0.9rem;
+    }
+}
+@media (max-width: 475px)
+{
+    .image-block img 
+    {
+        width: 350px;
+    }
+    .text-block-titles h2 
+    {
+        font-size: 2.2rem;
+    }
+    .text-block-titles h1 
+    {
+        font-size: 2.5rem;
+    }
+    .project-objective .text-block-ruler 
+    {
+        height: 225px;
+    }
+    .project-ideation .text-block-ruler 
+    {
+        height: 200px;
+    }
+    .project-solution .text-block-ruler 
+    {
+        height: 215px;
+    }
+    .text-block-copy 
+    {
+        width: 250px;
+    }
+    .text-block-copy p 
+    {
+        font-size: 0.8rem;
+    }
+}
 /*Responsive Footer*/
 @media (max-width: 800px)
 {
