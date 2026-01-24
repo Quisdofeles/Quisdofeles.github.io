@@ -1,11 +1,10 @@
 @font-face
 {
     /*Enter Font Name*/
-    font-family: font-name;
+    font-family: Basement-Grotesque;
     /*Choose Font From Folder*/
-    src: url(../fonts/);
+    src: url(../fonts/BasementGrotesque-Black_v1.202.otf);
 }
-
 * 
 {
     box-sizing: border-box;
@@ -14,38 +13,40 @@ body
 {
     margin: 0px;
     font-family: sans-serif;
-    background-color: #FFFFFF;
+    background-color: #000000;
+    background-repeat: repeat;
+    background-size: auto;
 }
 
 /*Font Styling*/
 h1
 {
-    font-family: font-name, sans-serif;
+    font-family: Basement-Grotesque, sans-serif;
     font-style: normal;
 }
 h2
 {
-    font-family: font-name, sans-serif;
+    font-family: Basement-Grotesque, sans-serif;
     font-style: normal;
 }
 h3
 {
-    font-family: font-name, sans-serif;
+    font-family: Basement-Grotesque, sans-serif;
     font-style: normal;
 }
 h4
 {
-    font-family: font-name, sans-serif;
+    font-family: Basement-Grotesque, sans-serif;
     font-style: normal;
 }
 a
 {
-    font-family: font-name, sans-serif;
+    font-family: Basement-Grotesque, sans-serif;
     font-style: normal;
 }
 p
 {
-    font-family: font-name, sans-serif;
+    font-family: Basement-Grotesque, sans-serif;
     font-style: normal;
 }
 
