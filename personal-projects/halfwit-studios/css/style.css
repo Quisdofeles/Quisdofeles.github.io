@@ -1,10 +1,3 @@
-@font-face
-{
-    /*Enter Font Name*/
-    font-family: Basement-Grotesque;
-    /*Choose Font From Folder*/
-    src: url(../fonts/BasementGrotesque-Black_v1.202.otf);
-}
 * 
 {
     box-sizing: border-box;
@@ -17,8 +10,39 @@ body
     background-repeat: repeat;
     background-size: auto;
 }
-
-/*Font Styling*/
+/* 
+======================
+    CUSTOM CURSOR
+====================== 
+*/
+:root 
+{
+    --cursor-default: url("cursor-default.png") 8 8, auto;
+    --cursor-pointer: url("cursor-pointer.png") 8 8, pointer;
+    --cursor-text: url("cursor-text.png") 8 8, text;
+}
+html,body 
+{
+    cursor: var(--cursor-default);
+}
+a,button,[role="button"],.clickable 
+{
+    cursor: var(--cursor-pointer);
+}
+input,textarea,[contenteditable="true"],p,span,h1, h2, h3, h4, h5, h6 
+{
+    cursor: var(--cursor-text);
+}
+/* 
+======================
+    CUSTOM FONTS
+====================== 
+*/
+@font-face
+{
+    font-family: Basement-Grotesque;
+    src: url(../fonts/BasementGrotesque-Black_v1.202.otf);
+}
 h1
 {
     font-family: Basement-Grotesque, sans-serif;
@@ -57,7 +81,11 @@ p
 /*Footer*/
 
 
-/*Responsive*/
+/* 
+======================
+    RESPONSIVENESS
+====================== 
+*/
 @media screen and (max-width: 000px)
 {
     
