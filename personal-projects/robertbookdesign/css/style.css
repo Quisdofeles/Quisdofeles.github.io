@@ -131,6 +131,7 @@ p
 #mobile-menu 
 {
     display: none;
+    margin: 0.6rem 0rem 0rem 0rem;
 }
 #breadcrumb-nav 
 {
@@ -493,6 +494,10 @@ p
     {
         height: 40px;
         width: auto;
+    }
+    #mobile-menu 
+    {
+        margin: 0rem 0rem 0rem 0rem;
     }
     #mobile-menu a 
     {
