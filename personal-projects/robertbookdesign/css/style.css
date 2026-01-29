@@ -151,9 +151,9 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
-/*Project Pages*/
+/*Projects Page*/
 
-/*Project Title*/
+/*Project Pages Title*/
 .project-title
 {
     position: fixed;
@@ -198,7 +198,7 @@ p
     border: solid 2px #DD1212;
 }
 
-/*Project Portfolio Pieces*/
+/*Project Pages Portfolio Pieces*/
 .project-objective 
 {
     display: flex;
@@ -466,9 +466,13 @@ p
     }
 }
 
-/*Responsive Project Pages*/
+/*Responsive Projects Page*/
+@media (max-width: 000px)
+{
 
-/*Responsive Project Title*/
+}
+
+/*Responsive Project Pages Title*/
 @media (max-width: 1350px)
 {
     .project-title
@@ -598,7 +602,7 @@ p
     }
 }
 
-/*Responsive Portfolio Pieces*/
+/*Responsive Portfolio Pages Pieces*/
 @media (max-width: 1650px)
 {
     .image-block img 

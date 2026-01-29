@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!--Meta Data-->
         <title>Projects</title>
-        <meta name="description" content="Graphic and web designer specializing in branding, print, and web design. Explore my portfolio and see the work I create for businesses and personal projects.">
+        <meta name="description" content="A complete portfolio index displaying all projects, allowing visitors to browse and navigate to individual design case studies.">
         <link rel="icon" href="images/favicon.ico" type="image/x-icon">
         <link href="css/style.css" rel="stylesheet">
     </head>
@@ -27,25 +27,54 @@
                     <li>•</li>
                     <li><a href="contact.html">CONTACT</a></li>
                 </ul>
-            </div>
+
+                <!--Hamburger-->
+                <div id="hamburger">☰</div>
+                </div>
 
             <!--Bottom header-->
             <div id="breadcrumb-nav">
             </div>
         </div>
+ 
+        <!--Dropdown Menu-->
+        <div id="mobile-menu">
+            <a href="about.html">ABOUT</a>
+            <a href="projects.html">PROJECTS</a>
+            <a href="contact.html">CONTACT</a>
+        </div>
 
         <!--Projects-->
         <div id="projects" data-label="PROJECTS">
-            <!--Mellowstruck Portfolo Website-->
-            <div id="mellowstruck-portfolio-website-project" data-label="MELLOWSTRUCK PORTFOLIO WEBSITE" data-parent="projects">
+            <!--Graphic Design Projects-->
+            <div id="graphic-design-projects" data-label="GRAPHIC DESIGN" data-parent="projects">
+                <!--Mellowstruck Logo Design-->
+                <div class="projects-page-project" id="mellowstruck-logo-design-project" data-label="MELLOWSTRUCK LOGO" data-parent="graphic-design-projects">
+                </div>
+                <!--Leaf&Ladel Restaurant Posters-->
+                <div class="projects-page-project" id="leaf&ladel-restaurant-posters-project" data-label="LEAF&LADEL" data-parent="graphic-design-projects">
+                </div>
+            </div>
+
+            <!--UI/UX Design Projects-->
+            <div id="ui/ux-design-projects" data-label="UI/UX DESIGN" data-parent="projects">
+                <!--Mellowstruck Portfolo Website-->
+                <div class="projects-page-project" id="mellowstruck-portfolio-website-project" data-label="MELLOWSTRUCK WEBSITE" data-parent="ui/ux-design-projects">
+                </div>
+                <!--Sakura&Sea Landing Page-->
+                <div class="projects-page-project" id="sakura&sea-landing-page-project" data-label="SAKURA&SEA" data-parent="ui/ux-design-projects">
+                </div>
             </div>
         </div>
 
         <!--Footer-->
-        <div id="footer">
+        <div class="footer">
             <h2>©2025 ROBERT BOOK DESIGN • ALL RIGHTS RESERVED</h2>
             <h2>POWERED BY <a href="...">ROBERT BOOK DESIGN</a></h2>
         </div>
+
+    <!--Java Scripts--> 
     <script src="Java/breadcrumb.js"></script>
+    <script src="Java/hamburger-menu.js"></script>
     </body>
 </html>
