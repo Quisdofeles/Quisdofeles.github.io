@@ -190,7 +190,7 @@ p
     display: flex;
     flex-direction: row;
     padding: 1rem 1rem 1rem 1rem;
-    margin: 2.5rem 0rem 2.5rem 0rem;
+    margin: 3rem 0rem 0rem 0rem;
     width: auto;
     height: 450px;
     border: 2px solid #000000;
@@ -454,7 +454,7 @@ p
 }
 #projects-page-footer
 {
-    margin: 2.5rem 0rem 0rem 0rem;
+    margin: 3rem 0rem 0rem 0rem;
 }
 
 /*Responsive Navigation*/
