@@ -420,7 +420,7 @@ p
 .text-block-copy p 
 {
     text-decoration: none;
-    color: #000;
+    color: #000000;
     font-size: 1.3rem;
 }
 
@@ -559,7 +559,7 @@ p
 {
     #header-title 
     {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     #robert-book-design-logo img
     {
@@ -590,9 +590,276 @@ p
 }
 
 /*Responsive Projects Page*/
-@media (max-width: 000px)
+@media (max-width: 1450px)
 {
-
+    .projects-page-project-card-image 
+    {
+        margin: 0.5rem 0.5rem 0.5rem 5.5rem;
+    }
+}
+@media (max-width: 1280px)
+{
+    .projects-page-project-card-image 
+    {
+        margin: 0.5rem 0.5rem 0.5rem 1.5rem;
+    }
+}
+@media (max-width: 1220px)
+{
+    .projects-page-project-card-text
+    {
+        width: 600px;
+    }
+}
+@media (max-width: 1120px)
+{
+    .projects-page-section-headers
+    {
+        font-size: 4rem;
+    }
+    .projects-page-project-card
+    {
+        height: 400px;
+    }
+    .projects-page-project-card-text
+    {
+        width: 550px;
+    }
+    .projects-page-project-card-text h2
+    {
+        font-size: 2.3rem;
+    }
+    .projects-page-project-card-text p
+    {
+        font-size: 1.2rem;
+    }
+    .projects-page-project-card-text h4
+    {
+        font-size: 1.2rem;
+    }
+    .projects-page-project-card-text h3
+    {
+        font-size: 1rem;
+    }
+    .placeholder-image
+    { 
+        border-radius: 20px;
+        height: 350px;
+        width: 350px;
+    }
+}
+@media (max-width: 1000px)
+{
+    .projects-page-section-headers
+    {
+        padding: 0.5rem 0rem 0rem 0rem;
+        font-size: 3rem;
+    }
+    .projects-page-project-card
+    {
+        margin: 2rem 0rem 0rem 0rem;
+        height: 350px;
+    }
+    .projects-page-project-card-text
+    {
+        width: 500px;
+    }
+    .projects-page-project-card-text h2
+    {
+        font-size: 1.8rem;
+    }
+    .projects-page-project-card-text p
+    {
+        font-size: 1rem;
+    }
+    .projects-page-project-card-text h4
+    {
+        font-size: 1rem;
+    }
+    .projects-page-project-card-text h3
+    {
+        font-size: 0.9rem;
+    }
+    .placeholder-image
+    {
+        height: 300px;
+        width: 300px;
+    }
+}
+@media (max-width: 950px)
+{
+    #graphic-design-projects
+    {
+        align-items: center;
+    }
+    #ui-ux-design-projects
+    {
+        align-items: center;
+    }
+    .projects-page-section-headers
+    {
+        align-self: flex-start;
+        font-size: 3rem;
+    }
+    .projects-page-project-card
+    {
+        flex-direction: column-reverse;
+        margin: 2rem 0rem 0rem 0rem;
+        width: auto;
+        height: auto;
+    }
+    .projects-page-project-card-text
+    {
+        width: 600px;
+    }
+    .projects-page-project-card-text h2
+    {
+        color: #000000;
+        font-size: 2.5rem;
+        -webkit-text-stroke: 1px #000000;
+        -moz-text-stroke: 1px #000000;
+        padding: 0rem 0rem 0rem 0rem;
+        margin: 0rem 0rem 1rem 0.5rem;
+    }
+    .projects-page-project-card-text p
+    {
+        color: #000000;
+        font-size: 1.2rem;
+        padding: 0rem 0rem 0rem 0rem;
+        margin: 0rem 0rem 1.5rem 0.5rem;
+    }
+    .projects-page-project-card-text h4
+    {
+        font-size: 1.2rem;
+        margin: 0rem 0rem 1.5rem 0.5rem;
+    }
+    .projects-page-project-card-text h3
+    {
+        font-size: 1.1rem;
+    }
+    .projects-page-project-card-image 
+    {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 0.5rem 0.5rem 1.5rem 0.5rem;
+    }
+    .placeholder-image
+    { 
+        border-radius: 25px;
+        background-color: #DD1212;
+        height: 600px;
+        width: 600px;
+    }
+}
+@media (max-width: 700px)
+{
+    .projects-page-section-headers
+    {
+        align-self: flex-start;
+        font-size: 2.5rem;
+    }
+    .projects-page-project-card-text
+    {
+        width: 525px;
+    }
+    .projects-page-project-card-text h2
+    {
+        font-size: 1.8rem;
+        -webkit-text-stroke: 1px #000000;
+        -moz-text-stroke: 1px #000000;
+    }
+    .projects-page-project-card-text p
+    {
+        font-size: 1.2rem;
+    }
+    .projects-page-project-card-text h4
+    {
+        font-size: 1.2rem;
+    }
+    .projects-page-project-card-text h3
+    {
+        font-size: 1rem;
+    }
+    .placeholder-image
+    { 
+        height: 525px;
+        width: 525px;
+    }
+}
+@media (max-width: 620px)
+{
+    .projects-page-section-headers
+    {
+        align-self: flex-start;
+        font-size: 2rem;
+    }
+    .projects-page-project-card-text
+    {
+        width: 400px;
+    }
+    .projects-page-project-card-text h2
+    {
+        font-size: 1.5rem;
+        -webkit-text-stroke: 1px #000000;
+        -moz-text-stroke: 1px #000000;
+    }
+    .projects-page-project-card-text p
+    {
+        font-size: 1rem;
+    }
+    .projects-page-project-card-text h4
+    {
+        font-size: 1rem;
+    }
+    .projects-page-project-card-text h3
+    {
+        font-size: 0.9rem;
+    }
+    .placeholder-image
+    { 
+        height: 400px;
+        width: 400px;
+    }
+}
+@media (max-width: 500px)
+{
+    .projects-page-project-card
+    {
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    }
+    .projects-page-section-headers
+    {
+        align-self: flex-start;
+        font-size: 1.5rem;
+    }
+    .projects-page-project-card-text
+    {
+        width: 300px;
+    }
+    .projects-page-project-card-text h2
+    {
+        font-size: 1.2rem;
+        -webkit-text-stroke: 0.5px #000000;
+        -moz-text-stroke: 0.5px #000000;
+    }
+    .projects-page-project-card-text p
+    {
+        font-size: 0.9rem;
+    }
+    .projects-page-project-card-text h4
+    {
+        font-size: 0.9rem;
+    }
+    .projects-page-project-card-text h3
+    {
+        font-size: 0.8rem;
+    }
+    .placeholder-image
+    { 
+        height: 300px;
+        width: 300px;
+    }
 }
 
 /*Responsive Project Pages Title*/
