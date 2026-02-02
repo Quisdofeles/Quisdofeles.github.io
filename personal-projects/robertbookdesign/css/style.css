@@ -263,7 +263,6 @@ p
 .placeholder-image
 { 
     border-radius: 25px;
-    background-color: #DD1212;
     height: 400px;
     width: 400px;
 }
@@ -747,7 +746,6 @@ p
     .placeholder-image
     { 
         border-radius: 25px;
-        background-color: #DD1212;
         height: 600px;
         width: 600px;
     }
