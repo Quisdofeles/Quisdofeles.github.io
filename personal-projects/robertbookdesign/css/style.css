@@ -152,6 +152,8 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
+/*Homepage*/
+
 /*Projects Page*/
 #projects
 {
@@ -456,6 +458,10 @@ p
     margin: 3rem 0rem 0rem 0rem;
 }
 
+/*-----------------
+   RESPONSIVNESS
+-----------------*/
+
 /*Responsive Navigation*/
 @media (max-width: 1000px)
 {
@@ -586,6 +592,12 @@ p
         -webkit-text-stroke: 0.75px #DD1212;
         -moz-text-stroke: 0.75px #DD1212;
     }
+}
+
+/*Responsive Homepage*/
+@media (max-width: 000px)
+{
+
 }
 
 /*Responsive Projects Page*/
