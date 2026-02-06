@@ -152,6 +152,9 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
+/*Homepage (about section)*/
+
+
 /*Homepage (featured works section)*/
 #featured-works
 {
@@ -737,6 +740,12 @@ p
         -webkit-text-stroke: 0.75px #DD1212;
         -moz-text-stroke: 0.75px #DD1212;
     }
+}
+
+/*Responsive Homepage (featured works section)*/
+@media (max-width: 000px)
+{
+    
 }
 
 /*Responsive Homepage (featured works section)*/
