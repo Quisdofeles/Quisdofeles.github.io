@@ -75,6 +75,12 @@ p
     height: 50px;
     width: auto;
 }
+#robert-book-design-logo img:hover
+{
+    border: 0px solid #000000;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
 #header-title 
 {
     position: absolute;
