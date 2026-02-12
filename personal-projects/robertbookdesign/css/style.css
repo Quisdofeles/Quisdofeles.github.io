@@ -93,6 +93,12 @@ p
     -moz-text-stroke: 1px #000000;
     font-size: 2rem;
 }
+#header-title:hover
+{
+    color: transparent;
+    -webkit-text-stroke: 1.5px #DD1212;
+    -moz-text-stroke: 1.5px #DD1212;
+}
 #nav-links 
 {
     display: flex;
