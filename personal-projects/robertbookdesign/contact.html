@@ -48,7 +48,71 @@
         </div>
 
         <!--Contact-->
-        <div id="contact" data-label="CONTACT">
+        <div id="contact-page" data-label="CONTACT">
+            <h2 id="contact-title">CONTACT</h2>
+            <div id="contact-sections">
+                <!--Sidebar / Contact Info-->
+                <div id="contact-info">
+                    <div class="contact-item">
+                        <img src="images/Address Icon.webp" alt="Address Icon">
+                        <h2>LOCATION:</h2>
+                        <a href="https://www.google.com/maps/place/Lynchburg,+VA/@37.4010817,-79.2606564,12z/data=!3m1!4b1!4m6!3m5!1s0x89b2d97890320401:0xc3b6f35ec820e261!8m2!3d37.4148819!4d-79.1422071!16zL20vMG1uazc?entry=ttu&g_ep=EgoyMDI2MDIxMS4wIKXMDSoASAFQAw%3D%3D">
+                            Lynchburg, VA
+                        </a>
+                    </div>
+                    <div class="contact-item">
+                        <img src="images/Email Icon.webp" alt="Email Icon">
+                        <h2>EMAIL:</h2>
+                        <a href="mailto:robertbookdesign@gmail.com">
+                            robertbookdesign@gmail.com
+                        </a>
+                        <a href="mailto:robert@booksoffaith.org">
+                            robert@booksoffaith.org
+                        </a>
+                    </div>
+                    <div class="contact-item">
+                        <img src="images/LinkedIn Icon.webp" alt="LinkedIn Icon">
+                        <h2>LINKEDIN:</h2>
+                        <a href="https://www.linkedin.com/in/robert-book-design/">
+                            Robert Book Design
+                        </a>
+                    </div>
+                </div>
+
+                <!--Divider-->
+                <div id="contact-divider"></div>
+
+                <!--Form-->
+                <div id="contact-form">
+                    <form
+                    action="https://formspree.io/f/mwvnbpyp"
+                    method="POST"
+                    enctype="multipart/form-data"
+                    >
+                        <label for="email">
+                            YOUR EMAIL:
+                            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                        </label>
+
+                        <label for="subject">
+                            SUBJECT:
+                            <input type="text" id="subject" name="subject" placeholder="Subject" required>
+                        </label>
+
+                        <label for="message">
+                            YOUR MESSAGE:
+                            <textarea id="message" name="message" placeholder="Your message here..." required></textarea>
+                        </label>
+
+                        <label for="upload">
+                            UPLOAD A FILE (OPTIONAL):
+                            <input type="file" id="upload" name="upload">
+                        </label>
+
+                        <button type="submit">SUBMIT</button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!--Footer-->
