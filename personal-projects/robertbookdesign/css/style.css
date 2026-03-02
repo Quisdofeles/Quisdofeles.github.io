@@ -951,6 +951,7 @@ p
 {
     padding: 0rem 1rem 0rem 1rem;
     margin: 2rem 0rem 0rem 0rem;
+    height: 780px;
 }
 #contact-sections 
 {
@@ -1008,7 +1009,7 @@ p
     align-self: flex-start;
     width: 2px;
     background-color: #000000;
-    height: 700px;
+    height: 585px;
 }
 #contact-form 
 {
@@ -2817,6 +2818,10 @@ p
 /*Responsive Contact Page*/
 @media (max-width: 850px)
 {
+    #contact-page
+    {
+        height: auto;
+    }
     #contact-sections 
     {
         flex-direction: column;
