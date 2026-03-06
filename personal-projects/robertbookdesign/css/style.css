@@ -12,6 +12,10 @@
 {
     box-sizing: border-box;
 }
+html
+{
+    scroll-behavior: smooth;
+}
 body 
 {
     margin: 0px;
@@ -174,11 +178,104 @@ p
     -moz-text-stroke: 1px #DD1212;
 }
 
+/*Homepage (Hero section)*/
+#hero
+{
+    padding: 0rem 0rem 0rem 0rem;
+    margin: 0rem 0rem 0rem 0rem;
+    height: 81vh;
+    width: auto;
+    background-color: #FFFFFF;
+    scroll-margin-top: 150px;
+}
+#hero-text
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0rem 0rem 0rem 0rem;
+    margin: 0rem 0rem 0rem 10rem;
+    height: 100%;
+}
+#hero-text h3
+{
+    color: #000000;
+    -webkit-text-stroke: 0.5px #000000;
+    -moz-text-stroke: 0.5px #000000;
+    font-size: 2rem;
+    margin: 0rem 0rem 0rem 0rem;
+    padding: 0rem 0rem 0rem 0rem;
+}
+#hero-text h1
+{
+    color: #000000;
+    -webkit-text-stroke: 2px #000000;
+    -moz-text-stroke: 2px #000000;
+    font-size: 7.5rem;
+    margin: 5rem 0rem 0rem 0rem;
+    padding: 0rem 0rem 0rem 0rem;
+}
+#hero-text h4
+{
+    color: #000000;
+    font-size: 1.7rem;
+    max-width: 700px;
+    margin: 2.5rem 0rem 0rem 0rem;
+    padding: 0rem 0rem 0rem 0rem;
+}
+#home-hero-links
+{
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    margin: 2.5rem 0rem 0rem 0rem;
+    padding: 0rem 0rem 0rem 0rem;
+}
+.home-cta
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    text-decoration: none;
+    font-size: 1.3rem;
+    border: 2px solid #000000;
+    width: fit-content;
+    height: auto;
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+}
+.home-cta:hover
+{
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
+    border: 2px solid #DD1212;
+}
+.home-hero-link
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    text-decoration: none;
+    font-size: 1.3rem;
+    width: fit-content;
+    height: auto;
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+}
+.home-hero-link:hover
+{
+    color: transparent;
+    -webkit-text-stroke: 1px #DD1212;
+    -moz-text-stroke: 1px #DD1212;
+}
+
 /*Homepage (Reveiws section)*/
 #reviews
 {
     padding: 0rem 1rem 0rem 1rem;
     margin: 2rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 #review-card
 {
@@ -279,6 +376,7 @@ p
 {
     padding: 0rem 1rem 0rem 1rem;
     margin: 2rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 .about-content
 {
@@ -386,6 +484,7 @@ p
 {
     padding: 0rem 1rem 0rem 1rem;
     margin: 2rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 #featured-works-projects
 {
@@ -520,6 +619,7 @@ p
 {
     padding: 0rem 1rem 0rem 1rem;
     margin: 2rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 .contact-content
 {
@@ -622,6 +722,10 @@ p
 }
 
 /*About Page*/
+#about-page
+{
+    scroll-margin-top: 150px;
+}
 #about-text-block-ruler-two
 {
     width: 2px;
@@ -637,6 +741,7 @@ p
 {
     padding: 0rem 1rem 0rem 1rem;
     margin: 0rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 #graphic-design-projects
 {
@@ -646,6 +751,7 @@ p
     justify-content: flex-start;
     padding: 0rem 0rem 0rem 0rem;
     margin: 0rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 #ui-ux-design-projects
 {
@@ -655,6 +761,7 @@ p
     justify-content: flex-start;
     padding: 0rem 0rem 0rem 0rem;
     margin: 2rem 0rem 0rem 0rem;
+    scroll-margin-top: 150px;
 }
 .projects-page-section-headers
 {
@@ -825,6 +932,7 @@ p
     gap: 3rem;
     margin: 9rem 5rem 0rem 5rem;
     align-items: center;
+    scroll-margin-top: 250px;
 }
 .project-ideation 
 {
@@ -832,6 +940,7 @@ p
     gap: 3rem;
     margin: 0rem 5rem 0rem 5rem;
     align-items: center;
+    scroll-margin-top: 250px;
 }
 .project-solution 
 {
@@ -839,6 +948,7 @@ p
     gap: 3rem;
     margin: 0rem 5rem 5rem 5rem;
     align-items: center;
+    scroll-margin-top: 250px;
 }
 .image-block 
 {
@@ -952,6 +1062,7 @@ p
     padding: 0rem 1rem 0rem 1rem;
     margin: 2rem 0rem 0rem 0rem;
     height: 780px;
+    scroll-margin-top: 150px;
 }
 #contact-sections 
 {
@@ -2741,6 +2852,8 @@ p
     .text-block-titles h2 
     {
         font-size: 2.6rem;
+        -webkit-text-stroke: 1.5px #DD1212;
+        -moz-text-stroke: 1.5px #DD1212;
     }
     .text-block-titles h1 
     {
@@ -2766,6 +2879,7 @@ p
     {
         font-size: 0.9rem;
     }
+    
     .image-block::before 
     {
         width: 460px;
