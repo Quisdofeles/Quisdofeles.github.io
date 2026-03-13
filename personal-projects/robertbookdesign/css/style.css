@@ -185,7 +185,7 @@ p
     flex-direction: row;
     padding: 0rem 0rem 0rem 0rem;
     margin: 0rem 0rem 0rem 0rem;
-    height: 81vh;
+    height: 50rem;
     width: auto;
     background-color: #FFFFFF;
     scroll-margin-top: 150px;
@@ -280,7 +280,7 @@ p
     align-items: flex-start;
     padding: 0rem 0rem 0rem 0rem;
     margin: 0rem 0rem 0rem 8rem;
-    height: 86vh;
+    height: 52.5rem;
     position: relative;
     overflow: hidden;
 }
@@ -1572,11 +1572,11 @@ p
     #hero
     {
         flex-direction: column;
-        height: 130vh;
+        height: 90rem;
     }
     #hero-text
     {
-        height: 80vh;
+        height: 50rem;
     }
     #hero-text h3
     {
@@ -1620,7 +1620,8 @@ p
         justify-content: flex-start;
         align-items: center;
         margin: 0rem 0rem 0rem 6rem;
-        height: 62.5vh;
+        margin: 0 auto;
+        height: 40rem;
         width: 66rem;
     }
     #hero-review-fade-top,
@@ -1740,6 +1741,817 @@ p
         to
         {
             transform: translateX(-96rem);
+        }
+    }
+}
+@media (max-width: 1250px)
+{
+    #hero
+    {
+        height: 90rem;
+    }
+    #hero-text
+    {
+        height: 50rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.5px #000000;
+        -moz-text-stroke: 0.5px #000000;
+        font-size: 1.75rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 2px #000000;
+        -moz-text-stroke: 2px #000000;
+        font-size: 6.5rem;
+    }
+    #hero-text h4
+    {
+        font-size: 1.5rem;
+        max-width: 650px;
+    }
+    .home-cta
+    {
+        font-size: 1.25rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 1px #DD1212;
+        -moz-text-stroke: 1px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 1.25rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 1px #DD1212;
+        -moz-text-stroke: 1px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 40rem;
+        width: 66rem;
+    }
+    #hero-review-track
+    {
+        gap: 7rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 35rem;
+        width: 25rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.5rem;
+        -webkit-text-stroke: 0.5px #000000;
+        -moz-text-stroke: 0.5px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 1.1rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 1.25rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 1px #DD1212;
+        -moz-text-stroke: 1px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-96rem);
+        }
+    }
+}
+@media (max-width: 1100px)
+{
+    #hero
+    {
+        height: 70rem;
+    }
+    #hero-text
+    {
+        height: 40rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1.5rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 2px #000000;
+        -moz-text-stroke: 2px #000000;
+        font-size: 5.5rem;
+    }
+    #hero-text h4
+    {
+        font-size: 1.3rem;
+        max-width: 550px;
+    }
+    .home-cta
+    {
+        font-size: 1.1rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.75px #DD1212;
+        -moz-text-stroke: 0.75px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 1.1rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.75px #DD1212;
+        -moz-text-stroke: 0.75px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 30rem;
+        width: 55rem;
+    }
+    #hero-review-track
+    {
+        gap: 6rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 30rem;
+        width: 20rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.25rem;
+        -webkit-text-stroke: 0.5px #000000;
+        -moz-text-stroke: 0.5px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 1.1rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.75px #DD1212;
+        -moz-text-stroke: 0.75px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-78rem);
+        }
+    }
+}
+@media (max-width: 950px)
+{
+    #hero
+    {
+        height: 71rem;
+        width: auto;
+    }
+    #hero-text
+    {
+        align-self: center;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 0rem 0rem 0rem 0rem;
+        margin: 0rem 0rem 0rem 0rem;
+        height: 40rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1.25rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 2px #000000;
+        -moz-text-stroke: 2px #000000;
+        font-size: 4.5rem;
+    }
+    #hero-text h4
+    {
+        font-size: 1.1rem;
+        max-width: 450px;
+    }
+    .home-cta
+    {
+        font-size: 1rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 1rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 31rem;
+        width: 50rem;
+    }
+    #hero-review-track
+    {
+        gap: 5rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 30rem;
+        width: 18rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.25rem;
+        -webkit-text-stroke: 0.5px #000000;
+        -moz-text-stroke: 0.5px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 1.1rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.75px #DD1212;
+        -moz-text-stroke: 0.75px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-69rem);
+        }
+    }
+}
+@media (max-width: 850px)
+{
+    #hero-reviews
+    {
+        width: 45rem;
+    }
+}
+@media (max-width: 800px)
+{
+    #hero
+    {
+        height: 65rem;
+    }
+    #hero-text
+    {
+        height: 35rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1.1rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 1.5px #000000;
+        -moz-text-stroke: 1.5px #000000;
+        font-size: 4rem;
+    }
+    #hero-text h4
+    {
+        font-size: 1rem;
+        max-width: 400px;
+    }
+    .home-cta
+    {
+        font-size: 1rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 1rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 30rem;
+        width: 40rem;
+    }
+    #hero-review-track
+    {
+        gap: 4rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 30rem;
+        width: 18rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.2rem;
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 1.1rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-66rem);
+        }
+    }
+}
+@media (max-width: 800px)
+{
+    #hero
+    {
+        height: 65rem;
+    }
+    #hero-text
+    {
+        height: 35rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1.1rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 1.5px #000000;
+        -moz-text-stroke: 1.5px #000000;
+        font-size: 4rem;
+    }
+    #hero-text h4
+    {
+        font-size: 1rem;
+        max-width: 400px;
+    }
+    .home-cta
+    {
+        font-size: 1rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 1rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 30rem;
+        width: 40rem;
+    }
+    #hero-review-track
+    {
+        gap: 4rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 30rem;
+        width: 18rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.2rem;
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 1.1rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-66rem);
+        }
+    }
+}
+@media (max-width: 650px)
+{
+    #hero
+    {
+        height: 65rem;
+    }
+    #hero-text
+    {
+        height: 35rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 1.5px #000000;
+        -moz-text-stroke: 1.5px #000000;
+        font-size: 3rem;
+    }
+    #hero-text h4
+    {
+        font-size: 0.9rem;
+        max-width: 320px;
+    }
+    .home-cta
+    {
+        font-size: 0.9rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 0.9rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 30rem;
+        width: 30rem;
+    }
+    #hero-review-track
+    {
+        gap: 3rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 29rem;
+        width: 18rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.1rem;
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 0.9rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-63rem);
+        }
+    }
+}
+@media (max-width: 500px)
+{
+    #hero
+    {
+        height: 65rem;
+    }
+    #hero-text
+    {
+        height: 35rem;
+        margin: 0rem 0rem 0rem 0rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 1.5px #000000;
+        -moz-text-stroke: 1.5px #000000;
+        font-size: 3.5rem;
+    }
+    .hero-title span
+    {
+        display: block;
+    }
+    #hero-text h4
+    {
+        font-size: 0.9rem;
+        max-width: 320px;
+    }
+    .home-cta
+    {
+        font-size: 0.9rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 0.9rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 30rem;
+        width: 25rem;
+    }
+    #hero-review-track
+    {
+        gap: 3rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 29rem;
+        width: 18rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.1rem;
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 0.9rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-63rem);
+        }
+    }
+}
+@media (max-width: 420px)
+{
+    #hero
+    {
+        height: 65rem;
+    }
+    #hero-text
+    {
+        height: 35rem;
+        margin: 0rem 0rem 0rem 0rem;
+    }
+    #hero-text h3
+    {
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+        font-size: 1rem;
+    }
+    #hero-text h1
+    {
+        -webkit-text-stroke: 1.5px #000000;
+        -moz-text-stroke: 1.5px #000000;
+        font-size: 3rem;
+    }
+    #hero-text h4
+    {
+        font-size: 0.9rem;
+        max-width: 320px;
+    }
+    .home-cta
+    {
+        font-size: 0.9rem;
+    }
+    .home-cta:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    .home-hero-link
+    {
+        font-size: 0.9rem;
+    }
+    .home-hero-link:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+    }
+    #hero-reviews
+    {
+        height: 30rem;
+        width: 20rem;
+    }
+    #hero-review-track
+    {
+        gap: 3rem;
+        animation: review-scroll 18s linear infinite;
+    }
+    .hero-review-card
+    {
+        border: 2px solid #000000;
+        border-radius: 25px;
+        height: 29rem;
+        width: 18rem;
+    }
+    .hero-review-card-text h3
+    {
+        font-size: 1.1rem;
+        -webkit-text-stroke: 0.25px #000000;
+        -moz-text-stroke: 0.25px #000000;
+    }
+    .hero-review-card-text p
+    {
+        font-size: 0.9rem;
+        margin: 1rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a
+    {
+        font-size: 0.9rem;
+        border: 2px solid #000000;
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+        margin: 1.5rem 0rem 0rem 0rem;
+    }
+    .hero-review-card-text a:hover
+    {
+        -webkit-text-stroke: 0.5px #DD1212;
+        -moz-text-stroke: 0.5px #DD1212;
+        border: 2px solid #DD1212;
+    }
+    @keyframes review-scroll
+    {
+        from
+        {
+            transform: translateX(0);
+        }
+        to
+        {
+            transform: translateX(-63rem);
         }
     }
 }
