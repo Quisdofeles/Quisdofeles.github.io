@@ -1630,7 +1630,7 @@ p
         position: absolute;
         top: 0;
         bottom: 0;
-        width: 50px;
+        width: 30px;
         height: 100%;
         pointer-events: none;
         z-index: 10;
@@ -2367,12 +2367,14 @@ p
         -webkit-text-stroke: 0.25px #000000;
         -moz-text-stroke: 0.25px #000000;
         font-size: 1rem;
+        margin: 0rem 0rem 0rem 0rem;
     }
     #hero-text h1
     {
         -webkit-text-stroke: 1.5px #000000;
         -moz-text-stroke: 1.5px #000000;
-        font-size: 3.5rem;
+        font-size: 5rem;
+        margin: 2.5rem 0rem 0rem 0rem;
     }
     .hero-title span
     {
@@ -2382,6 +2384,7 @@ p
     {
         font-size: 0.9rem;
         max-width: 320px;
+        margin: 1.5rem 0rem 0rem 0rem;
     }
     .home-cta
     {
@@ -2476,7 +2479,7 @@ p
     {
         -webkit-text-stroke: 1.5px #000000;
         -moz-text-stroke: 1.5px #000000;
-        font-size: 3rem;
+        font-size: 5rem;
     }
     #hero-text h4
     {
@@ -2505,7 +2508,7 @@ p
     #hero-reviews
     {
         height: 30rem;
-        width: 20rem;
+        width: 22rem;
     }
     #hero-review-track
     {
