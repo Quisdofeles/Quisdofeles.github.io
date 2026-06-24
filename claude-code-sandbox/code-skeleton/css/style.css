@@ -1,0 +1,121 @@
+/*-----------------------------------------------------------------------------------
+                                        GLOBAL STYLES
+-----------------------------------------------------------------------------------*/
+
+/*Fonts*/
+@font-face
+{
+    font-family: Font Name;
+    src: url(../fonts/Font-name);
+}
+
+/*Variables*/
+:root
+{
+    /*Colors*/
+    --pure-black: #000000;
+    --off-black: #121212;
+    --pure-white: #FFFFFF;
+    --off-white: #F5F5F7;
+    --accent-one: #FF3B30;
+
+    /*Values*/
+    --header-height: 0rem;
+}
+
+/*Defualts*/
+* 
+{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+html
+{
+    scroll-behavior: smooth;
+}
+body 
+{
+    margin: 0px;
+    font-family: Font Name, sans-serif;
+    background-color: var(--pure-white);
+    background-repeat: repeat;
+    background-size: auto;
+}
+
+/*Behaviours*/
+.index-letter 
+{
+    scroll-margin-top: var(--header-height); 
+}
+
+/*Typography*/
+p
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+h1
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+h2
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+h3
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+h4
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+a
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+ul, ol
+{
+    font-family: Font Name, sans-serif;
+    font-style: normal;
+}
+
+/*-----------------------------------------------------------------------------------
+                                        CONTENT
+-----------------------------------------------------------------------------------*/
+
+/*Header*/
+.header
+{
+    padding: 0rem 0rem 0rem 0rem;
+    margin: 0rem 0rem 0rem 0rem;
+}
+
+/*Content*/
+.content 
+{
+    padding: 0rem 0rem 0rem 0rem;
+    margin: 0rem 0rem 0rem 0rem;
+}
+
+/*Footer*/
+.footer 
+{
+    padding: 0rem 0rem 0rem 0rem;
+    margin: 0rem 0rem 0rem 0rem;
+}
+
+/*-----------------------------------------------------------------------------------
+                                        RESPONSIVNESS
+-----------------------------------------------------------------------------------*/
+
+/*Responsive Header*/
+@media (max-width: 000px)
+{
+}
