@@ -31,27 +31,36 @@
 
         <!--Hero Section-->
         <div id="hero">
-            <div id=hero-text><h1>MODERN MEDIA COMPOSER/PRODUCER</h1></div>
-        </div>
-
-        <!--Logo Carousel-->
-        <div class="logo-bar">
-            <div class="logo-bar-images">
-                <img id="rev-play"
-                src="images/Rev-Play.webp" 
-                alt="Reverse Play Gray Logo">
-                <img id="candl-motors"
-                src="images/C&L-Motors.webp" 
-                alt="C&L Motors Gray Logo">
-                <img id="fashion-speaks"
-                src="images/Fashion-Speaks.webp" 
-                alt="Fashion Speaks Gray Logo">
-                <img id="ocular-sounds"
-                src="images/Ocular-Sounds.webp" 
-                alt="Ocular Sounds Gray Logo">
-                <img id="le-monde"
-                src="images/Le-Monde.webp" 
-                alt="Le Monde Gray Logo">
+            <img src="images/B&W-Radio-Hero.webp" alt="Mellowstruck holding a vintage radio" class="hero-bg">
+            <div id="hero-text">
+                <h1 class="hero-line-1">MODERN MEDIA</h1>
+                <h1 class="hero-line-2">COMPOSER/PRODUCER</h1>
+            </div>
+            <div class="logo-bar">
+                <div class="logo-bar-images">
+                    <div class="logo-bar-track">
+                        <img src="images/Rev-Play.webp" alt="Reverse Play Gray Logo">
+                        <img src="images/C&L-Motors.webp" alt="C&L Motors Gray Logo">
+                        <img src="images/Fashion-Speaks.webp" alt="Fashion Speaks Gray Logo">
+                        <img src="images/Ocular-Sounds.webp" alt="Ocular Sounds Gray Logo">
+                        <img src="images/Le-Monde.webp" alt="Le Monde Gray Logo">
+                        <img src="images/Rev-Play.webp" alt="" aria-hidden="true">
+                        <img src="images/C&L-Motors.webp" alt="" aria-hidden="true">
+                        <img src="images/Fashion-Speaks.webp" alt="" aria-hidden="true">
+                        <img src="images/Ocular-Sounds.webp" alt="" aria-hidden="true">
+                        <img src="images/Le-Monde.webp" alt="" aria-hidden="true">
+                        <img src="images/Rev-Play.webp" alt="" aria-hidden="true">
+                        <img src="images/C&L-Motors.webp" alt="" aria-hidden="true">
+                        <img src="images/Fashion-Speaks.webp" alt="" aria-hidden="true">
+                        <img src="images/Ocular-Sounds.webp" alt="" aria-hidden="true">
+                        <img src="images/Le-Monde.webp" alt="" aria-hidden="true">
+                        <img src="images/Rev-Play.webp" alt="" aria-hidden="true">
+                        <img src="images/C&L-Motors.webp" alt="" aria-hidden="true">
+                        <img src="images/Fashion-Speaks.webp" alt="" aria-hidden="true">
+                        <img src="images/Ocular-Sounds.webp" alt="" aria-hidden="true">
+                        <img src="images/Le-Monde.webp" alt="" aria-hidden="true">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -322,5 +331,34 @@
                 </div>
             </div>
         </div>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            gsap.registerPlugin(ScrollTrigger);
+
+            var line1 = document.querySelector(".hero-line-1");
+            var line2 = document.querySelector(".hero-line-2");
+
+            gsap.set([line1, line2], { x: -100, opacity: 0 });
+
+            gsap.timeline({
+                onComplete: function() {
+                    gsap.timeline({
+                        scrollTrigger: {
+                            trigger: "#hero",
+                            start: "center center",
+                            end: "bottom top",
+                            scrub: 0.6
+                        }
+                    })
+                    .to(line2, { x: -150, opacity: 0 })
+                    .to(line1, { x: -150, opacity: 0 }, 0.15);
+                }
+            })
+            .to(line1, { x: 0, opacity: 1, duration: 1, ease: "power3.out" })
+            .to(line2, { x: 0, opacity: 1, duration: 1, ease: "power3.out" }, "-=0.5");
+        });
+        </script>
+        <script src="handler.js"></script>
     </body>
 </html>
