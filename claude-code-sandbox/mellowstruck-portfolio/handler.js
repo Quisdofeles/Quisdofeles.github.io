@@ -1,3 +1,6 @@
+/* -----------------------------------------
+HERO SECTION LOGO BAR INFINITE LOOP MARQUEE
+-------------------------------------------*/
 var BASE_DURATION = 25;
 var DEFAULT_SPEED = 1;
 var SPEED_MULTIPLIER = 3;
@@ -79,3 +82,4 @@ document.addEventListener("DOMContentLoaded", function() {
 
     requestAnimationFrame(tick);
 });
+
