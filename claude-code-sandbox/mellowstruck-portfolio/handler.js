@@ -116,7 +116,7 @@ var VELOCITY_DIVISOR = 1000;
 var SCROLL_RESPONSE_RATE = 0.12;
 var EASE_BACK_RATE = 0.04;
 var SCROLL_IDLE_THRESHOLD = 150;
-var SET_COUNT = 4;
+var SET_COUNT = 3;
 
 document.addEventListener("DOMContentLoaded", function() {
 

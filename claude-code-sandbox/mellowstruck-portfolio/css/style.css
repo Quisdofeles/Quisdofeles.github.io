@@ -213,7 +213,7 @@ p
     flex-direction: column;
     justify-content: center;
     flex: 1;
-    padding-left: 6vw;
+    padding-left: 8vw;
 }
 .hero-line-1-desktop,
 .hero-line-2-desktop 
@@ -226,7 +226,7 @@ p
 .hero-line-4
 {
     color: white;
-    font-size: clamp(2.5rem, 6.5vw, 7.5rem);
+    font-size: clamp(2.4rem, 6vw, 7rem);
     line-height: 1.05;
     text-shadow: 2px 4px 20px rgba(0, 0, 0, 0.6);
     will-change: transform, opacity;
@@ -283,6 +283,10 @@ p
     flex-shrink: 0;
     display: block;
     margin-right: clamp(40px, 6vw, 120px);
+}
+.logo-bar-track img.logo-band-of-friends
+{
+    height: clamp(50px, 7vw, 85px);
 }
 
 /*About Section*/
@@ -1384,15 +1388,17 @@ RESPONSIVNESS
 /*Hero Responsive*/
 @media (max-width: 600px)
 {
-    .hero-line-1-desktop,
-    .hero-line-2-desktop
+    .hero-line-1-desktop
     {
         display: none;
     }
-    .hero-line-1-mobile,
-    .hero-line-2-mobile
+    .hero-line-1-mobile
     {
         display: inline;
+    }
+    .hero-line-2
+    {
+        display: none;
     }
     .hero-line-3,
     .hero-line-4
@@ -1400,10 +1406,9 @@ RESPONSIVNESS
         display: block;
     }
     .hero-line-1,
-    .hero-line-2,
     .hero-line-3,
     .hero-line-4
     {
-        font-size: clamp(2.5rem, 11vw, 4rem);
+        font-size: clamp(2.4rem, 10vw, 3.4rem);
     }
 }
