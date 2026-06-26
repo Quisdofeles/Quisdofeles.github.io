@@ -1,3 +1,33 @@
+/* -------------------------
+HAMBURGER MENU TOGGLE
+--------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var hamburger = document.querySelector(".hamburger");
+    var mobileMenu = document.querySelector(".mobile-menu");
+    if (!hamburger || !mobileMenu) return;
+
+    var menuLinks = mobileMenu.querySelectorAll("a");
+
+    function toggleMenu() {
+        var isOpen = hamburger.classList.toggle("active");
+        mobileMenu.classList.toggle("open");
+        document.body.style.overflow = isOpen ? "hidden" : "";
+    }
+
+    function closeMenu() {
+        hamburger.classList.remove("active");
+        mobileMenu.classList.remove("open");
+        document.body.style.overflow = "";
+    }
+
+    hamburger.addEventListener("click", toggleMenu);
+
+    for (var i = 0; i < menuLinks.length; i++) {
+        menuLinks[i].addEventListener("click", closeMenu);
+    }
+});
+
 /* ------------------------------
 HERO TEXT ENTRANCE & SCROLL EXIT
 -------------------------------*/
@@ -161,4 +191,3 @@ document.addEventListener("DOMContentLoaded", function() {
 
     requestAnimationFrame(tick);
 });
-

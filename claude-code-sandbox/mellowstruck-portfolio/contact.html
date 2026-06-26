@@ -12,19 +12,35 @@
     <body>
         <!--Header-->
         <div class="header">
-            <div class="wordmark">
-                <a href="index.html" id="mellowstruck-wordmark">
-                    <img 
-                    src="images/Header-Wordmark.webp" 
-                    alt="White Mellowstruck Wordmark"
-                    >
-                </a>
-            </div>
-            <div class="navbar">
+            <a href="index.html" class="wordmark">
+                <img
+                src="images/Mellowstruck_Wordmark_Vector.svg"
+                alt="Mellowstruck Wordmark"
+                >
+            </a>
+            <nav class="navbar">
                 <a href="index.html">Home</a>
                 <a href="about.html">About</a>
                 <a href="tracks.html">Tracks</a>
                 <a href="contact.html">Contact</a>
+            </nav>
+            <button class="hamburger" aria-label="Toggle menu">
+                <svg class="hamburger-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                    <rect y="3" width="24" height="2.5" rx="1.25"/>
+                    <rect y="10.75" width="24" height="2.5" rx="1.25"/>
+                    <rect y="18.5" width="24" height="2.5" rx="1.25"/>
+                </svg>
+                <svg class="close-icon" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2.93" y="1.11" width="28" height="2.5" rx="1.25" transform="rotate(45 2.93 1.11)"/>
+                    <rect x="1.11" y="21.07" width="28" height="2.5" rx="1.25" transform="rotate(-45 1.11 21.07)"/>
+                </svg>
+            </button>
+            <div class="mobile-menu">
+                <a class="mobile-menu-button" href="index.html">Home</a>
+                <a class="mobile-menu-button" href="about.html">About</a>
+                <a class="mobile-menu-button" href="tracks.html">Tracks</a>
+                <a class="mobile-menu-button" href="contact.html">Contact</a>
+                <a class="mobile-menu-shadow"></a>
             </div>
         </div>
 
@@ -136,5 +152,7 @@
                 </div>
             </div>
         </div>
+
+        <script src="handler.js"></script>
     </body>
 </html>
