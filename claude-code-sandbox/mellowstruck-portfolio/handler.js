@@ -4,8 +4,9 @@ HERO TEXT ENTRANCE & SCROLL EXIT
 document.addEventListener("DOMContentLoaded", function() {
 
     gsap.registerPlugin(ScrollTrigger);
-    ScrollTrigger.normalizeScroll(true);
+    ScrollTrigger.config({ ignoreMobileResize: true });
 
+    var heroText = document.querySelector("#hero-text");
     var allLines = [
         document.querySelector(".hero-line-1"),
         document.querySelector(".hero-line-2"),
@@ -13,30 +14,65 @@ document.addEventListener("DOMContentLoaded", function() {
         document.querySelector(".hero-line-4")
     ];
 
-    var lines = allLines.filter(function(el) {
-        return el && getComputedStyle(el).display !== "none";
-    });
+    var entranceTl = null;
+    var exitScrollTrigger = null;
+    var visibleCount = 0;
 
-    gsap.set(lines, { x: -100, opacity: 0 });
+    function getVisibleLines() {
+        return allLines.filter(function(el) {
+            return el && getComputedStyle(el).display !== "none";
+        });
+    }
 
-    var entranceTl = gsap.timeline({
-        onComplete: function() {
-            var exitTl = gsap.timeline({
-                scrollTrigger: {
-                    trigger: "#hero",
-                    start: "center center",
-                    end: "bottom top",
-                    scrub: 0.25
+    function initAnimation() {
+        var lines = getVisibleLines();
+        visibleCount = lines.length;
+
+        gsap.set(allLines, { clearProps: "all" });
+        gsap.set(lines, { x: -100, opacity: 0 });
+
+        entranceTl = gsap.timeline({
+            onComplete: function() {
+                var exitTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: "#hero",
+                        start: "center center",
+                        end: "bottom top",
+                        scrub: 0.25,
+                        invalidateOnRefresh: true,
+                        onRefresh: function(self) {
+                            exitScrollTrigger = self;
+                        }
+                    }
+                });
+                exitScrollTrigger = exitTl.scrollTrigger;
+                for (var i = 0; i < lines.length; i++) {
+                    exitTl.to(lines[i], { x: -90, opacity: 0 }, i * 0.05);
                 }
-            });
-            for (var i = 0; i < lines.length; i++) {
-                exitTl.to(lines[i], { x: -90, opacity: 0 }, i * 0.05);
             }
+        });
+        lines.forEach(function(line, i) {
+            entranceTl.to(line, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, i === 0 ? 0 : "-=0.4");
+        });
+    }
+
+    initAnimation();
+
+    new ResizeObserver(function() {
+        var newCount = getVisibleLines().length;
+        if (newCount === visibleCount) return;
+
+        if (entranceTl) {
+            entranceTl.kill();
+            entranceTl = null;
         }
-    });
-    lines.forEach(function(line, i) {
-        entranceTl.to(line, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, i === 0 ? 0 : "-=0.4");
-    });
+        if (exitScrollTrigger) {
+            exitScrollTrigger.kill();
+            exitScrollTrigger = null;
+        }
+
+        initAnimation();
+    }).observe(heroText);
 });
 
 /* -----------------------------------------
@@ -54,8 +90,9 @@ var SET_COUNT = 4;
 
 document.addEventListener("DOMContentLoaded", function() {
 
-    gsap.registerPlugin(ScrollTrigger);
-    ScrollTrigger.normalizeScroll(true);
+    window.addEventListener("orientationchange", function() {
+        setTimeout(function() { ScrollTrigger.refresh(); }, 200);
+    });
 
     var track = document.querySelector(".logo-bar-track");
     if (!track) return;
