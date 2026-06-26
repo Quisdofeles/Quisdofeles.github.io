@@ -200,7 +200,7 @@ p
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 8887;
+    z-index: 0;
     height: calc(100% - 7.5rem);
     object-fit: cover;
     object-position: 60% center;
@@ -214,6 +214,11 @@ p
     justify-content: center;
     flex: 1;
     padding-left: 6vw;
+}
+.hero-line-1-desktop,
+.hero-line-2-desktop 
+{
+    display: inline;
 }
 .hero-line-1,
 .hero-line-2,
