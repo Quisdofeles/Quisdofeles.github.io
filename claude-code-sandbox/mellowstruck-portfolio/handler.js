@@ -4,6 +4,7 @@ HERO TEXT ENTRANCE & SCROLL EXIT
 document.addEventListener("DOMContentLoaded", function() {
 
     gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.normalizeScroll(true);
 
     var allLines = [
         document.querySelector(".hero-line-1"),
@@ -54,6 +55,7 @@ var SET_COUNT = 4;
 document.addEventListener("DOMContentLoaded", function() {
 
     gsap.registerPlugin(ScrollTrigger);
+    ScrollTrigger.normalizeScroll(true);
 
     var track = document.querySelector(".logo-bar-track");
     if (!track) return;
