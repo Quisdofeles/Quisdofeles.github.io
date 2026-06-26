@@ -108,7 +108,7 @@ p
     width: 100%;
     height: calc(100% - 12vh);
     object-fit: cover;
-    object-position: 55% center;
+    object-position: 60% center;
 }
 #hero-text
 {
@@ -121,13 +121,25 @@ p
     padding-left: 6vw;
 }
 .hero-line-1,
-.hero-line-2
+.hero-line-2,
+.hero-line-3,
+.hero-line-4
 {
     color: white;
     font-size: clamp(2.5rem, 6.5vw, 7.5rem);
     line-height: 1.05;
     text-shadow: 2px 4px 20px rgba(0, 0, 0, 0.6);
     will-change: transform, opacity;
+}
+.hero-line-3,
+.hero-line-4
+{
+    display: none;
+}
+.hero-line-1-mobile,
+.hero-line-2-mobile
+{
+    display: none;
 }
 .logo-bar
 {
@@ -1189,43 +1201,35 @@ p
     text-decoration: none;
 }
 
+
+/*------------
+RESPONSIVNESS
+------------*/
+
+
 /*Hero Responsive*/
 @media (max-width: 600px)
 {
-    .hero-bg
+    .hero-line-1-desktop,
+    .hero-line-2-desktop
     {
-        object-position: 58% center;
+        display: none;
     }
-}
-@media (max-width: 600px)
-{
+    .hero-line-1-mobile,
+    .hero-line-2-mobile
+    {
+        display: inline;
+    }
+    .hero-line-3,
+    .hero-line-4
+    {
+        display: block;
+    }
     .hero-line-1,
-    .hero-line-2
+    .hero-line-2,
+    .hero-line-3,
+    .hero-line-4
     {
-        font-size: clamp(1.5rem, 7vw, 2.5rem);
-    }
-    .hero-bg
-    {
-        object-position: 60% center;
-    }
-}
-@media (max-width: 375px)
-{
-    .hero-line-1,
-    .hero-line-2
-    {
-        font-size: clamp(1.3rem, 6.5vw, 2rem);
-    }
-    .hero-bg
-    {
-        object-position: 62% center;
-    }
-}
-@media (max-height: 500px) and (orientation: landscape)
-{
-    .hero-line-1,
-    .hero-line-2
-    {
-        font-size: clamp(1.8rem, 8vh, 3.5rem);
+        font-size: clamp(2.5rem, 11vw, 4rem);
     }
 }

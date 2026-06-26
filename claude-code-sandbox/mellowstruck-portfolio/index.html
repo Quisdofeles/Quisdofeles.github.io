@@ -33,8 +33,10 @@
         <div id="hero">
             <img src="images/B&W-Radio-Hero.webp" alt="Mellowstruck holding a vintage radio" class="hero-bg">
             <div id="hero-text">
-                <h1 class="hero-line-1">MODERN MEDIA</h1>
-                <h1 class="hero-line-2">COMPOSER/PRODUCER</h1>
+                <h1 class="hero-line-1"><span class="hero-line-1-desktop">MODERN MEDIA</span><span class="hero-line-1-mobile">MODERN</span></h1>
+                <h1 class="hero-line-2"><span class="hero-line-2-desktop">COMPOSER/PRODUCER</span><span class="hero-line-2-mobile">MEDIA</span></h1>
+                <h1 class="hero-line-3">COMPOSER</h1>
+                <h1 class="hero-line-4">PRODUCER</h1>
             </div>
             <div class="logo-bar">
                 <div class="logo-bar-images">
@@ -332,33 +334,6 @@
             </div>
         </div>
 
-        <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            gsap.registerPlugin(ScrollTrigger);
-
-            var line1 = document.querySelector(".hero-line-1");
-            var line2 = document.querySelector(".hero-line-2");
-
-            gsap.set([line1, line2], { x: -100, opacity: 0 });
-
-            gsap.timeline({
-                onComplete: function() {
-                    gsap.timeline({
-                        scrollTrigger: {
-                            trigger: "#hero",
-                            start: "center center",
-                            end: "bottom top",
-                            scrub: 0.6
-                        }
-                    })
-                    .to(line2, { x: -150, opacity: 0 })
-                    .to(line1, { x: -150, opacity: 0 }, 0.15);
-                }
-            })
-            .to(line1, { x: 0, opacity: 1, duration: 1, ease: "power3.out" })
-            .to(line2, { x: 0, opacity: 1, duration: 1, ease: "power3.out" }, "-=0.5");
-        });
-        </script>
         <script src="handler.js"></script>
     </body>
 </html>

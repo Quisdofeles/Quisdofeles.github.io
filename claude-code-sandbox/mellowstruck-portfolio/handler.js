@@ -1,3 +1,43 @@
+/* ------------------------------
+HERO TEXT ENTRANCE & SCROLL EXIT
+-------------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    var allLines = [
+        document.querySelector(".hero-line-1"),
+        document.querySelector(".hero-line-2"),
+        document.querySelector(".hero-line-3"),
+        document.querySelector(".hero-line-4")
+    ];
+
+    var lines = allLines.filter(function(el) {
+        return el && getComputedStyle(el).display !== "none";
+    });
+
+    gsap.set(lines, { x: -100, opacity: 0 });
+
+    var entranceTl = gsap.timeline({
+        onComplete: function() {
+            var exitTl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: "#hero",
+                    start: "center center",
+                    end: "bottom top",
+                    scrub: 0.25
+                }
+            });
+            for (var i = 0; i < lines.length; i++) {
+                exitTl.to(lines[i], { x: -90, opacity: 0 }, i * 0.05);
+            }
+        }
+    });
+    lines.forEach(function(line, i) {
+        entranceTl.to(line, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, i === 0 ? 0 : "-=0.4");
+    });
+});
+
 /* -----------------------------------------
 HERO SECTION LOGO BAR INFINITE LOOP MARQUEE
 -------------------------------------------*/
