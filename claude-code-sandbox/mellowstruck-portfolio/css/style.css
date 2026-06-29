@@ -26,6 +26,7 @@ body
     overflow-x: hidden;
     max-width: 100%;
     padding-top: 7.5rem;
+    background-color: #222222;
 }
 
 /*Font Styling*/
@@ -158,7 +159,8 @@ p
 }
 .mobile-menu a
 {
-    text-align: center;
+    text-align: right;
+    padding-right: 2rem;
     width: 100%;
     font-size: 1.4rem;
     text-decoration: none;
@@ -293,20 +295,19 @@ p
 #about
 {
     background-image: url("../images/Pink-Sky-Hero.webp");
-    height: 100vh;
+    min-height: calc(102svh - 7.5rem);
     background-size: cover;
-    background-position: center, center;
+    background-position: center;
+    position: relative;
     display: flex;
     justify-content: start;
     align-items: center;
     text-align: center;
     flex-direction: column;
-    position: relative;
-    top: 0px;
-    padding: 12vh;
+    padding: 4rem 4rem 4rem 4rem;
     z-index: 7777;
 }
-#about::before 
+#about::before
 {
     content: "";
     position: absolute;
@@ -322,57 +323,34 @@ p
 {
     display: flex;
     flex-direction: column;
-    margin: 0vh 0vh 0vh 0vh;
-    border: 0px solid white;
     border-radius: 25px;
-    max-width: 180vh;
-    min-width: 50vh;
+    max-width: 1100px;
+    min-width: 320px;
     padding: 5vh;
-    background-color: transparent;
-    backdrop-filter: blur(25px);
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     justify-content: center;
-}
-.about-card::before 
-{
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 25px;
-    padding: 2px;
-    background: 
-        linear-gradient(to bottom right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
-        linear-gradient(to bottom right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1));
-        
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-              mask-composite: exclude;
-    mask:
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    mask-composite: exclude;
 }
 #about h2
 {
     color: white;
-    font-size: 54px;
+    font-size: clamp(2rem, 4vw, 3.5rem);
 }
 #about p
 {
     color: white;
-    font-size: 27px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
 }
-#about a 
+#about a
 {
     align-self: center;
     width: fit-content;
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
-    font-size: 27px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
     border: 3px solid white;
     border-radius: 75px;
     padding: 10px 20px;
@@ -381,84 +359,62 @@ p
     z-index: 8888;
     transition: all 0.3s ease;
 }
-#about a:hover 
+#about a:hover
 {
     border: 3px solid transparent;
     background-color: white;
     color: #222222;
+}
+.about-text-mobile
+{
+    display: none;
 }
 
 /*About Page*/
 #about-mellowstruck
 {
     background-image: url("../images/Pink-Sky-Hero-Tall.webp");
-    height: 170vh;
+    height: 120svh;
     background-size: cover;
-    background-position: bottom, center;
+    background-position: bottom center;
     display: flex;
     justify-content: start;
     align-items: center;
     text-align: center;
     flex-direction: column;
-    position: relative;
-    top: 0px;
-    padding: 12vh;
+    padding: 4rem 4rem 4rem 4rem;
 }
 .about-mellowstruck-card
 {
     display: flex;
     flex-direction: column;
-    margin: 0vh 0vh 0vh 0vh;
-    border: 0px solid white;
     border-radius: 25px;
-    max-width: 180vh;
-    min-width: 50vh;
-    padding: 5vh;
-    background-color: transparent;
-    backdrop-filter: blur(25px);
-    justify-content: center;
-}
-.about-mellowstruck-card::before 
-{
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 25px;
-    padding: 2px;
-    background: 
-        linear-gradient(to bottom right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
-        linear-gradient(to bottom right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.1));
-        
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-              mask-composite: exclude;
-    mask:
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    mask-composite: exclude;
+    max-width: 1400px;
+    min-width: 320px;
+    padding: 2rem;
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 }
 #about-mellowstruck h2
 {
     color: white;
-    font-size: 54px;
+    font-size: clamp(2rem, 4vw, 3.5rem);
 }
 #about-mellowstruck p
 {
     color: white;
-    font-size: 27px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
 }
-#about-mellowstruck a 
+#about-mellowstruck a
 {
     align-self: center;
     width: fit-content;
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
-    font-size: 27px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
     border: 3px solid white;
     border-radius: 75px;
     padding: 10px 20px;
@@ -467,7 +423,7 @@ p
     z-index: 8888;
     transition: all 0.3s ease;
 }
-#about-mellowstruck a:hover 
+#about-mellowstruck a:hover
 {
     border: 3px solid transparent;
     background-color: white;
@@ -1052,37 +1008,37 @@ p
 .contact
 {
     background-image: url("../images/Saturated-Back-Shots.webp");
-    height: 90vh;
+    height: calc(100svh - 7.5rem);
     background-size: cover;
-    background-position: center, center;
+    background-position: center;
     display: flex;
-    justify-content: start;
+    justify-content: flex-start;
     align-items: center;
     text-align: center;
     flex-direction: column;
     position: relative;
-    top: 0px;
+    padding-top: 4rem;
 }
 .contact h2
 {
     color: white;
-    font-size: 60px;
-    margin: 7vh 0vh 0vh 0vh;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    margin: 0;
 }
 .contact p
 {
     color: white;
-    font-size: 28px;
-    margin: 0vh 0vh 0vh 0vh;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
 }
-.contact a 
+.contact a
 {
+    position: absolute;
+    top: 82%;
     align-self: center;
-    justify-self: start;
     width: fit-content;
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
-    font-size: 27px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
     border: 3px solid white;
     border-radius: 75px;
     padding: 10px 20px;
@@ -1090,11 +1046,8 @@ p
     color: white;
     z-index: 6666;
     transition: all 0.3s ease;
-    position: relative;
-    top: 0vh;
-    margin-top: 55vh;
 }
-.contact a:hover 
+.contact a:hover
 {
     border: 3px solid transparent;
     background-color: white;
@@ -1105,26 +1058,28 @@ p
 .contact-page
 {
     background-image: url("../images/Saturated-Back-Shots-Tall.webp");
-    height: 125vh;
+    min-height: calc(100svh - 7.5rem);
     background-size: cover;
-    background-position: bottom, center;
+    background-position: bottom center;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    padding: 4rem 2rem 4rem 2rem;
 }
 .contact-page h2
 {
     color: white;
-    font-size: 48px;
+    font-size: clamp(2rem, 4vw, 3.5rem);
 }
 .contact-page h3
 {
     color: white;
-    font-size: 36px;
+    font-size: clamp(1.25rem, 2.5vw, 2rem);
 }
 .contact-page p
 {
     color: white;
-    font-size: 24px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
 }
 .blurb
 {
@@ -1132,19 +1087,16 @@ p
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin: 10vh 0vh 0vh 0vh;
 }
 .blurb h2
 {
-    max-width: 50%;
-    margin: 0 auto;
-    text-align: center; 
+    max-width: 700px;
+    text-align: center;
 }
 .blurb p
 {
-    max-width: 50%;
-    margin: 0 auto;
-    text-align: center; 
+    max-width: 700px;
+    text-align: center;
 }
 .social-cards
 {
@@ -1153,26 +1105,28 @@ p
     justify-content: center;
     align-items: center;
     text-align: center;
-    gap: 15vw;
-    margin: 25vh 0vh 0vh 0vh;
+    gap: 17.5rem;
+    margin-top: -1rem;
 }
-#email-card 
+#email-card
 {
     order: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
 }
-#instagram-card 
+#instagram-card
 {
     order: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
 }
 #link-card
 {
@@ -1180,7 +1134,6 @@ p
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 35vh 0vh 0vh 0vh;
 }
 #contact-explore-button
 {
@@ -1188,7 +1141,7 @@ p
     text-decoration: none;
     font-family: Clash-Grotesk-Medium, sans-serif;
     font-weight: 100;
-    font-size: 24px;
+    font-size: clamp(1rem, 1.8vw, 1.5rem);
     color: white;
     border: 3px solid white;
     border-radius: 75px;
@@ -1196,20 +1149,20 @@ p
     z-index: 6666;
     transition: all 0.3s ease;
     align-self: center;
-    margin-top: 2vh;
+    margin-top: 1rem;
 }
-#contact-explore-button:hover 
+#contact-explore-button:hover
 {
     border: 3px solid transparent;
     background-color: white;
     color: #222222;
 }
-.contact-icons 
+.contact-icons
 {
     position: relative;
     width: 40px;
     height: 40px;
-    margin: 2vh 0vh 0vh 0vh;
+    margin-top: 1rem;
 }
 .contact-icons a 
 {
@@ -1385,7 +1338,7 @@ RESPONSIVNESS
     }
 }
 
-/*Hero Responsive*/
+/*Hero Section Responsive*/
 @media (max-width: 600px)
 {
     .hero-line-1-desktop
@@ -1410,5 +1363,115 @@ RESPONSIVNESS
     .hero-line-4
     {
         font-size: clamp(2.4rem, 10vw, 3.4rem);
+    }
+}
+
+/*About Section Responsive*/
+@media (max-width: 600px)
+{
+    .about-text-desktop
+    {
+        display: none;
+    }
+    .about-text-mobile
+    {
+        display: inline;
+    }
+    #about
+    {
+        padding: 3rem 4rem 4rem 4rem;
+    }
+}
+
+/*About Page Responsive*/
+@media (max-width: 1400px)
+{
+    #about-mellowstruck
+    {
+        height: 110svh;
+    }
+}
+@media (max-width: 1200px)
+{
+    #about-mellowstruck
+    {
+        height: calc(110svh - 7.5rem);
+    }
+}
+@media (max-width: 1000px)
+{
+    #about-mellowstruck
+    {
+        height: calc(100svh - 7.5rem);
+    }
+}
+@media (max-width: 800px)
+{
+    #about-mellowstruck
+    {
+        height: calc(110svh - 7.5rem);
+    }
+}
+@media (max-width: 650px)
+{
+    #about-mellowstruck
+    {
+        height: 130svh;
+    }
+    #about-mellowstruck
+    {
+        padding: 3rem 4rem 4rem 4rem;
+    }
+}
+@media (max-width: 500px)
+{
+    #about-mellowstruck
+    {
+        height: 165svh;
+    }
+    #about-mellowstruck
+    {
+        padding: 3rem 4rem 4rem 4rem;
+    }
+}
+
+/*Contact Section Responsive*/
+@media (max-width: 600px)
+{
+}
+
+/*Contact Page Responsive*/
+@media (max-width: 1400px)
+{
+    .social-cards
+    {
+        gap: 17.5rem;
+        margin-top: 3rem;
+    }
+}
+@media (max-width: 1275px)
+{
+    .social-cards
+    {
+        gap: 10rem;
+        margin-top: 5rem;
+    }
+}
+@media (max-width: 600px)
+{
+    .contact-page
+    {
+        min-height: calc(115svh - 7.5rem);
+    }
+    .social-cards
+    {
+        flex-direction: column;
+        margin-top: 6rem;
+        gap: 2rem;
+    }
+    .blurb h2,
+    .blurb p
+    {
+        max-width: 100%;
     }
 }

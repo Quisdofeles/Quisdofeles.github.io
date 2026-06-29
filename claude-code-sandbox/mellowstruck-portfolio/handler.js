@@ -1,6 +1,6 @@
-/* -------------------------
+/* --------------------
 HAMBURGER MENU TOGGLE
---------------------------*/
+---------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var hamburger = document.querySelector(".hamburger");
@@ -105,9 +105,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }).observe(heroText);
 });
 
-/* -----------------------------------------
-HERO SECTION LOGO BAR INFINITE LOOP MARQUEE
--------------------------------------------*/
+/* ----------------------------
+LOGO BAR INFINITE LOOP MARQUEE
+------------------------------*/
 var BASE_DURATION = 25;
 var DEFAULT_SPEED = 1;
 var SPEED_MULTIPLIER = 3;
@@ -190,4 +190,115 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     requestAnimationFrame(tick);
+});
+
+/* -------------------------------
+ABOUT CARD SCROLL ENTRANCE & EXIT
+--------------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var aboutCard = document.querySelector(".about-card");
+    if (!aboutCard) return;
+
+    var elements = aboutCard.querySelectorAll("h2, p, a");
+    gsap.set(elements, { x: -50, opacity: 0 });
+
+    var entranceTl = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#about",
+            start: "top 85%",
+            toggleActions: "play none none reverse",
+            fastScrollEnd: true
+        }
+    });
+    for (var i = 0; i < elements.length; i++) {
+        entranceTl.to(elements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
+    }
+
+    var exitTl = gsap.timeline({
+        scrollTrigger: {
+            trigger: "#about",
+            start: "center center",
+            end: "bottom top",
+            scrub: 0.25
+        }
+    });
+    for (var i = 0; i < elements.length; i++) {
+        exitTl.to(elements[i], { x: -50, opacity: 0 }, i * 0.05);
+    }
+});
+
+/* --------------------------
+ABOUT PAGE CARD ENTRANCE
+---------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var aboutCard = document.querySelector(".about-mellowstruck-card");
+    if (!aboutCard) return;
+
+    var elements = aboutCard.querySelectorAll("h2, p, a");
+    gsap.set(elements, { x: -50, opacity: 0 });
+
+    var entranceTl = gsap.timeline();
+    for (var i = 0; i < elements.length; i++) {
+        entranceTl.to(elements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
+    }
+});
+
+/* -------------------------------
+CONTACT SECTION SCROLL EXIT
+--------------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var contact = document.querySelector(".contact");
+    if (!contact) return;
+
+    var contactElements = contact.querySelectorAll("h2, p, a");
+    gsap.set(contactElements, { x: -50, opacity: 0 });
+
+    var entranceTl = gsap.timeline({
+        scrollTrigger: {
+            trigger: ".contact",
+            start: "top 85%",
+            toggleActions: "play none none reverse",
+            fastScrollEnd: true
+        }
+    });
+    for (var i = 0; i < contactElements.length; i++) {
+        entranceTl.to(contactElements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
+    }
+
+    var exitTl = gsap.timeline({
+        scrollTrigger: {
+            trigger: ".contact",
+            start: "center center",
+            end: "bottom top",
+            scrub: 0.25
+        }
+    });
+    for (var i = 0; i < contactElements.length; i++) {
+        exitTl.to(contactElements[i], { x: -50, opacity: 0 }, i * 0.15);
+    }
+});
+
+/* --------------------------
+CONTACT PAGE ENTRANCE
+---------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var contactPage = document.querySelector(".contact-page");
+    if (!contactPage) return;
+
+    var elements = [
+        contactPage.querySelector(".blurb"),
+        contactPage.querySelector(".social-cards"),
+        contactPage.querySelector("#link-card")
+    ].filter(function(el) { return el; });
+
+    gsap.set(elements, { x: -50, opacity: 0 });
+
+    var entranceTl = gsap.timeline();
+    for (var i = 0; i < elements.length; i++) {
+        entranceTl.to(elements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
+    }
 });
