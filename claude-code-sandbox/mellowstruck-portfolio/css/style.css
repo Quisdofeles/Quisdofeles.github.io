@@ -1475,3 +1475,38 @@ RESPONSIVNESS
         max-width: 100%;
     }
 }
+
+/*Footer Responsive*/
+@media (max-width: 600px)
+{
+    .footer-links
+    {
+        display: none;
+    }
+    .footer h2
+    {
+        font-size: 3.08vw;
+    }
+    .footer-copyright
+    {
+        left: 9%;
+        top: 31%;
+    }
+    .footer-icons
+    {
+        left: 75.8%;
+        top: 25%;
+        gap: 1vw;
+    }
+    .footer-icons a
+    {
+        width: 4vw;
+        height: 4vw;
+    }
+    .footer-icons .icon-white,
+    .footer-icons .icon-green
+    {
+        width: 4vw;
+        height: 4vw;
+    }
+}

@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", function() {
     ];
 
     var entranceTl = null;
-    var exitScrollTrigger = null;
     var visibleCount = 0;
 
     function getVisibleLines() {
@@ -61,26 +60,7 @@ document.addEventListener("DOMContentLoaded", function() {
         gsap.set(allLines, { clearProps: "all" });
         gsap.set(lines, { x: -100, opacity: 0 });
 
-        entranceTl = gsap.timeline({
-            onComplete: function() {
-                var exitTl = gsap.timeline({
-                    scrollTrigger: {
-                        trigger: "#hero",
-                        start: "center center",
-                        end: "bottom top",
-                        scrub: 0.25,
-                        invalidateOnRefresh: true,
-                        onRefresh: function(self) {
-                            exitScrollTrigger = self;
-                        }
-                    }
-                });
-                exitScrollTrigger = exitTl.scrollTrigger;
-                for (var i = 0; i < lines.length; i++) {
-                    exitTl.to(lines[i], { x: -90, opacity: 0 }, i * 0.05);
-                }
-            }
-        });
+        entranceTl = gsap.timeline();
         lines.forEach(function(line, i) {
             entranceTl.to(line, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, i === 0 ? 0 : "-=0.4");
         });
@@ -95,10 +75,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (entranceTl) {
             entranceTl.kill();
             entranceTl = null;
-        }
-        if (exitScrollTrigger) {
-            exitScrollTrigger.kill();
-            exitScrollTrigger = null;
         }
 
         initAnimation();
@@ -203,28 +179,9 @@ document.addEventListener("DOMContentLoaded", function() {
     var elements = aboutCard.querySelectorAll("h2, p, a");
     gsap.set(elements, { x: -50, opacity: 0 });
 
-    var entranceTl = gsap.timeline({
-        scrollTrigger: {
-            trigger: "#about",
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-            fastScrollEnd: true
-        }
-    });
+    var entranceTl = gsap.timeline();
     for (var i = 0; i < elements.length; i++) {
         entranceTl.to(elements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
-    }
-
-    var exitTl = gsap.timeline({
-        scrollTrigger: {
-            trigger: "#about",
-            start: "center center",
-            end: "bottom top",
-            scrub: 0.25
-        }
-    });
-    for (var i = 0; i < elements.length; i++) {
-        exitTl.to(elements[i], { x: -50, opacity: 0 }, i * 0.05);
     }
 });
 
@@ -245,9 +202,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/* -------------------------------
+/* --------------------------
 CONTACT SECTION SCROLL EXIT
---------------------------------*/
+---------------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var contact = document.querySelector(".contact");
@@ -256,34 +213,15 @@ document.addEventListener("DOMContentLoaded", function() {
     var contactElements = contact.querySelectorAll("h2, p, a");
     gsap.set(contactElements, { x: -50, opacity: 0 });
 
-    var entranceTl = gsap.timeline({
-        scrollTrigger: {
-            trigger: ".contact",
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-            fastScrollEnd: true
-        }
-    });
+    var entranceTl = gsap.timeline();
     for (var i = 0; i < contactElements.length; i++) {
         entranceTl.to(contactElements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
     }
-
-    var exitTl = gsap.timeline({
-        scrollTrigger: {
-            trigger: ".contact",
-            start: "center center",
-            end: "bottom top",
-            scrub: 0.25
-        }
-    });
-    for (var i = 0; i < contactElements.length; i++) {
-        exitTl.to(contactElements[i], { x: -50, opacity: 0 }, i * 0.15);
-    }
 });
 
-/* --------------------------
+/* --------------------
 CONTACT PAGE ENTRANCE
----------------------------*/
+---------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var contactPage = document.querySelector(".contact-page");
