@@ -185,9 +185,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/* -----------------------
+/* ----------------------
 ABOUT PAGE CARD ENTRANCE
--------------------------*/
+------------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var aboutCard = document.querySelector(".about-mellowstruck-card");
@@ -202,9 +202,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/* --------------------------
+/* ---------------------
 FEATURED WORKS ENTRANCE
----------------------------*/
+-----------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var fw = document.querySelector(".featured-works");
@@ -284,6 +284,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     amplitudeData[i] = sum / blockSize;
                 }
                 drawWaveform(0);
+                playerEl.dataset.waveformReady = "true";
             })
             .catch(function() {});
 
@@ -366,7 +367,7 @@ document.addEventListener("DOMContentLoaded", function() {
             var prevIndex = (index - 1 + players.length) % players.length;
             instances.forEach(function(inst) { inst.pauseOnly(); });
             instances[prevIndex].playFromStart();
-            var card = players[prevIndex].closest(".featured-works-card-left, .featured-works-card-right");
+            var card = players[prevIndex].closest(".featured-works-card-left, .featured-works-card-right, .tracks-dmt, .tracks-tmd");
             if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
         });
 
@@ -374,7 +375,7 @@ document.addEventListener("DOMContentLoaded", function() {
             var nextIndex = (index + 1) % players.length;
             instances.forEach(function(inst) { inst.pauseOnly(); });
             instances[nextIndex].playFromStart();
-            var card = players[nextIndex].closest(".featured-works-card-left, .featured-works-card-right");
+            var card = players[nextIndex].closest(".featured-works-card-left, .featured-works-card-right, .tracks-dmt, .tracks-tmd");
             if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
         });
 
@@ -383,6 +384,59 @@ document.addEventListener("DOMContentLoaded", function() {
 
     players.forEach(function(playerEl, index) {
         initPlayer(playerEl, index);
+    });
+});
+
+/* ------------------
+TRACKS PAGE ENTRANCE
+--------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var tp = document.querySelector(".tracks-page");
+    if (!tp) return;
+
+    var title = tp.querySelector("h2");
+    var contactBtn = document.querySelector("#tracks-contact-button");
+    var groups = Array.from(tp.querySelectorAll(".tracks-dmt, .tracks-tmd"));
+
+    var allElements = [title].concat(groups).concat([contactBtn]).filter(function(el) { return el; });
+    gsap.set(allElements, { x: -50, opacity: 0 });
+
+    if (title) {
+        gsap.to(title, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" });
+    }
+
+    groups.forEach(function(group) {
+        var player = group.querySelector(".player");
+        if (!player) return;
+
+        var checkReady = setInterval(function() {
+            if (player.dataset.waveformReady === "true") {
+                clearInterval(checkReady);
+                gsap.to(group, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" });
+            }
+        }, 100);
+    });
+
+    if (contactBtn) {
+        setTimeout(function() {
+            gsap.to(contactBtn, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" });
+        }, 2000);
+    }
+});
+
+/* --------------------------
+TRACKS PAGE SHOW MORE TOGGLE
+---------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var btns = document.querySelectorAll(".show-more-btn");
+    btns.forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            var extra = btn.previousElementSibling;
+            var isOpen = extra.classList.toggle("open");
+            btn.textContent = isOpen ? "Show Less..." : "Show More...";
+        });
     });
 });
 
