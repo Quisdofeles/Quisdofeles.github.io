@@ -185,9 +185,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/* --------------------------
+/* -----------------------
 ABOUT PAGE CARD ENTRANCE
----------------------------*/
+-------------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var aboutCard = document.querySelector(".about-mellowstruck-card");
@@ -203,8 +203,192 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 /* --------------------------
-CONTACT SECTION SCROLL EXIT
+FEATURED WORKS ENTRANCE
 ---------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var fw = document.querySelector(".featured-works");
+    if (!fw) return;
+
+    var elements = [fw.querySelector("h2")]
+        .concat(Array.from(fw.querySelectorAll(".featured-works-card-left, .featured-works-card-right")))
+        .concat([fw.querySelector("a")])
+        .filter(function(el) { return el; });
+
+    gsap.set(elements, { x: -50, opacity: 0 });
+
+    var entranceTl = gsap.timeline();
+    for (var i = 0; i < elements.length; i++) {
+        entranceTl.to(elements[i], { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, i === 0 ? 0 : "-=0.2");
+    }
+});
+
+/* ---------------------------------
+FEATURED WORKS CUSTOM AUDIO PLAYERS
+-----------------------------------*/
+document.addEventListener("DOMContentLoaded", function() {
+
+    var players = Array.from(document.querySelectorAll(".player"));
+    if (!players.length) return;
+
+    var SAMPLES = 1000;
+    var PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M2,2 Q2,0 4,1 L22,10.5 Q24,12 22,13.5 L4,23 Q2,24 2,22 Z"/></svg>';
+    var PAUSE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="0" width="7" height="24" rx="4.5"/><rect x="15" y="0" width="7" height="24" rx="4.5"/></svg>';
+    var instances = [];
+
+    function initPlayer(playerEl, index) {
+        var src = playerEl.dataset.src;
+        var canvas = playerEl.querySelector(".waveform-canvas");
+        var ctx2d = canvas.getContext("2d");
+        var playPauseBtn = playerEl.querySelector(".play-pause-btn");
+        var prevBtn = playerEl.querySelector(".prev-btn");
+        var nextBtn = playerEl.querySelector(".next-btn");
+        var volumeSlider = playerEl.querySelector(".volume-slider");
+
+        var audio = new Audio();
+        audio.src = src;
+        audio.volume = parseFloat(volumeSlider.value);
+        var amplitudeData = null;
+        var rafId = null;
+
+        function sizeCanvas() {
+            var w = canvas.offsetWidth;
+            if (w > 0) {
+                canvas.width = w;
+                canvas.height = 80;
+            }
+        }
+        sizeCanvas();
+
+        new ResizeObserver(function() {
+            sizeCanvas();
+            var progress = audio.duration ? audio.currentTime / audio.duration : 0;
+            drawWaveform(progress);
+        }).observe(canvas);
+
+        fetch(src)
+            .then(function(res) { return res.arrayBuffer(); })
+            .then(function(buffer) {
+                var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                return audioCtx.decodeAudioData(buffer);
+            })
+            .then(function(decoded) {
+                var raw = decoded.getChannelData(0);
+                var blockSize = Math.floor(raw.length / SAMPLES);
+                amplitudeData = new Float32Array(SAMPLES);
+                for (var i = 0; i < SAMPLES; i++) {
+                    var sum = 0;
+                    for (var j = 0; j < blockSize; j++) {
+                        sum += Math.abs(raw[i * blockSize + j]);
+                    }
+                    amplitudeData[i] = sum / blockSize;
+                }
+                drawWaveform(0);
+            })
+            .catch(function() {});
+
+        function drawWaveform(progress) {
+            if (!amplitudeData) return;
+            var w = canvas.width;
+            var h = canvas.height;
+            if (!w || !h) return;
+            ctx2d.clearRect(0, 0, w, h);
+            var barW = 3;
+            var gap = 2;
+            var pitch = barW + gap;
+            var numBars = Math.floor(w / pitch);
+            var playedBar = Math.floor(progress * numBars);
+            for (var i = 0; i < numBars; i++) {
+                var sampleIndex = Math.floor((i / numBars) * SAMPLES);
+                var amp = amplitudeData[sampleIndex];
+                var barH = Math.max(3, amp * h * 2);
+                ctx2d.fillStyle = i < playedBar ? "#32B57C" : "rgba(255,255,255,0.3)";
+                ctx2d.fillRect(i * pitch, (h - barH) / 2, barW, barH);
+            }
+        }
+
+        function rafLoop() {
+            if (!audio.paused) {
+                var progress = audio.duration ? audio.currentTime / audio.duration : 0;
+                drawWaveform(progress);
+                rafId = requestAnimationFrame(rafLoop);
+            }
+        }
+
+        function pauseOnly() {
+            audio.pause();
+            cancelAnimationFrame(rafId);
+            rafId = null;
+            playPauseBtn.innerHTML = PLAY_SVG;
+        }
+
+        function playFromStart() {
+            audio.currentTime = 0;
+            audio.play();
+            playPauseBtn.innerHTML = PAUSE_SVG;
+            rafId = requestAnimationFrame(rafLoop);
+        }
+
+        playPauseBtn.addEventListener("click", function() {
+            if (audio.paused) {
+                instances.forEach(function(inst, i) {
+                    if (i !== index) inst.pauseOnly();
+                });
+                audio.play();
+                playPauseBtn.innerHTML = PAUSE_SVG;
+                rafId = requestAnimationFrame(rafLoop);
+            } else {
+                pauseOnly();
+            }
+        });
+
+        canvas.addEventListener("click", function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var progress = (e.clientX - rect.left) / rect.width;
+            if (audio.duration) {
+                audio.currentTime = progress * audio.duration;
+                if (audio.paused) drawWaveform(progress);
+            }
+        });
+
+        volumeSlider.addEventListener("input", function() {
+            audio.volume = parseFloat(volumeSlider.value);
+        });
+
+        audio.addEventListener("ended", function() {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+            playPauseBtn.innerHTML = PLAY_SVG;
+            drawWaveform(1);
+        });
+
+        prevBtn.addEventListener("click", function() {
+            var prevIndex = (index - 1 + players.length) % players.length;
+            instances.forEach(function(inst) { inst.pauseOnly(); });
+            instances[prevIndex].playFromStart();
+            var card = players[prevIndex].closest(".featured-works-card-left, .featured-works-card-right");
+            if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        nextBtn.addEventListener("click", function() {
+            var nextIndex = (index + 1) % players.length;
+            instances.forEach(function(inst) { inst.pauseOnly(); });
+            instances[nextIndex].playFromStart();
+            var card = players[nextIndex].closest(".featured-works-card-left, .featured-works-card-right");
+            if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        instances.push({ pauseOnly: pauseOnly, playFromStart: playFromStart });
+    }
+
+    players.forEach(function(playerEl, index) {
+        initPlayer(playerEl, index);
+    });
+});
+
+/* -------------------------
+CONTACT SECTION SCROLL EXIT
+--------------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var contact = document.querySelector(".contact");
@@ -219,9 +403,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-/* --------------------
+/* -------------------
 CONTACT PAGE ENTRANCE
----------------------*/
+--------------------*/
 document.addEventListener("DOMContentLoaded", function() {
 
     var contactPage = document.querySelector(".contact-page");
