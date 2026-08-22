@@ -1,0 +1,24 @@
+{
+  "name": "ledger",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Personal finance tracker (Electron desktop + React Native Android, shared Supabase backend)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "supabase": "supabase",
+    "gen:types": "supabase gen types typescript --project-id blmihxbbxmtdrrbdgdty --schema public > packages/shared/src/database.types.ts",
+    "dev:desktop": "npm run dev --workspace=@ledger/desktop"
+  },
+  "devDependencies": {
+    "supabase": "^2.115.0"
+  },
+  "allowScripts": {
+    "electron@39.2.6": true,
+    "electron-winstaller@5.4.0": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
+  }
+}
