@@ -1,0 +1,32 @@
+/* tokens.css: the design tokens (colors, fonts, radii) as CSS variables.
+   Every other stylesheet uses these instead of hard-coded values. Also loads the bundled UI fonts. */
+
+/* Bundled UI fonts (both OFL licensed). Space Grotesk is a variable font, so one file covers all weights. */
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 400; src: url('../fonts/IBMPlexMono-Regular.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 500; src: url('../fonts/IBMPlexMono-Medium.ttf') format('truetype'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 700; src: url('../fonts/IBMPlexMono-Bold.ttf') format('truetype'); }
+@font-face { font-family: 'Space Grotesk'; font-weight: 300 700; src: url('../fonts/SpaceGrotesk-Variable.ttf') format('truetype'); }
+
+:root {
+  --bg: #0A0A0B;          /* app background, dot grid ground */
+  --panel: #0F0F11;       /* library + editor panel background */
+  --card: #141417;        /* cards, inputs */
+  --card-line: #1E1E22;   /* card borders */
+  --line: #26262B;        /* dividers, outlines */
+  --line-2: #33333A;      /* dashed borders */
+  --text: #EDEDEE;
+  --muted: #9A9AA2;
+  --dot: #2C2C33;         /* preview dot grid */
+  --accent: #D9FF43;      /* lime: primary actions, selection, active states ONLY */
+  --danger: #C42B1C;      /* close button hover */
+  --hover: #1A1A1E;       /* hover / selected row background */
+
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  --font-ui: 'IBM Plex Mono', ui-monospace, monospace;   /* all UI text, 13px base */
+  --font-brand: 'Space Grotesk', sans-serif;             /* wordmark only, 700 */
+
+  --row-h: 36px;          /* height of a property control row in the editor */
+}

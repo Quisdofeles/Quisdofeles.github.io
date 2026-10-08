@@ -1,0 +1,144 @@
+/* editor.css: the right panel. A flex column that exactly fills the height.
+   The LAYERS list is the only scrolling part (flex:1, min-height 120px); properties stay compact. */
+
+.layers-head {
+  flex: none;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 24px; padding: 0 16px;
+  color: var(--muted);
+}
+
+#layers {
+  flex: 1;
+  min-height: 120px;
+  padding: 4px 8px 4px 12px;
+}
+.layer-row {
+  position: relative;
+  display: flex; align-items: center; gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.layer-row:hover { background: var(--hover); }
+.layer-row.selected { background: var(--hover); border-color: var(--accent); }
+.layer-row.dimmed .layer-name, .layer-row.dimmed .layer-glyph { opacity: .4; }
+.layer-caret { width: 12px; text-align: center; color: var(--muted); font-size: 9px; flex: none; }
+.layer-glyph { width: 14px; text-align: center; flex: none; }
+.layer-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.layer-name-input { flex: 1; min-width: 0; height: 22px; }
+.layer-tag { color: var(--muted); font-size: 11px; flex: none; }
+.layer-row.selected .layer-tag { color: var(--accent); }
+.layer-eye {
+  display: none; background: none; border: 0; padding: 0; width: 20px; height: 20px;
+  color: var(--muted); place-items: center; flex: none;
+}
+.layer-eye svg { width: 14px; height: 14px; pointer-events: none; }
+.layer-row:hover .layer-eye, .layer-row.dimmed .layer-eye { display: grid; }
+.layer-eye:hover { color: var(--text); }
+.layer-row.drop-into { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.layer-row.drop-before::before, .layer-row.drop-after::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); pointer-events: none;
+}
+.layer-row.drop-before::before { top: -1px; }
+.layer-row.drop-after::after { bottom: -1px; }
+
+.props-divider { flex: none; height: 1px; background: var(--line); margin: 4px 16px 6px; }
+
+/* Properties never scroll: compact 36px rows, collapsible groups. */
+/* flex: 0 1 auto = natural height, but it may shrink (and only then scroll) in the extreme worst case
+   (5 text roles + a text block selected at 720px tall) so the layers list can keep its 120px minimum. */
+#props { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding: 0 16px; }
+#props::-webkit-scrollbar { width: 4px; }
+#props::-webkit-scrollbar-thumb { background: #3A3A41; border-radius: 2px; }
+.prop-group { margin-bottom: 4px; }
+.prop-head {
+  display: flex; align-items: center; gap: 6px;
+  height: 24px; color: var(--muted); cursor: pointer;
+  background: none; border: 0; padding: 0; width: 100%; text-align: left;
+}
+.prop-head:hover { color: var(--text); }
+.prop-head .caret { font-size: 9px; width: 10px; }
+.prop-body { display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; }
+.prop-body.roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+
+.prop-row {
+  height: var(--row-h);
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 0 10px;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+}
+.prop-row > .label { color: var(--text); font-weight: 500; white-space: nowrap; }
+.prop-row .value { color: var(--muted); display: flex; align-items: center; gap: 6px; min-width: 0; }
+button.prop-row { width: 100%; text-align: left; }
+button.prop-row:hover { border-color: var(--line-2); }
+
+/* Roles: compact buttons with swatch, name, hex. */
+.role-btn { height: var(--row-h); padding: 0 8px; gap: 6px; }
+.role-btn .swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; }
+.role-btn .label { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.role-btn .hex { font-size: 10px; color: var(--muted); }
+.role-btn.drop-target { outline-offset: -2px; }
+
+/* Slider rows: label, slider and value on ONE line so the properties stay compact. */
+.slider-row { gap: 10px; }
+.slider-row .label { width: 44px; flex: none; }
+.slider-row input[type=range] { flex: 1; min-width: 0; }
+.slider-row .val { width: 44px; text-align: right; color: var(--muted); flex: none; }
+
+/* Segmented toggles in the editor match the 36px (or compact) row height. */
+.seg.full { display: flex; width: 100%; height: var(--row-h); }
+.seg.full button { flex: 1; min-height: 0; padding: 0 6px; }
+.split-row { display: flex; gap: 4px; }
+.split-row .seg:first-child { flex: 2; }
+.split-row .seg:last-child { flex: 3; }
+.override-row .value { gap: 2px; }
+.override-row .label { color: var(--muted); font-weight: 400; }
+
+.font-label { max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Compact borderless buttons that live inside a property row (font family, color, "from role"). */
+.mini-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 6px; min-width: 0;
+  background: none; border: 0; border-radius: var(--radius-sm); color: var(--muted);
+}
+.mini-btn:hover { background: var(--hover); color: var(--text); }
+.mini-btn .dot { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,.15); flex: none; }
+.prop-row .mini-select { width: 74px; flex: none; }
+.reset-link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 0; font-size: 11px; }
+.reset-link:hover { color: var(--accent); }
+.text-input { width: 100%; height: var(--row-h); }
+.mini-select { height: 24px; font-size: 12px; }
+
+.props-foot { flex: none; padding: 8px 16px 14px; }
+.dashed-btn {
+  width: 100%; height: 36px;
+  background: none; color: var(--text);
+  border: 1px dashed var(--line-2); border-radius: var(--radius);
+}
+.dashed-btn:hover { border-color: var(--accent); color: var(--accent); }
+.dashed-btn:disabled { opacity: .35; cursor: default; border-color: var(--line-2); color: var(--text); }
+.preset-name-row { display: flex; gap: 6px; }
+.preset-name-row input { flex: 1; height: 36px; }
+
+/* Short windows (like 1280x720): tighten spacing first, per the spec. */
+@media (max-height: 820px) {
+  :root { --row-h: 26px; }
+  .panel-head { height: 44px; }
+  .layer-row { height: 26px; }
+  .layers-head { height: 20px; }
+  .props-divider { margin: 2px 16px 4px; }
+  .prop-head { height: 18px; font-size: 12px; }
+  .prop-group { margin-bottom: 2px; }
+  .prop-body { gap: 2px; padding-bottom: 2px; }
+  .prop-row { font-size: 12px; padding: 0 8px; }
+  .role-btn .label { font-size: 11px; }
+  .props-foot { padding: 4px 16px 8px; }
+  .props-foot .dashed-btn { height: 28px; }
+  .text-input { font-size: 12px; }
+  .prop-row .mini-select, .mini-btn { height: 20px; font-size: 12px; }
+}

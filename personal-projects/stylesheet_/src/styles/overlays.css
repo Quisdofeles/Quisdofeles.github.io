@@ -1,0 +1,82 @@
+/* overlays.css: help overlay, settings panel, confirm dialog, popovers, context menu, toasts. */
+
+#overlay-root { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
+#overlay-root > * { pointer-events: auto; }
+
+/* Offscreen container used while exporting; it only needs to exist, never to be seen. */
+#export-root { position: fixed; left: -100000px; top: 0; pointer-events: none; }
+
+/* ---------- Help overlay ---------- */
+.help-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.78); cursor: pointer; }
+.help-callout {
+  position: absolute; max-width: 250px;
+  background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-lg);
+  padding: 12px 14px; font-size: 12px; line-height: 1.5;
+}
+.help-callout b { color: var(--accent); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; display: block; margin-bottom: 4px; }
+.help-rule {
+  position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%);
+  background: var(--accent); color: #0A0A0B; padding: 10px 18px; border-radius: var(--radius); font-weight: 500;
+}
+.help-close { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+
+/* ---------- Modal base (settings + confirm) ---------- */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; }
+.modal {
+  width: 440px; max-width: calc(100vw - 40px); max-height: calc(100vh - 60px);
+  display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.modal-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 8px; }
+.modal-body { padding: 8px 20px 18px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 0 20px 18px; }
+.modal-text { color: var(--muted); line-height: 1.5; margin: 0; }
+.modal-text b { color: var(--text); font-weight: 500; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Trash list inside settings (its own scroll area). */
+.trash-list { max-height: 190px; display: flex; flex-direction: column; gap: 4px; padding-right: 6px; }
+.trash-item {
+  display: flex; align-items: center; gap: 10px; height: 34px; flex: none;
+  padding: 0 8px; background: var(--card); border: 1px solid var(--card-line); border-radius: var(--radius-sm);
+}
+.trash-item .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trash-item .kind { color: var(--muted); font-size: 11px; }
+.trash-empty { color: var(--muted); font-size: 12px; }
+
+/* ---------- Popovers and menus ---------- */
+.popover {
+  position: fixed;
+  min-width: 200px; max-width: 300px; max-height: 360px;
+  display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius-lg);
+  box-shadow: 0 14px 40px rgba(0,0,0,.6);
+  padding: 8px;
+}
+.popover .pop-scroll { min-height: 0; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
+.pop-title { color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 4px 2px; }
+.menu-item {
+  display: flex; align-items: center; gap: 8px; height: 30px; flex: none;
+  padding: 0 8px; background: none; border: 0; border-radius: var(--radius-sm); text-align: left; width: 100%;
+}
+.menu-item:hover { background: var(--hover); }
+.menu-item.danger { color: #ff6b5e; }
+.menu-item .glyph { color: var(--accent); width: 14px; text-align: center; }
+.menu-item .sub { margin-left: auto; color: var(--muted); font-size: 11px; }
+.menu-item .chip { width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; }
+.pop-palette { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 2px 4px 6px; }
+.pop-palette .chip-btn { height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); padding: 0; }
+.pop-palette .chip-btn:hover { outline: 1px solid var(--accent); }
+.hex-row { display: flex; gap: 6px; padding: 6px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+.hex-row input { flex: 1; height: 28px; }
+.hex-row input.invalid { border-color: var(--danger); }
+.hex-row .btn { height: 28px; }
+
+/* ---------- Toasts (non-blocking notices) ---------- */
+.toast-stack { position: fixed; left: 50%; bottom: 112px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.toast {
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius);
+  padding: 9px 16px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.toast.warn { border-color: var(--accent); }

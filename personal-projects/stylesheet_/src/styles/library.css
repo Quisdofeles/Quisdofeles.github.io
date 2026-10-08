@@ -1,0 +1,124 @@
+/* library.css: the left panel. Six sections share the panel height with flex weights (--w);
+   each section's LIST is the only thing that scrolls. */
+
+.library-body {
+  flex: 1;
+  min-height: 0;                 /* lets the sections shrink instead of overflowing the panel */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 8px 12px 16px;
+}
+
+.lib-section {
+  flex: var(--w) 1 0;            /* weight set inline: vectors 1, fonts 1.4, colors 1.4, palettes 1.4, blocks 1, presets 1 */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lib-head {
+  flex: none;                    /* header never shrinks */
+  display: flex; align-items: center; justify-content: space-between;
+  height: 24px;
+  padding-right: 8px;
+  color: var(--muted);
+}
+.lib-meta { font-size: 12px; }
+.dotcount::before { content: ' · '; }
+
+.lib-list {
+  flex: 1;
+  min-height: 40px;              /* at least one row stays visible */
+  padding-right: 8px;            /* room for the 6px scrollbar so it never overlaps cards */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lib-list > * { flex: none; }    /* cards keep their height; the list scrolls instead of squashing them */
+.lib-empty { color: var(--muted); font-size: 12px; padding: 8px 2px; }
+
+/* ---------- Vectors: 4-column grid of 34px tiles ---------- */
+.grid-vectors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; align-content: start; }
+.grid-vectors > * { min-width: 0; }
+.vector-tile {
+  height: 34px;
+  display: grid; place-items: center;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  padding: 5px;
+  overflow: hidden;
+}
+.vector-tile:hover { border-color: var(--line-2); }
+.vector-tile.in-use { border-color: var(--accent); }
+.vector-tile svg, .vector-tile img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; }
+.vector-tile svg { width: 100%; height: 100%; }
+.vector-tile img { object-fit: contain; }
+
+/* ---------- Long cards (fonts, colors) ---------- */
+.card-row {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 46px;
+  padding: 6px 8px;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  cursor: grab;
+}
+.card-row:hover { border-color: var(--line-2); }
+.card-row .card-text { min-width: 0; display: flex; flex-direction: column; }
+.card-row .card-title { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-row .card-sub { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.font-aa { width: 34px; text-align: center; font-size: 20px; line-height: 1; flex: none; }
+
+.swatch-sq { width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.08); flex: none; }
+
+/* Inline editing of a color card: two small inputs replace the text. */
+.color-edit { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.color-edit input { height: 22px; font-size: 12px; width: 100%; }
+.color-edit input.invalid { border-color: var(--danger); }
+
+/* ---------- Palettes ---------- */
+.palette-card {
+  padding: 8px 10px 10px;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+}
+.palette-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; display: block; }
+.palette-name-input { height: 22px; width: 100%; font-size: 12px; margin-bottom: 6px; }
+.palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }   /* wraps for any number of colors */
+.palette-swatch {
+  height: 22px; border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,.08);
+  cursor: grab; padding: 0;
+}
+.palette-add {
+  height: 22px; border-radius: var(--radius-sm);
+  border: 1px dashed var(--line-2); background: none; color: var(--muted); padding: 0; line-height: 1;
+}
+.palette-add:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Blocks: 2-column grid of small cards ---------- */
+.grid-blocks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; align-content: start; }
+.block-card {
+  height: 28px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 10px;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius-sm);
+  cursor: grab;
+}
+.block-card:hover { border-color: var(--line-2); }
+.block-card .glyph { color: var(--accent); width: 12px; text-align: center; }
+
+/* ---------- Presets: dashed rows ---------- */
+.preset-row {
+  height: 30px; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--radius);
+  cursor: grab;
+}
+.preset-row:hover { border-color: var(--muted); }

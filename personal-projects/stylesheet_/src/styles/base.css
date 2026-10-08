@@ -1,0 +1,183 @@
+/* base.css: reset, page frame, scrollbars, and the shared controls (buttons, inputs, segmented
+   toggles, sliders, checkboxes). Panel-specific styling lives in the other CSS files. */
+
+* { box-sizing: border-box; }
+
+/* The window never scrolls. Only list areas inside sections are allowed to (see .scroll-area). */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.4 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+input, textarea { user-select: text; }
+
+#app { display: flex; flex-direction: column; height: 100%; }
+
+/* Three columns between the top bar and status bar. min-height:0 lets children shrink instead of overflowing. */
+#columns { flex: 1; min-height: 0; display: flex; }
+
+.panel {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  overflow: hidden;       /* panels never scroll as a whole */
+}
+#library { width: 280px; border-right: 1px solid var(--line); }
+#editor { width: 320px; border-left: 1px solid var(--line); }
+#preview { flex: 1; min-width: 0; position: relative; overflow: hidden; background: var(--bg); }
+
+.panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 56px;
+}
+
+/* ---------- Small shared utilities ---------- */
+.grow { flex: 1; }
+.muted { color: var(--muted); }
+.section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+/* ---------- Scroll areas ---------- */
+/* 6px scrollbar, dark thumb, thumb turns lime while the pointer is over the area. */
+.scroll-area { overflow-y: auto; overflow-x: hidden; }
+.scroll-area::-webkit-scrollbar { width: 6px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background: #3A3A41; border-radius: 3px; }
+.scroll-area:hover::-webkit-scrollbar-thumb { background: var(--accent); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  height: 28px;
+  padding: 0 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+}
+.btn:hover { border-color: var(--line-2); background: var(--hover); }
+.btn-sm { height: 30px; padding: 0 10px; }
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0A0A0B;
+  font-weight: 500;
+  height: 36px;
+  padding: 0 20px;
+}
+.btn-primary:hover { background: #E4FF6E; border-color: #E4FF6E; }
+.btn-primary:disabled { opacity: .4; cursor: default; }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-danger:hover { background: #D93A2A; border-color: #D93A2A; }
+
+.plus-btn {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  color: var(--text); line-height: 1; padding: 0;
+}
+.plus-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.link-btn { background: none; border: 0; padding: 0; color: var(--muted); }
+.link-btn:hover { color: var(--accent); }
+
+/* ---------- Inputs ---------- */
+input[type=text], input[type=number], textarea, select {
+  height: 28px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+  outline: none;
+  min-width: 0;
+}
+input[type=text]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+select { padding-right: 4px; }
+select option { background: var(--card); color: var(--text); }
+
+/* ---------- Segmented toggle (stack | row, PNG | JPEG, 1x | 2x | 4x) ---------- */
+.seg {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.seg button, .seg .seg-value {
+  background: none; border: 0; color: var(--muted);
+  padding: 0 12px; min-height: 30px; min-width: 30px;
+  display: grid; place-items: center;
+}
+.seg button:hover { color: var(--text); background: var(--hover); }
+.seg button.active { background: #EDEDEE; color: #0A0A0B; }
+.seg button:disabled { opacity: .4; cursor: default; }
+.seg .seg-value { color: var(--text); min-width: 52px; }
+
+/* ---------- Checkbox ---------- */
+.check { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; white-space: nowrap; }
+.check input { position: absolute; opacity: 0; pointer-events: none; }
+.check .box {
+  width: 18px; height: 18px; border-radius: var(--radius-sm);
+  background: var(--card); border: 1px solid var(--line-2);
+  display: grid; place-items: center;
+}
+.check input:checked + .box { background: var(--accent); border-color: var(--accent); }
+.check input:checked + .box::after {
+  content: ''; width: 9px; height: 5px;
+  border-left: 2px solid #0A0A0B; border-bottom: 2px solid #0A0A0B;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+/* ---------- Sliders (lime fill left of the thumb; JS sets --pct) ---------- */
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 14px; margin: 0; background: transparent; cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--pct, 50%), #2A2A30 var(--pct, 50%));
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px;
+  border-radius: 50%; background: var(--accent); border: 0;
+}
+
+/* ---------- Icon toggle (transparent background checkerboard) ---------- */
+.icon-toggle {
+  width: 34px; height: 34px; padding: 0;
+  display: grid; place-items: center;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--muted);
+}
+.icon-toggle.on { border-color: var(--accent); color: var(--accent); }
+.icon-toggle:disabled { opacity: .45; cursor: default; }
+
+/* ---------- Status bar ---------- */
+#statusbar {
+  flex: none;
+  height: 30px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--muted);
+}

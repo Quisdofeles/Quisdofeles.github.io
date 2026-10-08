@@ -1,0 +1,55 @@
+/* topbar.css: the custom top bar (the app is frameless, so this is also the window's drag handle). */
+
+#topbar {
+  flex: none;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px 0 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  -webkit-app-region: drag;           /* drag the window by the bar... */
+}
+/* ...but every interactive thing inside it must opt out, or clicks are swallowed by the drag region. */
+#topbar button, #breadcrumb .crumb { -webkit-app-region: no-drag; }
+
+/* Wordmark: "Stylesheet" + a lime bar sitting on the baseline as the underscore. */
+.brand { display: flex; align-items: baseline; }
+.brand-word {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+.brand-bar {
+  width: 12px; height: 3px; background: var(--accent);
+  margin-left: 2px;
+  align-self: flex-end; margin-bottom: 6px;
+}
+
+/* Breadcrumb of the current selection: parents muted, last item white. */
+#breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: 22px;
+  color: var(--muted);
+  min-width: 0; white-space: nowrap; overflow: hidden;
+}
+#breadcrumb .crumb { background: none; border: 0; padding: 2px 0; color: var(--muted); }
+#breadcrumb .crumb:hover { color: var(--text); }
+#breadcrumb .crumb.last { color: var(--text); font-weight: 500; }
+#breadcrumb .sep { color: var(--muted); }
+
+.top-actions { display: flex; align-items: center; gap: 4px; }
+.top-divider { width: 1px; height: 22px; background: var(--line); margin: 0 10px; }
+
+/* Bare icon buttons: no box, muted, hover background #1A1A1E. Close turns red. */
+.win-btn {
+  width: 40px; height: 36px;
+  display: grid; place-items: center;
+  background: transparent; border: 0; border-radius: var(--radius);
+  color: var(--muted); padding: 0;
+}
+.win-btn:hover { background: var(--hover); color: var(--text); }
+.win-btn.win-close:hover { background: var(--danger); color: #fff; }
+.win-btn svg { width: 16px; height: 16px; pointer-events: none; }
