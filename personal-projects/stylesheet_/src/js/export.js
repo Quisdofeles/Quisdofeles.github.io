@@ -1,4 +1,4 @@
-// export.js: the floating export bar and the rendering of the preview to a PNG/JPEG.
+// export.js: the floating export bar (two rows) and the rendering of the preview to a PNG/JPEG/WebP.
 // The image is drawn from an OFFSCREEN copy of the canvas grid (at 100% zoom, ignoring the current
 // zoom/pan), built with the same renderCanvasElement() the preview uses, then rasterized by html-to-image.
 // Optional "style labels" strip below the canvases lists every color, font and vector used.
@@ -19,10 +19,11 @@ function renderBar() {
   const ex = state.session.export;
   const jpeg = ex.format === 'jpeg';
   $('#opt-labels').checked = ex.styleLabels;
+  $('#opt-canvas-labels').checked = ex.canvasLabels;
   document.querySelectorAll('#seg-format button').forEach((b) => b.classList.toggle('active', b.dataset.format === ex.format));
   document.querySelectorAll('#seg-scale button').forEach((b) => b.classList.toggle('active', Number(b.dataset.scale) === ex.scale));
   const t = $('#opt-transparent');
-  t.disabled = jpeg;                                   // JPEG can't be transparent: shown off and disabled
+  t.disabled = jpeg;                                   // JPEG can't be transparent: shown off and disabled (PNG and WebP can)
   t.classList.toggle('on', ex.transparent && !jpeg);
   t.title = jpeg ? 'JPEG has no transparency' : 'transparent background';
 }
@@ -30,6 +31,8 @@ function renderBar() {
 export function initExport() {
   $('#opt-transparent').append(checkerIcon());
   $('#opt-labels').addEventListener('change', (e) => setExport({ styleLabels: e.target.checked }));
+  // Hides/shows the OPTION A/B… label on every canvas (preview.js redraws when this changes).
+  $('#opt-canvas-labels').addEventListener('change', (e) => setExport({ canvasLabels: e.target.checked }));
   document.querySelectorAll('#seg-format button').forEach((b) => b.addEventListener('click', () => setExport({ format: b.dataset.format })));
   document.querySelectorAll('#seg-scale button').forEach((b) => b.addEventListener('click', () => setExport({ scale: Number(b.dataset.scale) })));
   $('#opt-transparent').addEventListener('click', () => setExport({ transparent: !state.session.export.transparent }));
@@ -172,9 +175,16 @@ async function exportImage() {
     await document.fonts.ready;
     const fontEmbedCSS = await buildFontCss([...usage.fonts.values()]);
     const options = { pixelRatio: scale, cacheBust: false, fontEmbedCSS, ...(solid ? { backgroundColor: '#FFFFFF' } : {}) };
-    const dataUrl = format === 'jpeg'
-      ? await window.htmlToImage.toJpeg(sheet, { ...options, quality: 0.95 })
-      : await window.htmlToImage.toPng(sheet, options);
+    let dataUrl;
+    if (format === 'jpeg') {
+      dataUrl = await window.htmlToImage.toJpeg(sheet, { ...options, quality: 0.95 });
+    } else if (format === 'webp') {
+      // html-to-image has no WebP function: render to a <canvas>, then let the browser encode it (keeps transparency).
+      const canvas = await window.htmlToImage.toCanvas(sheet, options);
+      dataUrl = canvas.toDataURL('image/webp', 0.92);
+    } else {
+      dataUrl = await window.htmlToImage.toPng(sheet, options);
+    }
 
     const result = await window.api.saveExport(dataUrl, format);
     if (result.saved) showToast(`exported ${result.path.split(/[\\/]/).pop()}`);

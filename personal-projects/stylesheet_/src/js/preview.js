@@ -13,7 +13,8 @@ import { isTextType } from './blocks.js';
 const MIN_ZOOM = 0.25, MAX_ZOOM = 4;
 // Where the canvas grid's top-left sits inside the stage at pan (0, 0): below the floating top bar.
 const ORIGIN = { x: 24, y: 100 };
-const FIT_RESERVED = { left: 24, right: 24, top: 100, bottom: 102 };   // space the floating bars use
+// Space the floating bars use. bottom = 24 inset + 98 two-row export bar + 20 breathing room.
+const FIT_RESERVED = { left: 24, right: 24, top: 100, bottom: 142 };
 
 // Auto grid: 1 -> 1 col, 2 -> 2, 3-4 -> 2, 5-6 -> 3, 7-9 -> 3 (never set manually). Beyond 9 we keep it square-ish.
 export function gridColumns(n) {
@@ -85,7 +86,11 @@ export function renderCanvasElement(canvas, index, { interactive = true } = {}) 
     dataset: { id: canvas.id },
     style: { background: bg, aspectRatio: String(canvas.aspect || 8 / 9) },
   });
-  card.append(el('div', { class: 'canvas-label', text: optionLabel(index), style: { color: contrastColor(bg), opacity: '0.6' } }));
+  // The "canvas labels" export setting hides the OPTION label in the preview AND the export (both use this function).
+  // The label is absolutely positioned, so leaving it out never moves or resizes anything.
+  if (state.session.export.canvasLabels) {
+    card.append(el('div', { class: 'canvas-label', text: optionLabel(index), style: { color: contrastColor(bg), opacity: '0.6' } }));
+  }
   const content = el('div', { class: 'canvas-content' });
   applyLayout(content, canvas.layout, 'center');
   canvas.children.forEach((child) => { const c = renderBlock(child, canvas, selectedIds); if (c) content.append(c); });
@@ -118,6 +123,10 @@ function applyView() {
   const stage = $('#stage');
   stage.style.backgroundSize = `${18 * zoom}px ${18 * zoom}px`;
   stage.style.backgroundPosition = `${x}px ${y}px`;
+  // Same values as CSS variables, for the wider dot grid used when the glass panels are on (end of preview.css).
+  stage.style.setProperty('--dot-size', `${18 * zoom}px`);
+  stage.style.setProperty('--dot-x', `${x}px`);
+  stage.style.setProperty('--dot-y', `${y}px`);
   if (!zoomEditing) $('#zoom-val').textContent = `${Math.round(zoom * 100)}%`;   // don't wipe the input while typing
 }
 
@@ -317,9 +326,14 @@ export function initPreview() {
   if (isFirstLaunch) fit(); else applyView();
   applyView();
 
+  // Remembers whether the canvases were last drawn with OPTION labels, so the one export setting that
+  // affects the preview ("canvas labels") redraws it, while the other export settings don't.
+  let labelsShown = state.session.export.canvasLabels;
   subscribe((meta) => {
     if (meta.view) { applyView(); return; }
-    if (meta.ui || meta.exportSettings) return;
+    if (meta.ui) return;
+    if (meta.exportSettings && state.session.export.canvasLabels === labelsShown) return;
+    labelsShown = state.session.export.canvasLabels;
     renderGrid();
     applyView();
   });

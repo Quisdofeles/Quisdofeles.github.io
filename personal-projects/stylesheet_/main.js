@@ -67,13 +67,54 @@ async function readJson(name) {
 
 // ---------- App settings (settings.json) ----------
 // A tiny file separate from session.json because main needs the "on launch" value BEFORE the window exists.
-// Returns a complete settings object; anything missing or invalid falls back to the default (maximized).
+// It also remembers the last folder each file dialog used (fonts import, media import, export).
+// Returns a complete settings object; anything missing or invalid falls back to the default
+// (maximized, and no remembered folders), so a bad file can never break startup.
+const FOLDER_KEYS = ['fonts', 'media', 'export'];
 function cleanSettings(raw) {
   const launch = raw && raw.launch === 'windowed' ? 'windowed' : 'maximized';
-  return { launch };
+  const lastFolders = {};
+  const src = raw && raw.lastFolders;
+  if (src && typeof src === 'object') {
+    for (const key of FOLDER_KEYS) {
+      const dir = src[key];
+      // Only plain absolute paths are kept; anything else is dropped (= default dialog location).
+      if (typeof dir === 'string' && dir.length < 4096 && path.isAbsolute(dir)) lastFolders[key] = dir;
+    }
+  }
+  return { launch, lastFolders };
 }
 async function loadSettings() {
   return cleanSettings(await readJson('settings.json'));
+}
+
+// Main keeps the one live copy of the settings (loaded at startup) so the renderer's "on launch" saves
+// and the dialogs' folder updates never overwrite each other.
+let settings = null;
+async function getSettings() {
+  if (!settings) settings = await loadSettings();
+  return settings;
+}
+async function saveSettingsFile() {
+  await writeJsonAtomic('settings.json', JSON.stringify(settings));
+}
+
+// Remembers the folder a dialog was last used in (key: 'fonts' | 'media' | 'export').
+async function rememberFolder(key, dir) {
+  const current = await getSettings();
+  settings = cleanSettings({ ...current, lastFolders: { ...current.lastFolders, [key]: dir } });
+  await saveSettingsFile();
+}
+
+// The remembered folder for a dialog, or null if there is none or it no longer exists (= default location).
+async function rememberedFolder(key) {
+  const dir = (await getSettings()).lastFolders[key];
+  if (!dir) return null;
+  try {
+    return (await fsp.stat(dir)).isDirectory() ? dir : null;
+  } catch {
+    return null;   // deleted, renamed, or an unplugged drive
+  }
 }
 
 // ---------- Window ----------
@@ -163,9 +204,14 @@ ipcMain.handle('library:load', () => readJson('library.json'));
 ipcMain.handle('library:save', (e, data) => writeJsonAtomic('library.json', JSON.stringify(data)));
 ipcMain.handle('session:load', () => readJson('session.json'));
 ipcMain.handle('session:save', (e, data) => writeJsonAtomic('session.json', JSON.stringify(data)));
-// App settings (currently just "on launch"); takes effect the next time the app starts.
-ipcMain.handle('settings:load', () => loadSettings());
-ipcMain.handle('settings:save', (e, data) => writeJsonAtomic('settings.json', JSON.stringify(cleanSettings(data))));
+// App settings. The renderer can only change "on launch" (takes effect the next time the app starts);
+// the remembered dialog folders are managed here in main and are always kept as they are.
+ipcMain.handle('settings:load', () => getSettings());
+ipcMain.handle('settings:save', async (e, data) => {
+  const current = await getSettings();
+  settings = cleanSettings({ ...current, launch: data && data.launch });
+  await saveSettingsFile();
+});
 
 // ---------- IPC: importing files ----------
 // Opens a file dialog, copies each chosen file into library/fonts or library/media,
@@ -175,12 +221,15 @@ ipcMain.handle('settings:save', (e, data) => writeJsonAtomic('settings.json', JS
 ipcMain.handle('files:import', async (e, type) => {
   const isFont = type === 'font';
   const allowed = isFont ? FONT_EXT : MEDIA_EXT;
+  const folderKey = isFont ? 'fonts' : 'media';   // each import button remembers its own last folder
+  const startIn = await rememberedFolder(folderKey);
   // Dev-only shortcut so automated tests can import without a dialog (never active in a packaged build).
   const scripted = !app.isPackaged && process.env.STYLESHEET_IMPORT;
   const result = scripted
     ? { canceled: false, filePaths: process.env.STYLESHEET_IMPORT.split(';') }
     : await dialog.showOpenDialog(win, {
       title: isFont ? 'Import fonts' : 'Import media',
+      ...(startIn ? { defaultPath: startIn } : {}),   // no remembered folder: Windows picks its usual default
       properties: ['openFile', 'multiSelections'],
       filters: [{ name: isFont ? 'Fonts' : 'Images and vectors', extensions: allowed.map((x) => x.slice(1)) }],
     });
@@ -198,6 +247,8 @@ ipcMain.handle('files:import', async (e, type) => {
     await fsp.copyFile(source, path.join(libraryDir(), subdir, fileName));
     imported.push({ kind, subdir, fileName, originalName: path.basename(source), ext });
   }
+  // Remember where the files came from so the next import of this type opens there (only if something was imported).
+  if (imported.length) await rememberFolder(folderKey, path.dirname(result.filePaths[0]));
   return imported;
 });
 
@@ -236,21 +287,24 @@ ipcMain.handle('trash:purge', async (e, files) => {
 });
 
 // ---------- IPC: export, folders, fonts, version ----------
+// format: 'png' | 'jpeg' | 'webp'. The dialog starts in the folder of the last export (or Pictures).
 ipcMain.handle('export:save', async (e, dataUrl, format) => {
-  const ext = format === 'jpeg' ? 'jpg' : 'png';
+  const ext = format === 'jpeg' ? 'jpg' : format === 'webp' ? 'webp' : 'png';
   const stamp = new Date().toISOString().slice(0, 10);
+  const folder = (await rememberedFolder('export')) || app.getPath('pictures');
   // Dev-only shortcut so automated tests can export without a dialog (never active in a packaged build).
   const scripted = !app.isPackaged && process.env.STYLESHEET_EXPORT_PATH;
   const result = scripted
     ? { canceled: false, filePath: process.env.STYLESHEET_EXPORT_PATH }
     : await dialog.showSaveDialog(win, {
       title: 'Export image',
-      defaultPath: path.join(app.getPath('pictures'), `stylesheet_export_${stamp}.${ext}`),
+      defaultPath: path.join(folder, `stylesheet_export_${stamp}.${ext}`),
       filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
     });
   if (result.canceled || !result.filePath) return { saved: false };
   const base64 = dataUrl.split(',')[1];
   await fsp.writeFile(result.filePath, Buffer.from(base64, 'base64'));
+  await rememberFolder('export', path.dirname(result.filePath));   // next export opens here
   return { saved: true, path: result.filePath };
 });
 
@@ -300,6 +354,6 @@ app.whenReady().then(async () => {
   }
   fs.mkdirSync(path.join(libraryDir(), 'fonts'), { recursive: true });
   fs.mkdirSync(path.join(libraryDir(), 'media'), { recursive: true });
-  createWindow(await loadSettings());   // settings are read first because the launch mode decides the window state
+  createWindow(await getSettings());   // settings are read first because the launch mode decides the window state
 });
 app.on('window-all-closed', () => app.quit());

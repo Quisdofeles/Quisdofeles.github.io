@@ -55,7 +55,9 @@ function defaultSession() {
     selection: [],           // ids of the selected nodes (a LIST; see cleanSelection() for the rules)
     zoom: 1,
     pan: { x: 0, y: 0 },
-    export: { styleLabels: true, format: 'png', transparent: true, scale: 2 },
+    // canvasLabels: show the OPTION A/B… label on each canvas (preview and export). Old saves without it get true
+    // because initState() merges these defaults under the saved values.
+    export: { styleLabels: true, canvasLabels: true, format: 'png', transparent: true, scale: 2 },
     collapsedGroups: {},     // editor property groups the user collapsed
     collapsedNodes: {},      // layers-tree nodes the user collapsed
     helpSeen: false,

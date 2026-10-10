@@ -91,7 +91,8 @@
 .hex-row .btn { height: 28px; }
 
 /* ---------- Toasts (non-blocking notices) ---------- */
-.toast-stack { position: fixed; left: 50%; bottom: 112px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; }
+/* bottom = status bar 30 + export bar inset 24 + export bar 98 (two rows) + 12px breathing room, so toasts never overlap the bar. */
+.toast-stack { position: fixed; left: 50%; bottom: 164px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast {
   background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius);
   padding: 9px 16px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);

@@ -10,13 +10,13 @@ contextBridge.exposeInMainWorld('api', {
   saveLibrary: (data) => ipcRenderer.invoke('library:save', data),
   loadSession: () => ipcRenderer.invoke('session:load'),
   saveSession: (data) => ipcRenderer.invoke('session:save', data),
-  loadSettings: () => ipcRenderer.invoke('settings:load'),           // { launch: 'maximized' | 'windowed' }
-  saveSettings: (data) => ipcRenderer.invoke('settings:save', data),
+  loadSettings: () => ipcRenderer.invoke('settings:load'),           // { launch: 'maximized' | 'windowed', lastFolders: { fonts, media, export } }
+  saveSettings: (data) => ipcRenderer.invoke('settings:save', data), // only `launch` is taken; lastFolders is managed by main
 
   // Files
   importFiles: (type) => ipcRenderer.invoke('files:import', type),   // type: 'font' | 'media'
   readLibraryFile: (relPath) => ipcRenderer.invoke('files:read', relPath),
-  saveExport: (dataUrl, format) => ipcRenderer.invoke('export:save', dataUrl, format),
+  saveExport: (dataUrl, format) => ipcRenderer.invoke('export:save', dataUrl, format),   // format: 'png' | 'jpeg' | 'webp'
   openLibraryFolder: () => ipcRenderer.invoke('library:openFolder'),
   readBundledFont: (name) => ipcRenderer.invoke('fonts:bundled', name),
 

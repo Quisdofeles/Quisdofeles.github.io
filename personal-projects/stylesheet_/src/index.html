@@ -18,7 +18,9 @@
   <link rel="stylesheet" href="styles/editor.css">
   <link rel="stylesheet" href="styles/overlays.css">
 </head>
-<body>
+<!-- "glass-panels" = ON/OFF switch for the see-through library and editor panels (styles at the end of preview.css).
+     Delete the class (leave <body>) to go back to the solid panels exactly as they were before. -->
+<body class="glass-panels">
   <div id="app">
 
     <!-- ===== Top bar (drag region) ===== -->
@@ -95,19 +97,34 @@
           <button class="btn" id="zoom-fit">fit</button>
         </div>
 
+        <!-- Export bar: two columns of two stacked rows (labels | file settings), the export button top right -->
         <div class="float-bar" id="export-bar">
-          <label class="check"><input type="checkbox" id="opt-labels"><span class="box"></span><span>include style labels</span></label>
-          <span class="bar-label muted">format</span>
-          <div class="seg" id="seg-format">
-            <button data-format="png">PNG</button>
-            <button data-format="jpeg">JPEG</button>
+          <div class="export-col">
+            <div class="export-row">
+              <label class="check"><input type="checkbox" id="opt-labels"><span class="box"></span><span>style labels</span></label>
+            </div>
+            <div class="export-row">
+              <label class="check"><input type="checkbox" id="opt-canvas-labels"><span class="box"></span><span>canvas labels</span></label>
+            </div>
           </div>
-          <button class="icon-toggle" id="opt-transparent" title="transparent background"></button>
-          <span class="bar-label muted">scale</span>
-          <div class="seg" id="seg-scale">
-            <button data-scale="1">1×</button>
-            <button data-scale="2">2×</button>
-            <button data-scale="4">4×</button>
+          <div class="export-col">
+            <div class="export-row">
+              <span class="bar-label muted">format</span>
+              <div class="seg" id="seg-format">
+                <button data-format="png">PNG</button>
+                <button data-format="jpeg">JPEG</button>
+                <button data-format="webp">WEBP</button>
+              </div>
+              <button class="icon-toggle" id="opt-transparent" title="transparent background"></button>
+            </div>
+            <div class="export-row">
+              <span class="bar-label muted">scale</span>
+              <div class="seg" id="seg-scale">
+                <button data-scale="1">1×</button>
+                <button data-scale="2">2×</button>
+                <button data-scale="4">4×</button>
+              </div>
+            </div>
           </div>
           <span class="grow"></span>
           <button class="btn" id="btn-export">export</button>

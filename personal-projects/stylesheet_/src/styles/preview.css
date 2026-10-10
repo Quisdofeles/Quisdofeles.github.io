@@ -47,10 +47,18 @@
   z-index: 5;
 }
 #preview-bar { top: 24px; height: 56px; }
-#export-bar { bottom: 24px; height: 58px; gap: 12px; }
+/* Export bar: two columns, each two stacked rows. Column 1: the style labels / canvas labels checkboxes.
+   Column 2: format + transparent toggle, then scale. The export button sits top right.
+   Height = 10px padding + 34px row + 8px gap + 34px row + 10px padding (+ border).
+   If this height changes, update .toast-stack's bottom in overlays.css so toasts stay above the bar. */
+#export-bar { bottom: 24px; height: auto; padding: 10px 16px; gap: 28px; align-items: flex-start; }
+.export-col { display: flex; flex-direction: column; gap: 8px; }
+.export-row { display: flex; align-items: center; gap: 12px; height: 34px; }   /* 34px = the transparent toggle's height */
+#export-bar .bar-label { width: 6ch; }      /* same width for "format" and "scale" so both toggles start on one edge */
 /* The one unique button: at rest it is the normal shared button; it only turns solid accent (background AND
    border) with dark text while hovered, and a shade darker while pressed. The ID selector beats the shared
-   hover rule, which would otherwise make the text accent on an accent fill. */
+   hover rule, which would otherwise make the text accent on an accent fill.
+   Normal height, pinned to the top right of the bar (the bar uses align-items: flex-start). */
 #btn-export.btn { height: 36px; padding: 0 20px; }
 #btn-export.btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #0A0A0B; }
 #btn-export.btn:active:not(:disabled) { background: #C4E63B; border-color: #C4E63B; color: #0A0A0B; }
@@ -147,8 +155,30 @@
 .export-sub { color: #777; font-size: 11px; }
 .export-font { font-size: 17px; line-height: 1.2; }
 
-/* Narrow windows: drop the small "format" / "scale" captions so the export bar fits at 1280px. */
-@media (max-width: 1400px) {
-  .bar-label { display: none; }
-  #export-bar { gap: 10px; padding: 0 12px; }
+/* ---------- Glass panels (ON/OFF switch) ----------
+   Active only while <body class="glass-panels"> is set in index.html. Remove that class to get the exact
+   previous look (solid library/editor columns, the preview clipped to the middle column).
+   Nothing moves either way: the panels keep their place, size and spacing, and the preview keeps its box
+   (so zoom, fit and clicks are unchanged). The preview's dot grid and canvases just continue BEHIND the
+   panels, and the panels become the same glass as the floating bars (88% --panel + 6px blur). */
+body.glass-panels .panel {
+  position: relative; z-index: 6;               /* draw above the canvases that now run behind them */
+  background: rgba(15, 15, 17, 0.88);           /* same values as .float-bar */
+  backdrop-filter: blur(6px);
+}
+/* Let the canvases spill sideways under the panels, but still clip them above (top bar) and below (status bar).
+   overflow-y: clip (not hidden) is what allows the other axis to stay visible. */
+body.glass-panels #preview { overflow-x: visible; overflow-y: clip; }
+/* The stage keeps its normal box; its own dot background is swapped for the wider layer below. */
+body.glass-panels #stage { overflow: visible; background: none; }
+/* The dot grid, widened to run under both panels: library 280px + 1px border on the left, editor 320px + 1px
+   border on the right. preview.js applyView() sets --dot-size/--dot-x/--dot-y, so the dots zoom and pan with
+   the canvases; +281px makes up for this layer starting 281px further left than the stage. */
+body.glass-panels #stage::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -281px; right: -321px;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
+  background-size: var(--dot-size, 18px) var(--dot-size, 18px);
+  background-position: calc(var(--dot-x, 0px) + 281px) var(--dot-y, 0px);
+  pointer-events: none;                         /* decorative */
 }
