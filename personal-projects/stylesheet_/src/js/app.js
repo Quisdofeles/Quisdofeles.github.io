@@ -9,7 +9,7 @@ import { initEditor } from './editor.js';
 import { initProperties } from './properties.js';
 import { initDragDrop } from './dragdrop.js';
 import { initExport } from './export.js';
-import { openHelp, openSettings } from './overlays.js';
+import { openHelp, openSettings, initNotifications } from './overlays.js';
 import { registerFonts } from './fonts.js';
 import { libraryBlockCount } from './blocks.js';
 import { ensureMediaLoaded, hasMediaMarkup } from './svg.js';
@@ -45,6 +45,7 @@ async function start() {
   initProperties();
   initDragDrop();
   initExport();
+  initNotifications();        // the log button above the export bar
 
   subscribe((meta) => { if (meta.library) syncLoadedFiles(); });
   subscribe(renderStatus);

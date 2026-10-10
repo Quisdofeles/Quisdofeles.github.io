@@ -129,6 +129,17 @@
           <span class="grow"></span>
           <button class="btn" id="btn-export">export</button>
         </div>
+
+        <!-- Notifications (overlays.js): above the export bar's right edge. The log button, with the toasts
+             (collapsed) or the open log list (expanded) directly to its left, bottom-aligned with it.
+             Empty space here never blocks the preview (pointer-events). -->
+        <div id="notify">
+          <div class="notify-row">
+            <div id="notify-log" class="scroll-area"></div>
+            <div id="toast-stack" class="toast-stack"></div>
+            <button class="icon-toggle" id="btn-log" title="show notifications"></button>
+          </div>
+        </div>
       </section>
 
       <!-- 03 — EDITOR -->

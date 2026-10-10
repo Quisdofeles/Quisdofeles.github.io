@@ -1,20 +1,77 @@
-// overlays.js: toasts (non-blocking notices), the confirm dialog, the help overlay, and the settings
-// overlay (clear canvas, open library folder, default export scale, trash, version).
+// overlays.js: notifications (toasts + the notification log), the confirm dialog, the help overlay, and the
+// settings overlay (clear canvas, open library folder, default export scale, trash, version).
 
-import { el, clear, $ } from './util.js';
+import { el, clear, $, icon } from './util.js';
 import {
   state, subscribe, clearCanvases, setExport, setHelpSeen, restoreTrash, purgeTrash, trashFileOf, trashLabel,
 } from './state.js';
 
-// ---------- Toasts ----------
-// A small notice at the bottom of the window that fades after a few seconds. Never blocks anything.
+// ---------- Notifications: toasts + log ----------
+// Every notice goes into a small in-memory log (the last LOG_MAX, cleared when the app closes; not saved,
+// not in undo). The markup (#notify) is static in index.html, so notices work even before initNotifications().
+// - Log collapsed: the notice also shows as a toast left of the log button (removed after `ms`).
+// - Log open: the notice goes straight into the open list (no toast).
+const LOG_MAX = 25;
+const notices = [];          // { message, warn, time }, oldest first
+let logOpen = false;
+
+// Shows a notice. Never blocks anything.
 export function showToast(message, { warn = false, ms = 4500 } = {}) {
-  const root = $('#overlay-root');
-  let stack = $('.toast-stack', root);
-  if (!stack) { stack = el('div', { class: 'toast-stack' }); root.append(stack); }
-  const toast = el('div', { class: 'toast' + (warn ? ' warn' : ''), text: message });
-  stack.append(toast);
+  notices.push({ message, warn, time: new Date() });
+  if (notices.length > LOG_MAX) notices.shift();
+  if (logOpen) { renderLog(); return; }
+  const toast = noticeEntry(notices[notices.length - 1]);   // exactly the same entry the open log shows
+  $('#toast-stack').append(toast);                 // appended last = newest at the bottom, nearest the button
   setTimeout(() => { toast.remove(); }, ms);
+}
+
+// "9:42" style clock time (24-hour, no leading zero on the hour).
+const clockTime = (d) => `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+// One notice as a toast-style entry (message + muted time), 34px tall like the log button.
+// Used for BOTH the fading toasts and the open log, so they always look and size the same.
+function noticeEntry(n) {
+  return el('div', {
+    class: 'toast log-entry' + (n.warn ? ' warn' : ''),
+    title: n.message,                              // full text on hover when the message is cut off
+  }, el('span', { class: 'log-msg', text: n.message }), el('span', { class: 'log-time', text: clockTime(n.time) }));
+}
+
+// Draws the open log: newest at the bottom (nearest the button), each older entry a bit more transparent.
+function renderLog() {
+  const list = clear($('#notify-log'));
+  list.classList.remove('has-scroll');
+  if (!notices.length) { list.append(el('div', { class: 'log-empty', text: 'no notifications yet' })); return; }
+  notices.forEach((n, i) => {
+    const age = notices.length - 1 - i;            // 0 = newest
+    const entry = noticeEntry(n);
+    entry.style.opacity = String(Math.max(0.25, 1 - age * 0.15));   // 1, .85, .7, .55, .4, ... never below .25
+    list.append(entry);
+  });
+  // Only show the scrollbar (and the space before it) when there is more than fits (more than 5 entries).
+  list.classList.toggle('has-scroll', list.scrollHeight > list.clientHeight);
+  list.scrollTop = list.scrollHeight;              // keep the newest in view
+}
+
+// Opens or collapses the log. Only the log button calls this (clicking elsewhere never collapses it).
+function setLogOpen(open) {
+  logOpen = open;
+  const btn = $('#btn-log');
+  $('#notify-log').classList.toggle('open', open);
+  clear(btn).append(icon(open ? 'chevronDown' : 'chevronUp'));
+  btn.title = open ? 'hide notifications' : 'show notifications';
+  if (open) {
+    clear($('#toast-stack'));                      // their notices are in the open list now
+    renderLog();
+  }
+}
+
+// Wires the log button (called once from app.js).
+export function initNotifications() {
+  $('#btn-log').addEventListener('click', () => setLogOpen(!logOpen));
+  // The preview zooms on wheel; over the log the wheel should scroll the list instead.
+  $('#notify-log').addEventListener('wheel', (e) => e.stopPropagation());
+  setLogOpen(false);
 }
 
 // ---------- Confirm dialog ----------

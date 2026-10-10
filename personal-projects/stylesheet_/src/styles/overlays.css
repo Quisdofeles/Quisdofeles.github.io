@@ -90,9 +90,53 @@
 .hex-row input.invalid { border-color: var(--danger); }
 .hex-row .btn { height: 28px; }
 
-/* ---------- Toasts (non-blocking notices) ---------- */
-/* bottom = status bar 30 + export bar inset 24 + export bar 98 (two rows) + 12px breathing room, so toasts never overlap the bar. */
-.toast-stack { position: fixed; left: 50%; bottom: 164px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; }
+/* ---------- Notifications: log button, toasts, log list (non-blocking; see overlays.js) ---------- */
+/* Lives inside #preview (so dialogs and the help overlay dim it like the rest of the app).
+   right = the export bar's right edge (24px inset); bottom = export bar inset 24 + export bar 98 (two rows) + 12px gap. */
+#notify {
+  position: absolute; right: 24px; bottom: 134px; z-index: 5;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+}
+/* Empty space must never block the preview: only the button, the toasts and the open log take the mouse. */
+#notify, .notify-row, .toast-stack { pointer-events: none; }
+#btn-log, #notify .toast, #notify-log.open { pointer-events: auto; }
+/* Toasts (collapsed) or the open log list (expanded) sit directly left of the button, bottom-aligned with it.
+   They never show at the same time: opening the log clears the toasts, and while it's open no toasts are made. */
+.notify-row { display: flex; align-items: flex-end; gap: 8px; }
+/* Several toasts stack upward; the newest is appended last = at the bottom, nearest the button.
+   Toasts are the same .toast.log-entry as the open log (34px tall, message + time), with the same 440px cap. */
+.toast-stack { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; max-width: 440px; }
+.toast-stack .log-entry { max-width: 100%; }
+/* No toasts (e.g. while the log is open): take the empty stack out of the row, otherwise the row's 8px gap
+   would count twice and push the open log 16px away from the button instead of 8px. */
+.toast-stack:empty { display: none; }
+/* The log button: an .icon-toggle (shared button look, same 34px as the transparency toggle) with a chevron. */
+#btn-log { flex: none; }
+#btn-log svg { width: 16px; height: 16px; }
+/* The open log: a gapped stack of toast-style entries (no panel around it), left of the button, growing upward.
+   Shows at most 5 entries (5 x 34px + 4 x 8px gaps); older ones scroll. With 5 or fewer there is no scrollbar
+   and no extra space, so entries end where the toasts do. overlays.js adds .has-scroll when there are more. */
+#notify-log {
+  display: none; flex-direction: column; gap: 8px;
+  width: max-content; max-width: 440px;
+  overflow-y: hidden;     /* nothing to scroll (beats .scroll-area's auto) */
+  /* 2px of room above and below the entries (taken back by the negative margin, so the newest entry still
+     lines up with the button). Without it, an exactly 5-entry-tall list loses the last entry's bottom border
+     to pixel rounding at Windows display scaling (e.g. 125%). */
+  padding-block: 2px; margin-block: -2px;
+  max-height: calc(5 * 34px + 4 * 8px + 4px);
+}
+/* More than 5: a real scrollbar (overflow: scroll, so its width is counted in the list's size) plus the same
+   8px space between items and scrollbar as the library lists (--list-pad). */
+#notify-log.has-scroll { overflow-y: scroll; padding-right: 8px; }
+#notify-log.open { display: flex; }
+.toast.log-entry {                        /* .toast.log-entry so it beats the plain .toast rule below */
+  flex: none; height: 34px; padding: 0 14px; box-shadow: none;
+  display: flex; align-items: center; gap: 12px; white-space: nowrap;
+}
+.log-msg { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }   /* long messages: ellipsis (full text in the tooltip) */
+.log-time { flex: none; color: var(--muted); font-size: 11px; }
+.log-empty { color: var(--muted); font-size: 12px; padding: 0 2px 4px; pointer-events: none; }
 .toast {
   background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--radius);
   padding: 9px 16px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
