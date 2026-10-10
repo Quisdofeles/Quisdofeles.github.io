@@ -1,5 +1,5 @@
-/* library.css: the left panel. Five sections (media, fonts, colors, palettes, blocks) share the panel height
-   with flex weights (--w); each section's LIST is the only thing that scrolls. */
+/* library.css: the left panel. Five sections (blocks, media, fonts, colors, palettes) share the panel height
+   equally, or ONE expanded section fills it (with a search box); each section's LIST is the only thing that scrolls. */
 
 .library-body {
   flex: 1;
@@ -30,8 +30,17 @@
 /* The one header style: "label · count" on the left, "drag in" hint or "+ add" button on the right. */
 .lib-label { font-size: 13px; color: var(--muted); }
 .lib-hint { font-size: 12px; color: var(--muted); }
-/* Colors header: the eyedropper tool button sits just left of "+ add". */
-.lib-head-actions { display: flex; align-items: center; gap: 6px; }
+/* Right side of every header: [eyedropper] [+ add / + import / drag in] [expand]. The expand button is always last,
+   so the five of them line up in one column at the far right. */
+.lib-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.lib-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }   /* a very long count can't push the buttons */
+
+/* Expanded section (library.js applyExpanded): it fills the whole panel; the other four are hidden completely. */
+.library-body.has-expanded .lib-section:not(.expanded) { display: none; }
+/* Search box under the header, only in the expanded section. It sits outside the scrolling list (so it never scrolls
+   away) and ends at the cards' right edge, like the header buttons. */
+.lib-search { display: none; flex: none; width: calc(100% - var(--list-pad) - var(--scroll-gutter)); margin-bottom: 8px; }
+.lib-section.expanded .lib-search { display: block; }
 /* The eyedropper is an .icon-toggle (same look/behavior as the export bar's transparent toggle), sized to the 24px header buttons. */
 .icon-toggle.tool-btn { width: 24px; height: 24px; }
 .icon-toggle.tool-btn svg { width: 14px; height: 14px; }

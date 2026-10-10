@@ -2,12 +2,14 @@
 // and handles importing files, adding colors/palettes, inline editing, and right-click delete.
 // Drag-and-drop out of the library is wired generically in dragdrop.js through data-drag-* attributes.
 // Every list is sorted for display only (see sorting.js); the saved data keeps its own order.
+// Any one section can be expanded to fill the panel (session.expandedSection), which also shows a search box that
+// filters that section's list (applyExpanded / buildSearch below).
 
 import { el, clear, $, uid, slug, isHex, normalizeHex, icon } from './util.js';
 import { initEyedropper } from './eyedropper.js';
 import {
   state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor,
-  addFonts, addMedia, trashItems, usageCount, allFonts,
+  addFonts, addMedia, trashItems, usageCount, allFonts, setExpandedSection,
 } from './state.js';
 import { groupFamilies, familySummary, closestTo400, cssFamily, fontCss, registerFonts, describeFont } from './fonts.js';
 import { processSvg, cacheMedia, buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
@@ -20,6 +22,21 @@ import { confirmDialog, showToast } from './overlays.js';
 let editingColorId = null;        // which color card is in inline-edit mode
 let renamingPaletteId = null;     // which palette name is being renamed
 let pendingSwatchEditId = null;   // a just-added palette swatch that should open its editor
+let searchText = '';              // the search box of the EXPANDED section (only one can be expanded); never saved
+
+// ---------- Search (only shown in an expanded section) ----------
+// Filtering only hides non-matches: the sort order and the header counts stay the same.
+const query = () => searchText.trim().toLowerCase();
+// True when the search is empty or any of `texts` contains it (case-insensitive, anywhere in the text).
+function matches(...texts) {
+  const q = query();
+  return !q || texts.some((t) => String(t || '').toLowerCase().includes(q));
+}
+// Hex search ignores a leading # on both sides, so "d9ff" and "#d9ff" both find #D9FF43.
+function hexMatches(hex) {
+  return !query() || String(hex || '').toLowerCase().replace(/^#/, '').includes(query().replace(/^#/, ''));
+}
+const noMatches = () => el('div', { class: 'lib-empty', text: 'no matches' });
 
 // Sets draggable + the payload attributes dragdrop.js reads on dragstart.
 const draggable = (kind, id) => ({ draggable: 'true', dataset: { dragKind: kind, dragId: id } });
@@ -64,8 +81,10 @@ function fileType(item) {
 
 function renderMedia() {
   redraw($('#list-media'), (list) => {
+    const shown = sortMedia(state.library.media).filter((m) => matches(m.name));   // newest added first; search: file name
     if (!state.library.media.length) list.append(el('div', { class: 'lib-empty', text: 'import an svg or image' }));
-    for (const item of sortMedia(state.library.media)) {   // newest added first
+    else if (!shown.length) list.append(noMatches());
+    for (const item of shown) {
       const thumbContent = item.kind === 'image'
         ? el('img', { src: mediaUrl(item), alt: item.name })
         : buildVectorSvg(item.id, () => '#D5D5DA') || el('span', { class: 'muted', text: '…' });
@@ -89,8 +108,10 @@ function renderMedia() {
 function renderFonts() {
   redraw($('#list-fonts'), (list) => {
     const families = groupFamilies(allFonts());   // built-in + library, already alphabetical, case-insensitive
+    const shown = families.filter((fam) => matches(fam.family));   // search: family name
     if (!families.length) list.append(el('div', { class: 'lib-empty', text: 'import .ttf .otf .woff .woff2' }));
-    for (const fam of families) {
+    else if (!shown.length) list.append(noMatches());
+    for (const fam of shown) {
       const sample = closestTo400(fam.fonts);   // the card previews, and drags, the weight closest to 400
       // A built-in font is drawn with its real family + font-weight (fontCss); an imported one by its own CSS family.
       const aaStyle = sample.builtin ? fontCss(sample) : { fontFamily: `'${cssFamily(sample)}'` };
@@ -150,14 +171,24 @@ function colorCard(color) {
 
 function renderColors() {
   redraw($('#list-colors'), (list) => {
-    for (const color of sortColors(state.library.colors)) list.append(colorCard(color));   // grouped by hue
+    // Grouped by hue. Search: name or hex. The card being edited always stays visible (e.g. a just-picked eyedropper
+    // color named "new_color" while the search says "blue"), so its name can still be typed.
+    const shown = sortColors(state.library.colors).filter((c) => c.id === editingColorId || matches(c.name) || hexMatches(c.hex));
+    if (state.library.colors.length && !shown.length) list.append(noMatches());
+    for (const color of shown) list.append(colorCard(color));
   });
 }
 
 // ---------- Palettes ----------
 function renderPalettes() {
   redraw($('#list-palettes'), (list) => {
-    for (const pal of sortPalettes(state.library.palettes)) {   // alphabetical; swatches inside keep the user's order
+    // Search: the palette's name, or any swatch's name or hex (a match shows the whole card). A palette being renamed,
+    // or one with a just-added swatch, always stays visible.
+    const shown = sortPalettes(state.library.palettes).filter((pal) => pal.id === renamingPaletteId
+      || pal.colors.some((c) => c.id === pendingSwatchEditId)
+      || matches(pal.name) || pal.colors.some((c) => matches(c.name) || hexMatches(c.hex)));
+    if (state.library.palettes.length && !shown.length) list.append(noMatches());
+    for (const pal of shown) {   // alphabetical; swatches inside keep the user's order
       // Name: plain text (double-click to rename) or an input while renaming.
       let nameNode;
       if (renamingPaletteId === pal.id) {
@@ -205,14 +236,18 @@ function renderPalettes() {
 // Blocks show what kind of block they are ("text", "container", "media"...); presets show "preset" and a dashed border.
 function renderBlocks() {
   redraw($('#list-blocks'), (list) => {
-    for (const b of sortBlockTypes()) {
+    // Search: block and preset names.
+    const blocks = sortBlockTypes().filter((b) => matches(b.type));
+    const presets = sortPresets(state.library.presets).filter((p) => matches(p.name));
+    if (!blocks.length && !presets.length) list.append(noMatches());
+    for (const b of blocks) {
       list.append(el('div', { class: 'card-row', ...draggable('block', b.type) },
         el('span', { class: 'icon-slot', text: b.glyph }),
         el('div', { class: 'card-text' },
           el('span', { class: 'card-title', text: b.type }),
           el('span', { class: 'card-sub', text: b.kind }))));
     }
-    for (const p of sortPresets(state.library.presets)) {
+    for (const p of presets) {
       const card = el('div', { class: 'card-row preset-card', title: p.name, ...draggable('preset', p.id) },
         el('span', { class: 'icon-slot', text: '▣' }),
         el('div', { class: 'card-text' },
@@ -228,6 +263,8 @@ function renderBlocks() {
 // "+ import" button (data-import = its id; colors/palettes add, media/fonts import) or, with neither, the
 // muted hint "drag in". Both buttons are the same .plus-btn. Built from the data-* attributes in index.html.
 // The colors header also gets the eyedropper tool button (data-eyedropper) just left of its "+ add".
+// EVERY header ends with the expand/collapse button, so all five line up in one column at the far right.
+// Under every header sits a search box; CSS only shows it while that section is expanded.
 function buildHeaders() {
   for (const head of document.querySelectorAll('.lib-head')) {
     clear(head);
@@ -240,11 +277,59 @@ function buildHeaders() {
     const tool = eyedropper
       ? el('button', { class: 'icon-toggle tool-btn', id: eyedropper, title: 'eyedropper: click a color in the preview to add it' }, icon('eyedropper'))
       : null;
+    // Expand/collapse: also an .icon-toggle; it shows the "on" look (accent border + icon) while its section is expanded.
+    const expandBtn = el('button', {
+      class: 'icon-toggle tool-btn expand-btn', dataset: { section: label },
+      on: { click: () => setExpandedSection(state.session.expandedSection === label ? null : label) },
+    });
     head.append(
       el('span', { class: 'lib-label' }, label, el('span', { class: 'lib-count', dataset: { for: label } })),
-      tool ? el('span', { class: 'lib-head-actions' }, tool, main) : main);
+      el('span', { class: 'lib-head-actions' }, tool, main, expandBtn));
+    head.after(buildSearch(label));
   }
 }
+
+// The search box under a section's header (visible only while that section is expanded). Filters live as you type;
+// Esc clears it. Typing never reaches the app's shortcuts: they all ignore keys typed into inputs, and Esc is stopped
+// here so it doesn't also clear the canvas selection.
+function buildSearch(label) {
+  const input = el('input', { type: 'text', class: 'lib-search', placeholder: `search ${label}…`, spellcheck: false, dataset: { section: label } });
+  input.addEventListener('input', () => { searchText = input.value; RENDER[label](); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    e.stopPropagation();
+    input.value = '';
+    searchText = '';
+    RENDER[label]();
+  });
+  return input;
+}
+
+// Shows the expanded section (or the normal equal layout): CSS hides the other sections and shows the search box.
+// Any change of the expanded section clears the search (collapsing always starts the next search fresh).
+let shownExpanded;    // the expanded section this was last drawn with (so the search is only cleared on a real change)
+function applyExpanded() {
+  const current = state.session.expandedSection || null;
+  $('.library-body').classList.toggle('has-expanded', !!current);
+  for (const section of document.querySelectorAll('.lib-section')) {
+    const label = section.querySelector('.lib-head').dataset.label;
+    const on = label === current;
+    section.classList.toggle('expanded', on);
+    const btn = section.querySelector('.expand-btn');
+    btn.classList.toggle('on', on);
+    btn.title = on ? 'collapse' : 'expand';
+    clear(btn).append(icon(on ? 'collapse' : 'expand'));
+  }
+  if (shownExpanded !== undefined && shownExpanded !== current && searchText) {
+    searchText = '';
+    document.querySelectorAll('.lib-search').forEach((s) => { s.value = ''; });
+    renderLibrary();
+  }
+  shownExpanded = current;
+}
+
+// Each section's render function, by its header label (used by the search box).
+const RENDER = { blocks: () => renderBlocks(), media: () => renderMedia(), fonts: () => renderFonts(), colors: () => renderColors(), palettes: () => renderPalettes() };
 
 // Live counts in the headers ("media · 3"). Blocks counts the offered blocks plus presets; fonts counts font FAMILIES
 // (= the cards shown, built-in ones included), not files, so the number always matches what is on screen.
@@ -329,8 +414,12 @@ export function initLibrary() {
   $('#btn-add-color').addEventListener('click', () => { editingColorId = addColor({ name: 'new_color', hex: '#888888' }).id; renderColors(); });
   // Eyedropper: a picked color is added exactly like "+ add", but with the picked hex already filled in.
   // The new card opens in edit mode with the name selected, so the user just types a name and presses Enter.
+  // (If another section is expanded the colors list is hidden; the color is still added, but not opened for editing,
+  // because a hidden input can't take focus. The view does not switch sections.)
   initEyedropper($('#btn-eyedropper'), (hex) => {
-    editingColorId = addColor({ name: 'new_color', hex }).id;
+    const id = addColor({ name: 'new_color', hex }).id;
+    const hidden = state.session.expandedSection && state.session.expandedSection !== 'colors';
+    editingColorId = hidden ? null : id;
     renderColors();
   });
   $('#btn-add-palette').addEventListener('click', () => {
@@ -338,10 +427,13 @@ export function initLibrary() {
     renderPalettes();
   });
 
-  // Re-render when the library or canvases change (media cards show an "in use" border). Skip pure view/selection updates.
+  // Re-render when the library or canvases change (media cards show an "in use" border). Skip pure view/selection
+  // updates. A UI change may be the expanded section, so that only re-applies the expand layout.
   subscribe((meta) => {
-    if (meta.view || meta.selection || meta.ui || meta.exportSettings || meta.live) return;
+    if (meta.ui) { applyExpanded(); return; }
+    if (meta.view || meta.selection || meta.exportSettings || meta.live) return;
     renderLibrary();
   });
   renderLibrary();
+  applyExpanded();   // restores the section that was expanded when the app was last closed
 }

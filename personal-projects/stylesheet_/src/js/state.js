@@ -62,6 +62,7 @@ function defaultSession() {
     export: { styleLabels: true, canvasLabels: true, format: 'png', transparent: false, scale: 1 },
     collapsedGroups: {},     // editor property groups the user collapsed
     collapsedNodes: {},      // layers-tree nodes the user collapsed
+    expandedSection: null,   // the library section filling the whole panel ('blocks' | 'media' | 'fonts' | 'colors' | 'palettes'), or null
     helpSeen: false,
   };
 }
@@ -449,6 +450,12 @@ export function setExport(patch) {
 }
 export function setGroupCollapsed(name, collapsed) {
   state.session.collapsedGroups[name] = collapsed;
+  notify({ session: true, ui: true });
+}
+// Expands one library section to fill the panel (null = the normal equal layout). Saved in the session like the
+// collapse states; not an undo step.
+export function setExpandedSection(name) {
+  state.session.expandedSection = name || null;
   notify({ session: true, ui: true });
 }
 export function setNodeCollapsed(id, collapsed) {

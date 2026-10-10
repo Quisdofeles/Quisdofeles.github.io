@@ -106,6 +106,10 @@ const SVG = {
   chevronUp: '<path d="M4 10l4-4 4 4"/>',
   chevronDown: '<path d="M4 6l4 4 4-4"/>',
   eyeOff: '<path d="M1.5 8s2.3-4.5 6.5-4.5S14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z" opacity=".45"/><path d="M2.5 13.5l11-11"/>',
+  // Library section expand/collapse: two diagonal arrows pointing OUT to the corners (expand) or IN toward the
+  // center (collapse). Deliberately not the square maximize/restore icons of the top bar.
+  expand: '<path d="M9.5 2.5h4v4M13.5 2.5L9.2 6.8M6.5 13.5h-4v-4M2.5 13.5L6.8 9.2"/>',
+  collapse: '<path d="M9.2 3v3.8H13M9.2 6.8l4.3-4.3M6.8 13V9.2H3M6.8 9.2l-4.3 4.3"/>',
 };
 
 // Returns an <svg> element for a named icon.
