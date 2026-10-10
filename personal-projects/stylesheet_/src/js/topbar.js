@@ -30,8 +30,14 @@ export async function initTopbar({ onHelp, onSettings } = {}) {
 
 // Draws the breadcrumb: "/ lockup_A / tagline". Parents muted, last item white, each clickable.
 // `path` is an array of nodes from the canvas down to the selected node (empty = nothing selected).
-export function renderBreadcrumb(path, onSelect) {
+// With more than one node selected (`count` > 1) it just says "/ N selected" (nothing to click).
+export function renderBreadcrumb(path, onSelect, count = path.length ? 1 : 0) {
   const nav = clear($('#breadcrumb'));
+  if (count > 1) {
+    nav.append(el('span', { class: 'sep', text: '/' }));
+    nav.append(el('span', { class: 'crumb last', text: `${count} selected` }));
+    return;
+  }
   path.forEach((node, i) => {
     nav.append(el('span', { class: 'sep', text: '/' }));
     nav.append(el('button', {

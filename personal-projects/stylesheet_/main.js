@@ -28,7 +28,7 @@ const MIME = {
   '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
 };
 const FONT_EXT = ['.ttf', '.otf', '.woff', '.woff2'];
-const VECTOR_EXT = ['.svg', '.png', '.jpg', '.jpeg'];
+const MEDIA_EXT = ['.svg', '.png', '.jpg', '.jpeg'];
 
 // Turns a relative path (e.g. "fonts/abc.ttf") into an absolute one INSIDE the library folder.
 // Anything that resolves outside the library folder is rejected: this is the security gate.
@@ -65,10 +65,21 @@ async function readJson(name) {
   }
 }
 
+// ---------- App settings (settings.json) ----------
+// A tiny file separate from session.json because main needs the "on launch" value BEFORE the window exists.
+// Returns a complete settings object; anything missing or invalid falls back to the default (maximized).
+function cleanSettings(raw) {
+  const launch = raw && raw.launch === 'windowed' ? 'windowed' : 'maximized';
+  return { launch };
+}
+async function loadSettings() {
+  return cleanSettings(await readJson('settings.json'));
+}
+
 // ---------- Window ----------
 let win = null;
 
-function createWindow() {
+function createWindow(settings) {
   const work = screen.getPrimaryDisplay().workAreaSize;
   win = new BrowserWindow({
     width: Math.min(1440, work.width),
@@ -88,7 +99,13 @@ function createWindow() {
     },
   });
   win.removeMenu();
-  win.once('ready-to-show', () => win.show());
+  // The window stays hidden (show: false) until the page is ready. If the "on launch" setting is maximized,
+  // maximize it right before showing, so the user never sees a small window first.
+  // (maximize() on a hidden window would show it immediately, which is why it happens here, not earlier.)
+  win.once('ready-to-show', () => {
+    if (settings.launch === 'maximized') win.maximize();
+    win.show();
+  });
   win.loadFile(path.join(__dirname, 'src', 'index.html'));
 
   // Tell the renderer when maximize state changes so the icon can swap between maximize / restore.
@@ -146,27 +163,34 @@ ipcMain.handle('library:load', () => readJson('library.json'));
 ipcMain.handle('library:save', (e, data) => writeJsonAtomic('library.json', JSON.stringify(data)));
 ipcMain.handle('session:load', () => readJson('session.json'));
 ipcMain.handle('session:save', (e, data) => writeJsonAtomic('session.json', JSON.stringify(data)));
+// App settings (currently just "on launch"); takes effect the next time the app starts.
+ipcMain.handle('settings:load', () => loadSettings());
+ipcMain.handle('settings:save', (e, data) => writeJsonAtomic('settings.json', JSON.stringify(cleanSettings(data))));
 
 // ---------- IPC: importing files ----------
-// Opens a file dialog, copies each chosen file into library/fonts or library/vectors,
+// Opens a file dialog, copies each chosen file into library/fonts or library/media,
 // and returns metadata the renderer uses to build library entries.
-ipcMain.handle('files:import', async () => {
+// `type` is 'font' or 'media': each library section has its own import button, and the dialog
+// (and the copy loop below) only accepts that section's file types.
+ipcMain.handle('files:import', async (e, type) => {
+  const isFont = type === 'font';
+  const allowed = isFont ? FONT_EXT : MEDIA_EXT;
   // Dev-only shortcut so automated tests can import without a dialog (never active in a packaged build).
   const scripted = !app.isPackaged && process.env.STYLESHEET_IMPORT;
   const result = scripted
     ? { canceled: false, filePaths: process.env.STYLESHEET_IMPORT.split(';') }
     : await dialog.showOpenDialog(win, {
-      title: 'Import into library',
+      title: isFont ? 'Import fonts' : 'Import media',
       properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Fonts, vectors and images', extensions: ['ttf', 'otf', 'woff', 'woff2', 'svg', 'png', 'jpg', 'jpeg'] }],
+      filters: [{ name: isFont ? 'Fonts' : 'Images and vectors', extensions: allowed.map((x) => x.slice(1)) }],
     });
   if (result.canceled) return [];
   const imported = [];
   for (const source of result.filePaths) {
     const ext = path.extname(source).toLowerCase();
-    const kind = FONT_EXT.includes(ext) ? 'font' : VECTOR_EXT.includes(ext) ? 'vector' : null;
-    if (!kind) continue;
-    const subdir = kind === 'font' ? 'fonts' : 'vectors';
+    if (!allowed.includes(ext)) continue;
+    const kind = isFont ? 'font' : 'media';
+    const subdir = kind === 'font' ? 'fonts' : 'media';
     // Unique stored name so two files called "logo.svg" never overwrite each other.
     const safe = path.basename(source).replace(/[^\w.\-]+/g, '_');
     const fileName = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}_${safe}`;
@@ -185,7 +209,7 @@ ipcMain.handle('files:read', async (e, rel) => fsp.readFile(resolveLibraryPath(r
 // listed files still in the live folder move to trash; unlisted files in trash move back (this is undo/restore).
 ipcMain.handle('trash:sync', async (e, wanted) => {
   const wantSet = new Set(wanted.map((f) => `${f.subdir}/${f.fileName}`));
-  for (const subdir of ['fonts', 'vectors']) {
+  for (const subdir of ['fonts', 'media']) {
     const live = path.join(libraryDir(), subdir);
     const trash = path.join(trashDir(), subdir);
     await fsp.mkdir(live, { recursive: true });
@@ -254,10 +278,16 @@ ipcMain.handle('window:close', () => win && win.close());
 ipcMain.handle('window:isMaximized', () => !!win && win.isMaximized());
 
 // ---------- App lifecycle ----------
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   registerProtocol();
+  // One-time migration: the "vectors" folders were renamed to "media" (live folder and trash folder).
+  // Runs only when the old folder exists and the new one doesn't, so saved files are never lost.
+  for (const base of [libraryDir(), trashDir()]) {
+    const oldDir = path.join(base, 'vectors'), newDir = path.join(base, 'media');
+    if (fs.existsSync(oldDir) && !fs.existsSync(newDir)) fs.renameSync(oldDir, newDir);
+  }
   fs.mkdirSync(path.join(libraryDir(), 'fonts'), { recursive: true });
-  fs.mkdirSync(path.join(libraryDir(), 'vectors'), { recursive: true });
-  createWindow();
+  fs.mkdirSync(path.join(libraryDir(), 'media'), { recursive: true });
+  createWindow(await loadSettings());   // settings are read first because the launch mode decides the window state
 });
 app.on('window-all-closed', () => app.quit());

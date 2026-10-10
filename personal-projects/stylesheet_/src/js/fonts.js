@@ -5,9 +5,22 @@
 
 const registered = new Set();   // font ids already added to document.fonts
 
+// Built-in fonts: Space Grotesk (a variable font, so one file gives every weight) and IBM Plex Mono, the UI fonts that
+// ship with the app (already loaded by @font-face in tokens.css, so nothing is imported or registered). They look
+// like library fonts to the rest of the app (same fields), plus `builtin: true`, but they live here, not in
+// library.fonts, so they can't be deleted and no save ever holds them. New text blocks start with DEFAULT_FONT_ID.
+const builtin = (slug, family) => [400, 500, 700].map((weight) => (
+  { id: `builtin_${slug}_${weight}`, family, weight, style: 'normal', builtin: true }
+));
+export const BUILTIN_FONTS = [...builtin('spacegrotesk', 'Space Grotesk'), ...builtin('plexmono', 'IBM Plex Mono')];
+export const DEFAULT_FONT_ID = 'builtin_spacegrotesk_700';       // Space Grotesk Bold
+
 // Every library font file gets its own CSS family name, so "Space Grotesk 700" and "Space Grotesk 400"
-// can never be confused or faux-bolded by the browser.
-export const cssFamily = (font) => `ssf-${font.id}`;
+// can never be confused or faux-bolded by the browser. (A built-in font uses the real family + weight instead.)
+export const cssFamily = (font) => (font.builtin ? font.family : `ssf-${font.id}`);
+// The CSS that draws text in a font: library fonts carry their weight in the file (so weight stays normal);
+// built-in Plex Mono picks its weight through font-weight.
+export const fontCss = (font) => ({ fontFamily: `'${cssFamily(font)}'`, fontWeight: font.builtin ? String(font.weight) : 'normal', fontStyle: 'normal' });
 export const fontUrl = (font) => `ssfile://lib/fonts/${encodeURIComponent(font.fileName)}`;
 
 // "Space Grotesk 700" / "DM Serif Display 400 italic": the label shown in pickers and the trash.
@@ -39,7 +52,7 @@ export function groupFamilies(fonts) {
     map.get(f.family).push(f);
   }
   return [...map.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
+    .sort((a, b) => a[0].toLowerCase().localeCompare(b[0].toLowerCase()))   // alphabetical, case-insensitive
     .map(([family, list]) => ({
       family,
       fonts: list.sort((a, b) => a.weight - b.weight || (a.style === 'italic') - (b.style === 'italic')),

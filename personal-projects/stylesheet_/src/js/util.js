@@ -85,11 +85,20 @@ export function contrastColor(hex) {
 // ---------- Icons ----------
 const SVG = {
   help: '<circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.6 1.8c-.5.3-.8.6-.8 1.2"/><circle cx="8" cy="11.6" r=".4" fill="currentColor"/>',
-  gear: '<circle cx="8" cy="8" r="2.1"/><path d="M8 1.6v1.7M8 12.7v1.7M1.6 8h1.7M12.7 8h1.7M3.5 3.5l1.2 1.2M11.3 11.3l1.2 1.2M12.5 3.5l-1.2 1.2M4.7 11.3l-1.2 1.2"/>',
+  // gear/cog: 8-tooth outline + center hole (the old circle-with-rays looked like a sun)
+  gear: '<path d="M12.61 6.68L14.32 7L14.32 9L12.61 9.32L12.2 10.33L13.18 11.76L11.76 13.18L10.33 12.2L9.32 12.61L9 14.32L7 14.32L6.68 12.61L5.67 12.2L4.24 13.18L2.82 11.76L3.8 10.33L3.39 9.32L1.68 9L1.68 7L3.39 6.68L3.8 5.67L2.82 4.24L4.24 2.82L5.67 3.8L6.68 3.39L7 1.68L9 1.68L9.32 3.39L10.33 3.8L11.76 2.82L13.18 4.24L12.2 5.67Z"/><circle cx="8" cy="8" r="1.9"/>',
   min: '<path d="M3 8h10"/>',
   max: '<rect x="3.2" y="3.2" width="9.6" height="9.6" rx="1"/>',
   restore: '<rect x="3.2" y="5.2" width="7.6" height="7.6" rx="1"/><path d="M5.6 5.2V3.6a.9.9 0 0 1 .9-.9h5.9a.9.9 0 0 1 .9.9v5.9a.9.9 0 0 1-.9.9h-1.6"/>',
   close: '<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>',
+  // Align glyphs. "h" = three horizontal lines (used when the layout is a stack: align is left/center/right);
+  // "v" = three vertical bars (used when the layout is a row: align is top/middle/bottom).
+  alignHStart: '<path d="M3 3.5h10M3 8h6M3 12.5h8"/>',
+  alignHCenter: '<path d="M3 3.5h10M5 8h6M4 12.5h8"/>',
+  alignHEnd: '<path d="M3 3.5h10M7 8h6M5 12.5h8"/>',
+  alignVStart: '<path d="M3.5 3v10M8 3v6M12.5 3v8"/>',
+  alignVCenter: '<path d="M3.5 3v10M8 5v6M12.5 4v8"/>',
+  alignVEnd: '<path d="M3.5 3v10M8 7v6M12.5 5v8"/>',
   eye: '<path d="M1.5 8s2.3-4.5 6.5-4.5S14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.8"/>',
   eyeOff: '<path d="M1.5 8s2.3-4.5 6.5-4.5S14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z" opacity=".45"/><path d="M2.5 13.5l11-11"/>',
 };

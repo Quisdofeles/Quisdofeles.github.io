@@ -1,15 +1,17 @@
-// library.js: renders the Library panel (vectors, fonts, colors, palettes, blocks, presets) from state,
+// library.js: renders the Library panel (media, fonts, colors, palettes, blocks + presets) from state,
 // and handles importing files, adding colors/palettes, inline editing, and right-click delete.
 // Drag-and-drop out of the library is wired generically in dragdrop.js through data-drag-* attributes.
+// Every list is sorted for display only (see sorting.js); the saved data keeps its own order.
 
 import { el, clear, $, uid, slug, isHex, normalizeHex } from './util.js';
 import {
   state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor,
-  addFonts, addVectors, trashItems, usageCount,
+  addFonts, addMedia, trashItems, usageCount,
 } from './state.js';
-import { BLOCK_TYPES } from './blocks.js';
 import { groupFamilies, familySummary, closestTo400, cssFamily, registerFonts, describeFont } from './fonts.js';
-import { processSvg, cacheVector, buildVectorSvg, vectorUrl } from './svg.js';
+import { processSvg, cacheMedia, buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
+import { libraryBlockCount } from './blocks.js';
+import { sortMedia, sortColors, sortPalettes, sortPresets, sortBlockTypes } from './sorting.js';
 import { openMenuAt, openColorEditor } from './popover.js';
 import { confirmDialog, showToast } from './overlays.js';
 
@@ -35,7 +37,7 @@ async function deleteWithConfirm(kind, ids, label) {
   const used = usageCount(kind, ids);
   const how = 'You can restore it from settings → trash, or press Ctrl+Z.';
   const message = used
-    ? `"${label}" is used by ${used} block${used === 1 ? '' : 's'}. After deleting, ${used === 1 ? 'that block falls' : 'those blocks fall'} back to the gray placeholder. ${how}`
+    ? `"${label}" is used by ${used} block${used === 1 ? '' : 's'}. After deleting, ${used === 1 ? 'that block falls' : 'those blocks fall'} back to ${kind === 'font' ? 'Space Grotesk' : 'the gray placeholder'}. ${how}`
     : `"${label}" will move to the trash. ${how}`;
   const ok = await confirmDialog({ title: `delete ${label}?`, message, confirmLabel: 'delete', danger: true });
   if (ok) trashItems(kind, ids);
@@ -51,20 +53,31 @@ function withDeleteMenu(node, kind, ids, label) {
   return node;
 }
 
-// ---------- Vectors ----------
-function renderVectors() {
-  redraw($('#list-vectors'), (list) => {
-    if (!state.library.vectors.length) list.append(el('div', { class: 'lib-empty', style: { gridColumn: '1 / -1' }, text: 'import an svg or image' }));
-    for (const vec of state.library.vectors) {
-      const thumb = vec.kind === 'image'
-        ? el('img', { src: vectorUrl(vec), alt: vec.name })
-        : buildVectorSvg(vec.id, () => '#D5D5DA') || el('span', { class: 'muted', text: '…' });
-      const tile = el('div', {
-        class: 'vector-tile' + (usageCount('vector', [vec.id]) ? ' in-use' : ''),
-        title: vec.name + (vec.layers.length ? `  ·  ${vec.layers.length} layers` : ''),
-        ...draggable('vector', vec.id),
-      }, thumb);
-      list.append(withDeleteMenu(tile, 'vector', [vec.id], vec.name));
+// ---------- Media ----------
+// The small muted line under a media card's name: the file type ("svg", "png", "jpg").
+function fileType(item) {
+  if (item.kind === 'svg') return 'svg';
+  const ext = (item.name.split('.').pop() || '').toLowerCase();
+  return ext === 'jpeg' ? 'jpg' : ext;
+}
+
+function renderMedia() {
+  redraw($('#list-media'), (list) => {
+    if (!state.library.media.length) list.append(el('div', { class: 'lib-empty', text: 'import an svg or image' }));
+    for (const item of sortMedia(state.library.media)) {   // newest added first
+      const thumbContent = item.kind === 'image'
+        ? el('img', { src: mediaUrl(item), alt: item.name })
+        : buildVectorSvg(item.id, () => '#D5D5DA') || el('span', { class: 'muted', text: '…' });
+      const card = el('div', {
+        class: 'card-row' + (usageCount('media', [item.id]) ? ' in-use' : ''),
+        title: item.name + (layerInfo(item.id).length ? `  ·  ${layerInfo(item.id).length} layers` : ''),
+        ...draggable('media', item.id),
+      },
+      el('span', { class: 'media-thumb' }, thumbContent),
+      el('div', { class: 'card-text' },
+        el('span', { class: 'card-title', text: item.name }),
+        el('span', { class: 'card-sub', text: fileType(item) })));
+      list.append(withDeleteMenu(card, 'media', [item.id], item.name));
     }
   });
 }
@@ -72,7 +85,7 @@ function renderVectors() {
 // ---------- Fonts ----------
 function renderFonts() {
   redraw($('#list-fonts'), (list) => {
-    const families = groupFamilies(state.library.fonts);
+    const families = groupFamilies(state.library.fonts);   // already alphabetical, case-insensitive
     if (!families.length) list.append(el('div', { class: 'lib-empty', text: 'import .ttf .otf .woff .woff2' }));
     for (const fam of families) {
       const sample = closestTo400(fam.fonts);   // the card previews, and drags, the weight closest to 400
@@ -128,14 +141,14 @@ function colorCard(color) {
 
 function renderColors() {
   redraw($('#list-colors'), (list) => {
-    for (const color of state.library.colors) list.append(colorCard(color));
+    for (const color of sortColors(state.library.colors)) list.append(colorCard(color));   // grouped by hue
   });
 }
 
 // ---------- Palettes ----------
 function renderPalettes() {
   redraw($('#list-palettes'), (list) => {
-    for (const pal of state.library.palettes) {
+    for (const pal of sortPalettes(state.library.palettes)) {   // alphabetical; swatches inside keep the user's order
       // Name: plain text (double-click to rename) or an input while renaming.
       let nameNode;
       if (renamingPaletteId === pal.id) {
@@ -158,8 +171,9 @@ function renderPalettes() {
       const grid = el('div', { class: 'palette-grid' });
       for (const color of pal.colors) {
         const swatch = el('button', {
-          class: 'palette-swatch', title: `${color.name} ${color.hex}`, style: { background: color.hex }, ...draggable('color', color.id),
+          class: 'palette-swatch', style: { background: color.hex }, ...draggable('color', color.id),
         });
+        attachSwatchTip(swatch, color);   // name + hex on hover (swatches have no visible label)
         swatch.addEventListener('click', () => openColorEditor(swatch, color, {
           onSave: (patch) => updateColor(color.id, patch),
           onDelete: () => deleteWithConfirm('palette_color', [color.id], color.name),
@@ -176,55 +190,94 @@ function renderPalettes() {
   });
 }
 
-// ---------- Blocks + presets ----------
+// ---------- Blocks + presets (one section) ----------
+// Default blocks first (fixed order), then the saved presets (newest first, shipped defaults last).
+// Both are single-column .card-row cards (same as fonts/colors): icon in a 34px slot, name, muted second line.
+// Blocks show what kind of block they are ("text", "container", "media"...); presets show "preset" and a dashed border.
 function renderBlocks() {
   redraw($('#list-blocks'), (list) => {
-    for (const b of BLOCK_TYPES) {
-      list.append(el('div', { class: 'block-card', ...draggable('block', b.type) },
-        el('span', { class: 'glyph', text: b.glyph }), b.type));
+    for (const b of sortBlockTypes()) {
+      list.append(el('div', { class: 'card-row', ...draggable('block', b.type) },
+        el('span', { class: 'icon-slot', text: b.glyph }),
+        el('div', { class: 'card-text' },
+          el('span', { class: 'card-title', text: b.type }),
+          el('span', { class: 'card-sub', text: b.kind }))));
+    }
+    for (const p of sortPresets(state.library.presets)) {
+      const card = el('div', { class: 'card-row preset-card', title: p.name, ...draggable('preset', p.id) },
+        el('span', { class: 'icon-slot', text: '▣' }),
+        el('div', { class: 'card-text' },
+          el('span', { class: 'card-title', text: p.name }),
+          el('span', { class: 'card-sub', text: 'preset' })));
+      list.append(withDeleteMenu(card, 'preset', [p.id], p.name));
     }
   });
 }
 
-function renderPresets() {
-  redraw($('#list-presets'), (list) => {
-    if (!state.library.presets.length) list.append(el('div', { class: 'lib-empty', text: 'select a canvas, then "save as preset"' }));
-    for (const p of state.library.presets) {
-      const row = el('div', { class: 'preset-row', title: p.name, ...draggable('preset', p.id) }, el('span', { text: '▣' }), el('span', { text: p.name }));
-      list.append(withDeleteMenu(row, 'preset', [p.id], p.name));
-    }
-  });
+// ---------- Section headers (ONE shared pattern for all five sections) ----------
+// Left: "label · count" (same style everywhere). Right: a "+ add" button (data-add = its element id), a
+// "+ import" button (data-import = its id; colors/palettes add, media/fonts import) or, with neither, the
+// muted hint "drag in". Both buttons are the same .plus-btn. Built from the data-* attributes in index.html.
+function buildHeaders() {
+  for (const head of document.querySelectorAll('.lib-head')) {
+    clear(head);
+    const { label, add, import: importId } = head.dataset;
+    const button = (id, text, title) => el('button', { class: 'plus-btn', id, title, text });
+    head.append(
+      el('span', { class: 'lib-label' }, label, el('span', { class: 'lib-count', dataset: { for: label } })),
+      add ? button(add, '+ add', `add ${label.replace(/s$/, '')}`)
+        : importId ? button(importId, '+ import', `import ${label}`)
+          : el('span', { class: 'lib-hint', text: 'drag in' }));
+  }
 }
 
-// Section header counts (live).
+// Live counts in the headers ("media · 3"). Blocks counts the default blocks plus presets.
 function renderMeta() {
   const l = state.library;
-  $('#meta-vectors').textContent = l.vectors.length;
-  $('#meta-fonts').textContent = l.fonts.length;
-  $('#meta-colors').textContent = l.colors.length;
-  $('#meta-palettes').textContent = l.palettes.length;
-  $('#meta-presets').textContent = l.presets.length;
+  const counts = { media: l.media.length, fonts: l.fonts.length, colors: l.colors.length, palettes: l.palettes.length, blocks: libraryBlockCount(l) };
+  for (const span of document.querySelectorAll('.lib-count')) span.textContent = ` · ${counts[span.dataset.for]}`;
+}
+
+// ---------- Palette swatch tooltip ----------
+// One small floating tip (name + hex) shared by every palette swatch. It lives on <body> so the list's
+// overflow can't clip it, and never takes pointer events.
+let swatchTip = null;
+function showSwatchTip(swatch, color) {
+  hideSwatchTip();
+  swatchTip = el('div', { class: 'swatch-tip' }, el('span', { text: color.name }), el('span', { class: 'swatch-tip-hex', text: color.hex }));
+  document.body.append(swatchTip);
+  const r = swatch.getBoundingClientRect(), t = swatchTip.getBoundingClientRect();
+  const left = Math.max(6, Math.min(window.innerWidth - t.width - 6, r.left + r.width / 2 - t.width / 2));
+  const above = r.top - t.height - 6;
+  swatchTip.style.left = `${left}px`;
+  swatchTip.style.top = `${above >= 6 ? above : r.bottom + 6}px`;   // flips below if there is no room above
+}
+function hideSwatchTip() { if (swatchTip) { swatchTip.remove(); swatchTip = null; } }
+function attachSwatchTip(swatch, color) {
+  swatch.addEventListener('mouseenter', () => showSwatchTip(swatch, color));
+  for (const ev of ['mouseleave', 'dragstart', 'click', 'contextmenu']) swatch.addEventListener(ev, hideSwatchTip);
 }
 
 export function renderLibrary() {
   renderMeta();
-  renderVectors();
+  renderMedia();
   renderFonts();
   renderColors();
   renderPalettes();
   renderBlocks();
-  renderPresets();
 }
 
 // ---------- Import ----------
-// Opens the file dialog, then turns each copied file into a library entry.
-async function importFlow() {
-  const files = await window.api.importFiles();
+// Opens the file dialog for one section ('font' or 'media'; the dialog only offers that section's file
+// types), then turns each copied file into a library entry.
+async function importFlow(type) {
+  const files = await window.api.importFiles(type);
   if (!files.length) return;
   const fontEntries = [];
-  const vectorEntries = [];
+  const mediaEntries = [];
+  const now = Date.now();     // addedAt for sorting; +i keeps files imported together in order
 
-  for (const f of files) {
+  for (const [i, f] of files.entries()) {
     if (f.kind === 'font') {
       const res = await fetch(`ssfile://lib/fonts/${encodeURIComponent(f.fileName)}`);
       const info = await describeFont(await res.arrayBuffer(), f.originalName);
@@ -232,37 +285,38 @@ async function importFlow() {
     } else if (f.ext === '.svg') {
       const id = uid('v');
       try {
-        const text = await window.api.readLibraryFile(`vectors/${f.fileName}`);
-        const { markup, layers } = processSvg(text, id);   // sanitizes + finds named layers
-        cacheVector(id, markup);
-        vectorEntries.push({ id, name: f.originalName, fileName: f.fileName, kind: 'svg', layers });
-        if (!layers.length) showToast(`${f.originalName}: no named layers found — this vector will take one color.`, { warn: true, ms: 7000 });
+        const text = await window.api.readLibraryFile(`media/${f.fileName}`);
+        cacheMedia(id, processSvg(text, id));   // sanitizes + reads the first-level layers and their colors
+        mediaEntries.push({ id, name: f.originalName, fileName: f.fileName, kind: 'svg', addedAt: now + i });
       } catch {
         showToast(`${f.originalName} isn't a valid svg and was skipped.`, { warn: true });
       }
     } else {
-      vectorEntries.push({ id: uid('v'), name: f.originalName, fileName: f.fileName, kind: 'image', layers: [] });
+      mediaEntries.push({ id: uid('m'), name: f.originalName, fileName: f.fileName, kind: 'image', addedAt: now + i });
     }
   }
 
   if (fontEntries.length) { await registerFonts(fontEntries); addFonts(fontEntries); }
-  if (vectorEntries.length) addVectors(vectorEntries);
+  if (mediaEntries.length) addMedia(mediaEntries);
   const bits = [];
   if (fontEntries.length) bits.push(`${fontEntries.length} font${fontEntries.length === 1 ? '' : 's'}`);
-  if (vectorEntries.length) bits.push(`${vectorEntries.length} vector${vectorEntries.length === 1 ? '' : 's'}`);
+  if (mediaEntries.length) bits.push(`${mediaEntries.length} media file${mediaEntries.length === 1 ? '' : 's'}`);
   if (bits.length) showToast(`imported ${bits.join(' and ')}`);
 }
 
 // ---------- Setup ----------
 export function initLibrary() {
-  $('#btn-import').addEventListener('click', () => importFlow().catch((err) => { console.error(err); showToast('import failed', { warn: true }); }));
+  buildHeaders();   // must run first: it creates the "+ add" buttons wired below
+  const runImport = (type) => importFlow(type).catch((err) => { console.error(err); showToast('import failed', { warn: true }); });
+  $('#btn-import-fonts').addEventListener('click', () => runImport('font'));
+  $('#btn-import-media').addEventListener('click', () => runImport('media'));
   $('#btn-add-color').addEventListener('click', () => { editingColorId = addColor({ name: 'new_color', hex: '#888888' }).id; renderColors(); });
   $('#btn-add-palette').addEventListener('click', () => {
     renamingPaletteId = addPalette(`palette_${state.library.palettes.length + 1}`).id;
     renderPalettes();
   });
 
-  // Re-render when the library or canvases change (vectors show an "in use" border). Skip pure view/selection updates.
+  // Re-render when the library or canvases change (media cards show an "in use" border). Skip pure view/selection updates.
   subscribe((meta) => {
     if (meta.view || meta.selection || meta.ui || meta.exportSettings || meta.live) return;
     renderLibrary();

@@ -7,7 +7,7 @@
   <meta charset="utf-8">
   <title>Stylesheet_</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Content Security Policy: only our own files and ssfile:// (imported fonts/vectors). No remote code. -->
+  <!-- Content Security Policy: only our own files and ssfile:// (imported fonts/media). No remote code. -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self' ssfile:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ssfile:; font-src 'self' data: blob: ssfile:; connect-src 'self' data: blob: ssfile:;">
   <link rel="stylesheet" href="styles/tokens.css">
@@ -24,7 +24,7 @@
     <!-- ===== Top bar (drag region) ===== -->
     <header id="topbar">
       <div class="brand">
-        <span class="brand-word">Stylesheet</span><span class="brand-bar"></span>
+        <span class="brand-word">Stylesheet<span class="underscore">_</span></span><!-- old .brand-bar underscore removed: the "_" character above is the only underscore -->
       </div>
       <nav id="breadcrumb" aria-label="selection"></nav>
       <div class="grow"></div>
@@ -45,34 +45,32 @@
       <aside id="library" class="panel">
         <div class="panel-head">
           <span class="section-label">01 — LIBRARY</span>
-          <button class="btn btn-sm" id="btn-import">+ import</button>
         </div>
         <div class="library-body">
-          <section class="lib-section" style="--w:1" id="sec-vectors">
-            <header class="lib-head"><span>vectors</span><span class="lib-meta" id="meta-vectors"></span></header>
-            <div class="lib-list scroll-area grid-vectors" id="list-vectors"></div>
+          <!-- Section order: blocks, media, fonts, colors, palettes (the status bar uses the same order).
+               Weights share the panel height: blocks (+ presets) 2, media 1, fonts 1.2, colors 1.5, palettes 1.5 -->
+          <!-- Every <header class="lib-head"> is empty here: library.js (buildHeaders) fills them all with the ONE shared
+               structure. data-label = the name; data-add = id of a "+ add" button; data-import = id of a "+ import" button
+               (omit both to show the "drag in" hint). -->
+          <section class="lib-section" style="--w:2" id="sec-blocks">
+            <header class="lib-head" data-label="blocks"></header>
+            <div class="lib-list scroll-area" id="list-blocks"></div>
           </section>
-          <section class="lib-section" style="--w:1.4" id="sec-fonts">
-            <header class="lib-head"><span>fonts</span><span class="lib-meta" id="meta-fonts"></span></header>
+          <section class="lib-section" style="--w:1" id="sec-media">
+            <header class="lib-head" data-label="media" data-import="btn-import-media"></header>
+            <div class="lib-list scroll-area" id="list-media"></div>
+          </section>
+          <section class="lib-section" style="--w:1.2" id="sec-fonts">
+            <header class="lib-head" data-label="fonts" data-import="btn-import-fonts"></header>
             <div class="lib-list scroll-area" id="list-fonts"></div>
           </section>
-          <section class="lib-section" style="--w:1.4" id="sec-colors">
-            <header class="lib-head"><span>colors<span class="dotcount" id="meta-colors"></span></span>
-              <button class="plus-btn" id="btn-add-color" title="add color">+</button></header>
+          <section class="lib-section" style="--w:1.5" id="sec-colors">
+            <header class="lib-head" data-label="colors" data-add="btn-add-color"></header>
             <div class="lib-list scroll-area" id="list-colors"></div>
           </section>
-          <section class="lib-section" style="--w:1.4" id="sec-palettes">
-            <header class="lib-head"><span>palettes<span class="dotcount" id="meta-palettes"></span></span>
-              <button class="plus-btn" id="btn-add-palette" title="add palette">+</button></header>
+          <section class="lib-section" style="--w:1.5" id="sec-palettes">
+            <header class="lib-head" data-label="palettes" data-add="btn-add-palette"></header>
             <div class="lib-list scroll-area" id="list-palettes"></div>
-          </section>
-          <section class="lib-section" style="--w:1" id="sec-blocks">
-            <header class="lib-head"><span>blocks</span><span class="lib-meta">drag in</span></header>
-            <div class="lib-list scroll-area grid-blocks" id="list-blocks"></div>
-          </section>
-          <section class="lib-section" style="--w:1" id="sec-presets">
-            <header class="lib-head"><span>presets</span><span class="lib-meta" id="meta-presets"></span></header>
-            <div class="lib-list scroll-area" id="list-presets"></div>
           </section>
         </div>
       </aside>
@@ -81,7 +79,7 @@
       <section id="preview">
         <div id="stage">
           <div id="canvas-grid"></div>
-          <div id="stage-empty">drag a preset or a block here to start</div>
+          <div id="stage-empty"><button class="dashed-btn" id="btn-add-canvas">drag in a canvas or preset</button></div>
         </div>
 
         <div class="float-bar" id="preview-bar">
@@ -112,7 +110,7 @@
             <button data-scale="4">4×</button>
           </div>
           <span class="grow"></span>
-          <button class="btn btn-primary" id="btn-export">export</button>
+          <button class="btn" id="btn-export">export</button>
         </div>
       </section>
 
@@ -132,7 +130,7 @@
 
     <!-- ===== Status bar ===== -->
     <footer id="statusbar">
-      <span id="status-counts">library: 0 fonts · 0 colors · 0 palettes · 0 vectors · 0 presets</span>
+      <span id="status-counts">library: 0 blocks · 0 media · 0 fonts · 0 colors · 0 palettes</span>
       <span id="status-brand">Stylesheet_ by HALFWIT Studios · v0.1</span>
     </footer>
   </div>

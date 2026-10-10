@@ -8,17 +8,16 @@
 
 /* ---------- Help overlay ---------- */
 .help-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.78); cursor: pointer; }
+/* One row, centered in the window, equal 16px gaps; `top` is set in overlays.js. Cards stretch to equal height. */
+.help-row { position: absolute; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; }
 .help-callout {
-  position: absolute; max-width: 250px;
+  width: min(300px, calc((100vw - 96px) / 4));   /* all four equal; 300px max, shrinks so 4 cards + 3 gaps + 24px side margins fit (296px at 1280) */
   background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-lg);
   padding: 12px 14px; font-size: 12px; line-height: 1.5;
 }
 .help-callout b { color: var(--accent); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; display: block; margin-bottom: 4px; }
-.help-rule {
-  position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%);
-  background: var(--accent); color: #0A0A0B; padding: 10px 18px; border-radius: var(--radius); font-weight: 500;
-}
-.help-close { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+/* One short footer line, bottom center. */
+.help-footer { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); color: var(--muted); font-size: 11px; letter-spacing: 1px; white-space: nowrap; }
 
 /* ---------- Modal base (settings + confirm) ---------- */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: grid; place-items: center; }

@@ -2,7 +2,7 @@
 // - The library saves immediately whenever it changes.
 // - The session saves 1 second after the last change (debounced), and always on close.
 // - It also keeps the trash FOLDER on disk matching the trash LIST in library.json
-//   (soft-deleted font/vector files move into library/trash/, and move back on restore/undo).
+//   (soft-deleted font/media files move into library/trash/, and move back on restore/undo).
 
 import { state, subscribe, initState, trashFileOf } from './state.js';
 import { debounce } from './util.js';

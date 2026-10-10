@@ -3,38 +3,46 @@
 // Pure data + functions: this file never touches the DOM or the state object.
 
 import { uid, clone } from './util.js';
+import { DEFAULT_FONT_ID } from './fonts.js';
 
 // ---------- Constants ----------
-// The library's "blocks" list, in the order from CLAUDE.md. `glyph` is the small lime icon.
+// The block types. `glyph` is the small lime icon; `kind` is the muted second line on its library card
+// ("text", "media", "container", ...). (The order blocks appear in the LIBRARY panel is separate: see
+// BLOCK_ORDER in sorting.js. This order is used by the editor's "+ block" menu.)
 export const BLOCK_TYPES = [
-  { type: 'title', glyph: 'T' },
-  { type: 'heading', glyph: 'T' },
-  { type: 'subheading', glyph: 't' },
-  { type: 'body', glyph: '¶' },
-  { type: 'caption', glyph: 't' },
-  { type: 'vector', glyph: '◇' },
-  { type: 'image', glyph: '▨' },
-  { type: 'swatch', glyph: '▤' },
-  { type: 'canvas', glyph: '▣' },
-  { type: 'spacer', glyph: '↕' },
-  { type: 'group', glyph: '▢' },
+  { type: 'title', glyph: 'T', kind: 'text' },
+  { type: 'heading', glyph: 'T', kind: 'text' },
+  { type: 'subheading', glyph: 't', kind: 'text' },
+  { type: 'body', glyph: '¶', kind: 'text' },
+  { type: 'caption', glyph: 't', kind: 'text' },
+  { type: 'vector', glyph: '◇', kind: 'media' },
+  { type: 'image', glyph: '▨', kind: 'media' },
+  { type: 'canvas', glyph: '▣', kind: 'container' },
+  { type: 'spacer', glyph: '↕', kind: 'layout' },
 ];
-export const glyphFor = (type) => (BLOCK_TYPES.find((b) => b.type === type) || { glyph: '·' }).glyph;
+// "group" is NOT in the list above on purpose: it can't be created from the library or the "+ block" menu. Groups are
+// made in the layers tree (select layers, right-click -> group; see groupNodes() in state.js), but they are still a
+// real node type (presets, old saves and the preview use them), so it keeps its icon here.
+const GROUP_GLYPH = '▢';
+// The number shown for "blocks" in the library header AND the status bar: default blocks + saved presets.
+export const libraryBlockCount = (library) => BLOCK_TYPES.length + library.presets.length;
+export const glyphFor = (type) => (type === 'group' ? GROUP_GLYPH : (BLOCK_TYPES.find((b) => b.type === type) || { glyph: '·' }).glyph);
 
 export const TEXT_TYPES = ['title', 'heading', 'subheading', 'body', 'caption'];
-export const ROLE_NAMES = ['background', 'primary', 'secondary', 'accent'];
-export const TEXT_ROLES = ['primary', 'secondary', 'accent'];   // roles a text block may use (not the background)
-
-export const DEFAULT_ROLES = { background: '#F3F0E8', primary: '#1B1B1B', secondary: '#E4572E', accent: '#2E86AB' };
+// Colors are stored directly on the thing they paint (no roles): a canvas has `background`, a text block has `color`,
+// a vector block has `layerColors`. New canvases are white and new text is black.
+export const DEFAULT_BACKGROUND = '#FFFFFF';
+export const DEFAULT_TEXT_COLOR = '#000000';
 export const DEFAULT_ASPECT = 8 / 9;      // canvas width / height; matches the mockup's slightly tall canvases
 export const BASE_NAME = 'lockup';        // canvases are auto-named lockup_A, lockup_B ...
 
+// New text starts as its own type name ("title", "heading"...): a real, editable text value, not a placeholder.
 const TEXT_DEFAULTS = {
-  title: { size: 32, text: 'Your Title' },
-  heading: { size: 24, text: 'Heading' },
-  subheading: { size: 18, text: 'Subheading' },
-  body: { size: 14, text: 'Body text goes here' },
-  caption: { size: 12, text: 'Caption' },
+  title: { size: 32 },
+  heading: { size: 24 },
+  subheading: { size: 18 },
+  body: { size: 14 },
+  caption: { size: 12 },
 };
 
 export const isTextType = (type) => TEXT_TYPES.includes(type);
@@ -44,25 +52,18 @@ export const isContainer = (node) => node.type === 'canvas' || node.type === 'gr
 // Default layout for a container.
 const defaultLayout = () => ({ direction: 'stack', gap: 24, align: 'center' });
 
-// Which role each named layer uses by default: cycles primary, secondary, accent.
-// A vector with no named layers is colored as one piece, stored under the key '*'.
-export function defaultLayerRoles(layers = []) {
-  if (!layers.length) return { '*': 'primary' };
-  const roles = {};
-  layers.forEach((name, i) => { roles[name] = TEXT_ROLES[i % TEXT_ROLES.length]; });
-  return roles;
-}
-
 // Creates a new block of any non-canvas type. `extra` overrides defaults.
 export function createBlock(type, extra = {}) {
   const base = { id: uid('b'), type, name: type, hidden: false };
   if (isTextType(type)) {
     const d = TEXT_DEFAULTS[type];
-    Object.assign(base, { text: d.text, size: d.size, colorRole: 'primary', fontOverride: null, colorOverride: null });
+    // `font` = the block's OWN font (a library font id or a built-in one); new text starts in Space Grotesk.
+    Object.assign(base, { text: type, size: d.size, color: DEFAULT_TEXT_COLOR, font: DEFAULT_FONT_ID });
   } else if (type === 'vector') {
-    Object.assign(base, { vectorId: null, width: 120, layerRoles: {}, layerOverrides: {} });
+    // layerColors: { "<first-level layer index>": hex }. A layer with no entry keeps its original colors.
+    Object.assign(base, { mediaId: null, width: 120, layerColors: {} });
   } else if (type === 'image') {
-    Object.assign(base, { vectorId: null, width: 120 });
+    Object.assign(base, { mediaId: null, width: 120 });
   } else if (type === 'spacer') {
     Object.assign(base, { size: 24 });
   } else if (type === 'group') {
@@ -77,8 +78,7 @@ export function createCanvas(extra = {}) {
     id: uid('cv'),
     type: 'canvas',
     name: `${BASE_NAME}_A`,
-    roles: { ...DEFAULT_ROLES },
-    fonts: { title: null, heading: null, subheading: null, body: null, caption: null },   // library font ids
+    background: DEFAULT_BACKGROUND,
     layout: defaultLayout(),
     aspect: DEFAULT_ASPECT,
     hidden: false,
@@ -96,11 +96,11 @@ export function cloneWithNewIds(node) {
 }
 
 // ---------- Presets: structure only ----------
-// A preset keeps block types, order, nesting, names, sizes, layout and role pointers,
-// and drops every hex value, font, vector reference and text override.
+// A preset keeps block types, order, nesting, names, sizes and layout,
+// and drops every color, font, media reference and text.
 function nodeToStructure(node) {
   const s = { type: node.type, name: node.name };
-  if (isTextType(node.type)) { s.size = node.size; s.colorRole = node.colorRole; }
+  if (isTextType(node.type)) s.size = node.size;
   if (node.type === 'vector' || node.type === 'image') s.width = node.width;
   if (node.type === 'spacer') s.size = node.size;
   if (node.layout) s.layout = { ...node.layout };
@@ -114,7 +114,7 @@ export function structureFromCanvas(canvas) {
 
 function structureToNode(s) {
   const extra = { name: s.name };
-  if (isTextType(s.type)) Object.assign(extra, { size: s.size, colorRole: s.colorRole || 'primary', text: '' });   // empty text -> gray placeholder
+  if (isTextType(s.type)) extra.size = s.size;      // text and font come from createBlock: the type name, in Space Grotesk
   if (s.width) extra.width = s.width;
   if (s.type === 'spacer') extra.size = s.size;
   if (s.layout) extra.layout = { ...s.layout };
@@ -123,7 +123,7 @@ function structureToNode(s) {
   return block;
 }
 
-// Builds a fresh canvas from a preset structure: default roles, no fonts, empty slots (gray placeholders).
+// Builds a fresh canvas from a preset structure: default colors, default font, placeholder-named text, gray media slots.
 export function canvasFromStructure(structure, name) {
   return createCanvas({
     name,
@@ -142,8 +142,8 @@ export const DEFAULT_PRESETS = [
     id: 'preset_symmetrical_logo', name: 'symmetrical_logo',
     structure: { name: 'symmetrical_logo', aspect: DEFAULT_ASPECT, layout: stack(24), children: [
       { type: 'vector', name: 'vector', width: 120 },
-      { type: 'title', name: 'title', size: 32, colorRole: 'primary' },
-      { type: 'caption', name: 'caption', size: 12, colorRole: 'primary' },
+      { type: 'title', name: 'title', size: 32 },
+      { type: 'caption', name: 'caption', size: 12 },
     ] },
   },
   {
@@ -151,19 +151,19 @@ export const DEFAULT_PRESETS = [
     structure: { name: 'horizontal_lockup', aspect: DEFAULT_ASPECT, layout: row(18), children: [
       { type: 'vector', name: 'vector', width: 90 },
       { type: 'group', name: 'text', layout: stack(4, 'start'), children: [
-        { type: 'title', name: 'title', size: 24, colorRole: 'primary' },
-        { type: 'caption', name: 'caption', size: 11, colorRole: 'primary' },
+        { type: 'title', name: 'title', size: 24 },
+        { type: 'caption', name: 'caption', size: 11 },
       ] },
     ] },
   },
   {
     id: 'preset_type_hierarchy', name: 'type_hierarchy',
     structure: { name: 'type_hierarchy', aspect: DEFAULT_ASPECT, layout: stack(12, 'start'), children: [
-      { type: 'title', name: 'title', size: 32, colorRole: 'primary' },
-      { type: 'heading', name: 'heading', size: 24, colorRole: 'primary' },
-      { type: 'subheading', name: 'subheading', size: 18, colorRole: 'secondary' },
-      { type: 'body', name: 'body', size: 14, colorRole: 'primary' },
-      { type: 'caption', name: 'caption', size: 12, colorRole: 'accent' },
+      { type: 'title', name: 'title', size: 32 },
+      { type: 'heading', name: 'heading', size: 24 },
+      { type: 'subheading', name: 'subheading', size: 18 },
+      { type: 'body', name: 'body', size: 14 },
+      { type: 'caption', name: 'caption', size: 12 },
     ] },
   },
   {
@@ -171,9 +171,9 @@ export const DEFAULT_PRESETS = [
     structure: { name: 'business_card', aspect: 1.75, layout: row(16), children: [
       { type: 'vector', name: 'vector', width: 70 },
       { type: 'group', name: 'details', layout: stack(4, 'start'), children: [
-        { type: 'title', name: 'title', size: 22, colorRole: 'primary' },
-        { type: 'caption', name: 'caption', size: 10, colorRole: 'secondary' },
-        { type: 'body', name: 'body', size: 10, colorRole: 'primary' },
+        { type: 'title', name: 'title', size: 22 },
+        { type: 'caption', name: 'caption', size: 10 },
+        { type: 'body', name: 'body', size: 10 },
       ] },
     ] },
   },
@@ -181,9 +181,9 @@ export const DEFAULT_PRESETS = [
     id: 'preset_social_post', name: 'social_post',
     structure: { name: 'social_post', aspect: 0.8, layout: stack(18), children: [
       { type: 'vector', name: 'vector', width: 90 },
-      { type: 'title', name: 'title', size: 34, colorRole: 'primary' },
-      { type: 'body', name: 'body', size: 14, colorRole: 'primary' },
-      { type: 'caption', name: 'caption', size: 11, colorRole: 'secondary' },
+      { type: 'title', name: 'title', size: 34 },
+      { type: 'body', name: 'body', size: 14 },
+      { type: 'caption', name: 'caption', size: 11 },
     ] },
   },
 ];

@@ -2,7 +2,7 @@
 
 #topbar {
   flex: none;
-  height: 64px;
+  height: 48px;
   display: flex;
   align-items: center;
   padding: 0 14px 0 20px;
@@ -13,7 +13,7 @@
 /* ...but every interactive thing inside it must opt out, or clicks are swallowed by the drag region. */
 #topbar button, #breadcrumb .crumb { -webkit-app-region: no-drag; }
 
-/* Wordmark: "Stylesheet" + a lime bar sitting on the baseline as the underscore. */
+/* Wordmark: "Stylesheet" + a real "_" character in the accent color as the underscore. */
 .brand { display: flex; align-items: baseline; }
 .brand-word {
   font-family: var(--font-brand);
@@ -22,10 +22,8 @@
   letter-spacing: -0.3px;
   line-height: 1;
 }
-.brand-bar {
-  width: 12px; height: 3px; background: var(--accent);
-  margin-left: 2px;
-  align-self: flex-end; margin-bottom: 6px;
+.underscore {
+  color: var(--accent)
 }
 
 /* Breadcrumb of the current selection: parents muted, last item white. */

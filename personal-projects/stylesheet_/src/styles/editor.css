@@ -47,12 +47,16 @@
 
 .props-divider { flex: none; height: 1px; background: var(--line); margin: 4px 16px 6px; }
 
-/* Properties never scroll: compact 36px rows, collapsible groups. */
-/* flex: 0 1 auto = natural height, but it may shrink (and only then scroll) in the extreme worst case
-   (5 text roles + a text block selected at 720px tall) so the layers list can keep its 120px minimum. */
+/* Compact 36px rows, collapsible groups. */
+/* flex: 0 1 auto = natural height, but it shrinks and scrolls INSIDE itself when it has too much (a vector with many
+   layers in the colors section, or 5 text roles + a text block at 720px tall) so the layers list keeps its 120px minimum.
+   The panel never scrolls; the "layers" header above and the pinned "save as preset" below stay put. */
 #props { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding: 0 16px; }
 #props::-webkit-scrollbar { width: 4px; }
-#props::-webkit-scrollbar-thumb { background: #3A3A41; border-radius: 2px; }
+#props::-webkit-scrollbar-thumb { background: #3A3A41; border-radius: 2px; }   /* lime-while-dragging rule is in base.css */
+/* Several items selected: one stacked section per item, each under a small header naming it ("lockup_A / title 1"). */
+.prop-item + .prop-item { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.prop-item-head { color: var(--text); padding: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prop-group { margin-bottom: 4px; }
 .prop-head {
   display: flex; align-items: center; gap: 6px;
@@ -62,7 +66,6 @@
 .prop-head:hover { color: var(--text); }
 .prop-head .caret { font-size: 9px; width: 10px; }
 .prop-body { display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; }
-.prop-body.roles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 
 .prop-row {
   height: var(--row-h);
@@ -74,21 +77,23 @@
 }
 .prop-row > .label { color: var(--text); font-weight: 500; white-space: nowrap; }
 .prop-row .value { color: var(--muted); display: flex; align-items: center; gap: 6px; min-width: 0; }
-button.prop-row { width: 100%; text-align: left; }
-button.prop-row:hover { border-color: var(--line-2); }
+button.prop-row { width: 100%; text-align: left; }   /* look comes from the shared button style in base.css */
 
-/* Roles: compact buttons with swatch, name, hex. */
-.role-btn { height: var(--row-h); padding: 0 8px; gap: 6px; }
-.role-btn .swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; }
-.role-btn .label { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
-.role-btn .hex { font-size: 10px; color: var(--muted); }
-.role-btn.drop-target { outline-offset: -2px; }
+/* Colors section: one full-width row per colorable thing (swatch, name, hex or "original"), with an optional reset link. */
+.color-row { display: flex; align-items: center; gap: 8px; }
+.color-btn { flex: 1; min-width: 0; height: var(--row-h); padding: 0 8px; gap: 8px; }
+.color-btn .swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; }
+.color-btn .label { flex: 1; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.color-btn .hex { font-size: 11px; color: var(--muted); }
+.color-btn.drop-target { outline-offset: -2px; }
 
 /* Slider rows: label, slider and value on ONE line so the properties stay compact. */
 .slider-row { gap: 10px; }
 .slider-row .label { width: 44px; flex: none; }
 .slider-row input[type=range] { flex: 1; min-width: 0; }
-.slider-row .val { width: 44px; text-align: right; color: var(--muted); flex: none; }
+.slider-row .val { width: 44px; text-align: right; color: var(--muted); flex: none; cursor: text; }
+/* The number turns into this box on double-click (selector is specific enough to beat the global text-input style). */
+.slider-row input.val-input[type=text] { width: 44px; flex: none; height: auto; padding: 0; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; background: transparent; text-align: right; color: var(--text); font: inherit; }
 
 /* Segmented toggles in the editor match the 36px (or compact) row height. */
 .seg.full { display: flex; width: 100%; height: var(--row-h); }
@@ -100,19 +105,18 @@ button.prop-row:hover { border-color: var(--line-2); }
 .override-row .label { color: var(--muted); font-weight: 400; }
 
 .font-label { max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Compact borderless buttons that live inside a property row (font family, color, "from role"). */
+/* Compact buttons that live inside a property row (font family, color, "from role"). Size only; look is in base.css. */
 .mini-btn {
   display: inline-flex; align-items: center; gap: 6px;
   height: 24px; padding: 0 6px; min-width: 0;
-  background: none; border: 0; border-radius: var(--radius-sm); color: var(--muted);
 }
-.mini-btn:hover { background: var(--hover); color: var(--text); }
 .mini-btn .dot { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,.15); flex: none; }
 .prop-row .mini-select { width: 74px; flex: none; }
 .reset-link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 0; font-size: 11px; }
 .reset-link:hover { color: var(--accent); }
 .text-input { width: 100%; height: var(--row-h); }
 .mini-select { height: 24px; font-size: 12px; }
+.mini-select:hover:not(:disabled) { border-color: var(--accent); }   /* weight picker matches the shared button hover */
 
 .props-foot { flex: none; padding: 8px 16px 14px; }
 .dashed-btn {
@@ -130,13 +134,11 @@ button.prop-row:hover { border-color: var(--line-2); }
   :root { --row-h: 26px; }
   .panel-head { height: 44px; }
   .layer-row { height: 26px; }
-  .layers-head { height: 20px; }
-  .props-divider { margin: 2px 16px 4px; }
+  .layers-head { height: 20px; }  .props-divider { margin: 2px 16px 4px; }
   .prop-head { height: 18px; font-size: 12px; }
   .prop-group { margin-bottom: 2px; }
   .prop-body { gap: 2px; padding-bottom: 2px; }
   .prop-row { font-size: 12px; padding: 0 8px; }
-  .role-btn .label { font-size: 11px; }
   .props-foot { padding: 4px 16px 8px; }
   .props-foot .dashed-btn { height: 28px; }
   .text-input { font-size: 12px; }

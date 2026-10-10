@@ -30,7 +30,7 @@ export function confirmDialog({ title, message, confirmLabel = 'confirm', danger
       if (e.key === 'Escape') { e.stopPropagation(); finish(false); }
       else if (e.key === 'Enter') { e.stopPropagation(); finish(true); }
     };
-    const confirmBtn = el('button', { class: 'btn ' + (danger ? 'btn-danger' : 'btn-primary'), style: { height: '32px' }, text: confirmLabel, on: { click: () => finish(true) } });
+    const confirmBtn = el('button', { class: 'btn' + (danger ? ' btn-danger' : ''), style: { height: '32px' }, text: confirmLabel, on: { click: () => finish(true) } });
     const backdrop = el('div', { class: 'modal-backdrop', on: { mousedown: (e) => { if (e.target === backdrop) finish(false); } } },
       el('div', { class: 'modal', style: { width: '400px' }, role: 'dialog' },
         el('div', { class: 'modal-head' }, el('span', { class: 'section-label', text: title })),
@@ -45,29 +45,25 @@ export function confirmDialog({ title, message, confirmLabel = 'confirm', danger
 }
 
 // ---------- Help overlay ----------
-// Dims the app and places a short callout on each panel. Click anywhere or press Esc to close.
+// Dims the app and shows four step cards in ONE centered row, always in the order 01, 02, 03, 04.
+// The cards are no longer tied to the panels they describe; the row (flex, equal gaps, equal widths) is
+// centered in the window by CSS. Its top edge is HELP_TOP below the top of the preview panel (unchanged height).
+// Click anywhere or press Esc to close.
+const HELP_TOP = 120;
 const HELP_CALLOUTS = [
-  { target: '#library', title: '01 — library', text: 'Import fonts, SVGs and images. Make colors and palettes. Drag anything from here onto the preview or the layers.', side: 'right' },
-  { target: '#preview', title: '02 — preview', text: 'Your canvases in an auto grid. Ctrl + scroll to zoom, space + drag to pan. Drop presets and blocks on the dots to start.', side: 'center' },
-  { target: '#editor', title: '03 — editor', text: 'Layers on top, properties below. Change a role color once and everything in that canvas updates. Ctrl+D duplicates, Delete removes, Ctrl+Z undoes.', side: 'left' },
-  { target: '#export-bar', title: 'export', text: 'Exports every visible canvas as one image, with optional style labels.', side: 'center-bottom' },
+  { title: '01 — LIBRARY', text: 'Everything you bring in lives here. Use + import for media (svg, png, jpg) and fonts, and + add for colors and palettes. Files are copied into the app, so moving or deleting your originals won\'t break anything. Drag any card into the preview or onto a layer. Click a color to edit it. Right-click anything to delete it. Deleted items go to the trash in settings, where you can restore them.' },
+  { title: '02 — PREVIEW', text: 'Drag a block or preset onto the grid to start a canvas. Each canvas is one option, labeled A, B, C, and they arrange themselves automatically. Drop a color onto text, onto one part of a vector, or onto the background to change just that one thing. Click to select. Use − / + or fit to zoom, and hold space or the middle mouse button to pan.' },
+  { title: '03 — EDITOR', text: 'Layers shows every canvas and the blocks inside it. Drag rows to reorder, double-click to rename, and click the eye to hide. Ctrl+D duplicates, which is the fastest way to make another option. Properties changes the selected item, and its colors section only ever changes that one item: a canvas background, a text color, or one part of a vector.' },
+  { title: '04 — EXPORT', text: 'Exports every visible canvas as one image. Hidden canvases are skipped. Style labels adds a strip listing the colors, fonts, and media you used. PNG can have a transparent background, JPEG can\'t. Use 2× or 4× for a sharper image.' },
 ];
 
 export function openHelp() {
   if ($('.help-overlay')) return;
   const overlay = el('div', { class: 'help-overlay' });
-  for (const c of HELP_CALLOUTS) {
-    const r = $(c.target).getBoundingClientRect();
-    const box = el('div', { class: 'help-callout' }, el('b', { text: c.title }), c.text);
-    // Place the callout inside the panel it describes.
-    if (c.side === 'right') Object.assign(box.style, { left: `${r.left + 16}px`, top: `${r.top + 90}px` });
-    else if (c.side === 'left') Object.assign(box.style, { left: `${r.left + 16}px`, top: `${r.top + 90}px` });
-    else if (c.side === 'center') Object.assign(box.style, { left: `${r.left + r.width / 2 - 125}px`, top: `${r.top + 120}px` });
-    else Object.assign(box.style, { left: `${r.left + r.width / 2 - 125}px`, top: `${r.top - 100}px` });
-    overlay.append(box);
-  }
-  overlay.append(el('div', { class: 'help-rule', text: 'name your layers in Illustrator' }));
-  overlay.append(el('div', { class: 'help-close', text: 'click anywhere or press Esc to close' }));
+  const top = $('#preview').getBoundingClientRect().top + HELP_TOP;   // the row's vertical position
+  overlay.append(el('div', { class: 'help-row', style: { top: `${top}px` } },
+    HELP_CALLOUTS.map((c) => el('div', { class: 'help-callout' }, el('b', { text: c.title }), c.text))));
+  overlay.append(el('div', { class: 'help-footer', text: 'everything saves automatically · ctrl+z to undo · press ? anytime to reopen this · click anywhere to close' }));
   const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); setHelpSeen(); };
   const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
   overlay.addEventListener('click', close);
@@ -91,9 +87,21 @@ export function openSettings() {
     })));
   };
 
+  // "On launch": maximized | windowed. Stored in settings.json (main reads it before creating the window),
+  // so it only takes effect the next time the app starts. The current window is not touched.
+  const launchSeg = el('div', { class: 'seg' });
+  const drawLaunch = (current) => {
+    clear(launchSeg);
+    ['maximized', 'windowed'].forEach((mode) => launchSeg.append(el('button', {
+      class: current === mode ? 'active' : '', text: mode,
+      on: { click: async () => { await window.api.saveSettings({ launch: mode }); drawLaunch(mode); } },
+    })));
+  };
+  window.api.loadSettings().then((s) => drawLaunch(s.launch));
+
   // Trash: restore items one by one, or empty it for good.
   const trashList = el('div', { class: 'trash-list scroll-area' });
-  const emptyBtn = el('button', { class: 'btn', text: 'empty trash', on: { click: async () => {
+  const emptyBtn = el('button', { class: 'btn btn-danger', text: 'empty trash', on: { click: async () => {
     const n = state.library.trash.length;
     if (!n) return;
     const ok = await confirmDialog({ title: 'empty trash?', message: `${n} item${n === 1 ? '' : 's'} and their files will be deleted permanently. This can't be undone.`, confirmLabel: 'empty trash', danger: true });
@@ -124,12 +132,13 @@ export function openSettings() {
       el('div', { class: 'modal-head' }, el('span', { class: 'section-label', text: 'settings' }),
         el('button', { class: 'link-btn', text: 'close', on: { click: close } })),
       el('div', { class: 'modal-body' },
-        row('clear canvas', el('button', { class: 'btn', text: 'clear', on: { click: async () => {
+        row('clear canvas', el('button', { class: 'btn btn-danger', text: 'clear', on: { click: async () => {
           const ok = await confirmDialog({ title: 'clear canvas?', message: 'This removes every canvas and leaves one empty canvas. Your library is untouched. You can undo it with Ctrl+Z.', confirmLabel: 'clear', danger: true });
           if (ok) { clearCanvases(); showToast('canvas cleared (Ctrl+Z to undo)'); }
         } } })),
         row('library folder', el('button', { class: 'btn', text: 'open', on: { click: () => window.api.openLibraryFolder() } })),
         row('default export scale', scaleSeg),
+        row('on launch', launchSeg),
         el('div', { class: 'setting-row' }, el('span', { class: 'section-label', text: 'trash' }), emptyBtn),
         trashList,
         row('version', versionText))));

@@ -1,30 +1,37 @@
 // editor.js: the LAYERS tree in the editor panel (the properties below it live in properties.js),
-// plus the keyboard shortcuts for the selected node (Delete, Ctrl+D) and undo/redo.
+// plus the keyboard shortcuts for the selection (Delete, Ctrl+D, Ctrl+C / Ctrl+V, Esc), the right-click menu on
+// tree rows (copy / paste / duplicate / delete), and undo/redo.
 // The tree and the preview are two views of the same state: both call the same state.js functions.
 
 import { el, clear, $, icon } from './util.js';
 import {
-  state, subscribe, selectNode, toggleHidden, updateNode, setNodeCollapsed, removeNode, duplicateNode,
-  addBlock, addBlockToNewCanvas, findNode, getVector, undo, redo, selectedNode,
+  state, subscribe, selectNode, toggleSelect, selectRange, clearSelection, isSelected, toggleHidden, updateNode,
+  setNodeCollapsed, removeNodes, duplicateNodes, copyNodes, pasteClipboard, hasClipboard, groupNodes, ungroupNodes,
+  addBlockToSelection, findNode, getMedia, undo, redo,
 } from './state.js';
 import { glyphFor, isContainer } from './blocks.js';
-import { openBlockMenu } from './popover.js';
+import { openBlockMenu, openMenuAt } from './popover.js';
+import { showToast } from './overlays.js';
+import { layerInfo } from './svg.js';
 
 let renamingId = null;      // which row is showing its inline rename input
+let visibleIds = [];        // the ids of the rows on screen, top to bottom (Shift+click selects a range of these)
 
 // The muted tag on the right of a row: "canvas", "3 layers", "title"...
 function tagFor(node) {
   if (node.type === 'vector') {
-    const vec = getVector(node.vectorId);
+    const vec = getMedia(node.mediaId);
     if (!vec) return 'empty';
-    return vec.layers.length ? `${vec.layers.length} layers` : '1 color';
+    const count = layerInfo(vec.id).length;
+    return count ? `${count} layer${count === 1 ? '' : 's'}` : 'vector';
   }
   return node.type;
 }
 
 // Builds the row for one node, then recurses into its children (unless collapsed).
 function appendRows(list, node, depth) {
-  const sel = state.session.selectedId === node.id;
+  visibleIds.push(node.id);
+  const sel = isSelected(node.id);
   const container = isContainer(node);
   const collapsed = !!state.session.collapsedNodes[node.id];
 
@@ -62,7 +69,7 @@ function appendRows(list, node, depth) {
     dataset: { id: node.id, nodeType: node.type, dragKind: 'node', dragId: node.id },
     draggable: renamingId === node.id ? 'false' : 'true',
     style: { paddingLeft: `${8 + depth * 20}px` },
-    on: { click: () => selectNode(node.id) },
+    on: { click: (e) => onRowClick(e, node.id), contextmenu: (e) => onRowContextMenu(e, node.id) },
   }, caret, el('span', { class: 'layer-glyph', text: glyphFor(node.type) }), nameNode, el('span', { class: 'layer-tag', text: tagFor(node) }), eye);
   list.append(row);
 
@@ -73,29 +80,54 @@ function renderLayers() {
   const list = $('#layers');
   const top = list.scrollTop;
   clear(list);
+  visibleIds = [];
   state.session.canvases.forEach((cv) => appendRows(list, cv, 0));
   list.scrollTop = top;
-  const selected = list.querySelector('.layer-row.selected');
-  if (selected) selected.scrollIntoView({ block: 'nearest' });
+  // Keep the most recently selected row in view.
+  const ids = state.session.selection;
+  const last = ids.length ? [...list.querySelectorAll('.layer-row')].find((r) => r.dataset.id === ids[ids.length - 1]) : null;
+  if (last) last.scrollIntoView({ block: 'nearest' });
 }
 
-// When the selection moves (e.g. a click on the preview), expand any collapsed ancestors so the row is visible.
+// Plain click selects one row; Ctrl+click adds/removes it; Shift+click selects the rows between the last-clicked row and this one.
+function onRowClick(e, id) {
+  if (e.ctrlKey || e.metaKey) toggleSelect(id);
+  else if (e.shiftKey) selectRange(id, visibleIds);
+  else selectNode(id);
+}
+
+// Pastes the clipboard, or explains why nothing happened.
+function pasteWithToast() {
+  if (!pasteClipboard()) showToast('select a canvas or a layer to paste into');
+}
+
+// Right-click on a row: act on the whole selection if the row is part of it, otherwise select just this row first.
+function onRowContextMenu(e, id) {
+  e.preventDefault();
+  if (!isSelected(id)) selectNode(id);
+  const ids = [...state.session.selection];
+  const items = [{ label: 'copy', sub: 'ctrl+c', onClick: () => copyNodes(ids) }];
+  if (hasClipboard()) items.push({ label: 'paste', sub: 'ctrl+v', onClick: pasteWithToast });
+  items.push({ label: 'duplicate', sub: 'ctrl+d', onClick: () => duplicateNodes(ids) });
+  // Grouping is for blocks (never canvases); ungroup shows when the selection includes a group.
+  const nodes = ids.map((i) => (findNode(i) || {}).node).filter(Boolean);
+  if (nodes.length && nodes.every((n) => n.type !== 'canvas')) items.push({ label: 'group', sub: 'ctrl+g', onClick: () => groupNodes(ids) });
+  if (nodes.some((n) => n.type === 'group')) items.push({ label: 'ungroup', sub: 'ctrl+shift+g', onClick: () => ungroupNodes(ids) });
+  items.push(
+    { label: 'delete', sub: 'del', danger: true, onClick: () => removeNodes(ids) },     // undoable, so no confirm (unlike library deletes)
+  );
+  openMenuAt(e.clientX, e.clientY, items);
+}
+
+// When the selection moves (e.g. a click on the preview), expand any collapsed ancestors so the rows are visible.
 function expandAncestorsOfSelection() {
-  let hit = findNode(state.session.selectedId);
-  while (hit && hit.parent) {
-    if (state.session.collapsedNodes[hit.parent.id]) setNodeCollapsed(hit.parent.id, false);
-    hit = findNode(hit.parent.id);
+  for (const id of state.session.selection) {
+    let hit = findNode(id);
+    while (hit && hit.parent) {
+      if (state.session.collapsedNodes[hit.parent.id]) setNodeCollapsed(hit.parent.id, false);
+      hit = findNode(hit.parent.id);
+    }
   }
-}
-
-// "+ block" menu: adds the chosen block to the selected container (or the container around the selected block).
-// With nothing selected, the block goes into a new canvas.
-function addBlockFromMenu(type) {
-  const sel = selectedNode();
-  if (type === 'canvas' || !sel) { addBlockToNewCanvas(type); return; }
-  if (isContainer(sel)) { addBlock(type, sel.id); return; }
-  const hit = findNode(sel.id);
-  addBlock(type, hit.parent.id, hit.index + 1);
 }
 
 // ---------- Keyboard shortcuts ----------
@@ -109,13 +141,18 @@ function initShortcuts() {
     const key = e.key.toLowerCase();
     if (ctrl && key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
     else if (ctrl && (key === 'y' || (key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
-    else if (ctrl && key === 'd') { e.preventDefault(); if (state.session.selectedId) duplicateNode(state.session.selectedId); }
-    else if (e.key === 'Delete' && state.session.selectedId) { e.preventDefault(); removeNode(state.session.selectedId); }
+    // Everything below acts on the whole selection (one undo step each).
+    else if (ctrl && key === 'd') { e.preventDefault(); if (state.session.selection.length) duplicateNodes([...state.session.selection]); }
+    else if (ctrl && key === 'g') { e.preventDefault(); const ids = [...state.session.selection]; if (e.shiftKey) ungroupNodes(ids); else groupNodes(ids); }
+    else if (ctrl && key === 'c') { if (state.session.selection.length) { e.preventDefault(); copyNodes([...state.session.selection]); } }
+    else if (ctrl && key === 'v') { e.preventDefault(); pasteWithToast(); }
+    else if (e.key === 'Delete' && state.session.selection.length) { e.preventDefault(); removeNodes([...state.session.selection]); }
+    else if (e.key === 'Escape') clearSelection();
   });
 }
 
 export function initEditor() {
-  $('#btn-add-block').addEventListener('click', (e) => openBlockMenu(e.currentTarget, addBlockFromMenu));
+  $('#btn-add-block').addEventListener('click', (e) => openBlockMenu(e.currentTarget, addBlockToSelection));
   initShortcuts();
   subscribe((meta) => {
     if (meta.view || meta.exportSettings || meta.live) return;

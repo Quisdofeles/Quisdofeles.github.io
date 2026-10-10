@@ -10,9 +10,11 @@ contextBridge.exposeInMainWorld('api', {
   saveLibrary: (data) => ipcRenderer.invoke('library:save', data),
   loadSession: () => ipcRenderer.invoke('session:load'),
   saveSession: (data) => ipcRenderer.invoke('session:save', data),
+  loadSettings: () => ipcRenderer.invoke('settings:load'),           // { launch: 'maximized' | 'windowed' }
+  saveSettings: (data) => ipcRenderer.invoke('settings:save', data),
 
   // Files
-  importFiles: () => ipcRenderer.invoke('files:import'),
+  importFiles: (type) => ipcRenderer.invoke('files:import', type),   // type: 'font' | 'media'
   readLibraryFile: (relPath) => ipcRenderer.invoke('files:read', relPath),
   saveExport: (dataUrl, format) => ipcRenderer.invoke('export:save', dataUrl, format),
   openLibraryFolder: () => ipcRenderer.invoke('library:openFolder'),

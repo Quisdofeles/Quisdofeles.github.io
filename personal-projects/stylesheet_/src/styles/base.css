@@ -56,44 +56,58 @@ input, textarea { user-select: text; }
 }
 
 /* ---------- Scroll areas ---------- */
-/* 6px scrollbar, dark thumb, thumb turns lime while the pointer is over the area. */
+/* 6px scrollbar. The thumb is gray at rest AND on hover; it only turns lime while it is being
+   pressed/dragged (:active), so it can never get "stuck" lime. Pure CSS, no JavaScript involved. */
 .scroll-area { overflow-y: auto; overflow-x: hidden; }
 .scroll-area::-webkit-scrollbar { width: 6px; }
 .scroll-area::-webkit-scrollbar-track { background: transparent; }
 .scroll-area::-webkit-scrollbar-thumb { background: #3A3A41; border-radius: 3px; }
-.scroll-area:hover::-webkit-scrollbar-thumb { background: var(--accent); }
+.scroll-area::-webkit-scrollbar-thumb:active,
+#props::-webkit-scrollbar-thumb:active { background: var(--accent); }
 
-/* ---------- Buttons ---------- */
-.btn {
-  height: 28px;
-  padding: 0 12px;
+/* ---------- Buttons: ONE shared style (the look of the library's "+ import" button) ---------- */
+/* Every button and toggle button in the app uses this base look, except the top bar buttons and
+   "save as preset". Each class below only adds its own SIZE/layout; look lives here and only here.
+   - .btn: general button (settings, confirm dialog, popovers, export, fit)
+   - .plus-btn: "+ import" / "+ add" / "+ block"
+   - .seg button: segmented toggle options (.active = selected)
+   - .icon-toggle: icon toggle (.on = selected)
+   - .mini-btn / button.prop-row: buttons inside the editor's property rows */
+.btn, .plus-btn, .seg button, .icon-toggle, .mini-btn, button.prop-row {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   color: var(--text);
+  transition: background-color .08s ease-out;   /* quick, for the press state only */
 }
-.btn:hover { border-color: var(--line-2); background: var(--hover); }
-.btn-sm { height: 30px; padding: 0 10px; }
-.btn-primary {
-  background: var(--accent);
+/* Hover: accent border + accent text, background unchanged. Not on disabled buttons. */
+.btn:hover:not(:disabled), .plus-btn:hover:not(:disabled), .seg button:hover:not(:disabled),
+.icon-toggle:hover:not(:disabled), .mini-btn:hover:not(:disabled), button.prop-row:hover:not(:disabled) {
   border-color: var(--accent);
-  color: #0A0A0B;
-  font-weight: 500;
-  height: 36px;
-  padding: 0 20px;
+  color: var(--accent);
 }
-.btn-primary:hover { background: #E4FF6E; border-color: #E4FF6E; }
-.btn-primary:disabled { opacity: .4; cursor: default; }
-.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
-.btn-danger:hover { background: #D93A2A; border-color: #D93A2A; }
+/* Press: while the mouse is held down the background darkens a touch. No movement or scale. */
+.btn:active:not(:disabled), .plus-btn:active:not(:disabled), .seg button:active:not(:disabled),
+.icon-toggle:active:not(:disabled), .mini-btn:active:not(:disabled), button.prop-row:active:not(:disabled) {
+  background: #0C0C0E;
+}
+/* Selected toggle option: accent border + accent text, and it stays that way (no fill). */
+.seg button.active, .icon-toggle.on { border-color: var(--accent); color: var(--accent); }
+/* Disabled: dimmed, default cursor, and no hover (the hover rules above skip :disabled). */
+.btn:disabled, .plus-btn:disabled, .seg button:disabled, .icon-toggle:disabled,
+.mini-btn:disabled, button.prop-row:disabled { opacity: .4; cursor: default; }
 
+/* Destructive buttons (clear canvas, empty trash, and the confirm button of delete/clear/empty-trash dialogs):
+   normal shared look at rest, solid red with white text on hover, darker red while pressed. */
+.btn.btn-danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.btn-danger:active:not(:disabled) { background: #9E2216; border-color: #9E2216; color: #fff; }
+
+.btn { height: 28px; padding: 0 12px; }
 .plus-btn {
-  width: 24px; height: 24px;
+  min-width: 24px; height: 24px;      /* reads "+ add", so it grows with its text */
   display: grid; place-items: center;
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
-  color: var(--text); line-height: 1; padding: 0;
+  line-height: 1; padding: 0 8px; font-size: 12px;
 }
-.plus-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 .link-btn { background: none; border: 0; padding: 0; color: var(--muted); }
 .link-btn:hover { color: var(--accent); }
@@ -113,23 +127,31 @@ select { padding-right: 4px; }
 select option { background: var(--card); color: var(--text); }
 
 /* ---------- Segmented toggle (stack | row, PNG | JPEG, 1x | 2x | 4x) ---------- */
+/* Joined control: the options are buttons (look from the shared style above) that overlap by 1px, so
+   neighbours share one divider line. Only the outer corners are rounded. The selected option lifts
+   (z-index) so its accent border is drawn over the dividers; its size never changes, so nothing shifts.
+   Hover on an unselected option changes the text color only.
+   The zoom control (− | 100% | +) is also a .seg: the % readout is a non-clickable middle section drawn like a button segment. */
 .seg {
   display: inline-flex;
   align-items: stretch;
-  background: var(--card);
-  border: 1px solid var(--card-line);
-  border-radius: var(--radius);
-  overflow: hidden;
 }
 .seg button, .seg .seg-value {
-  background: none; border: 0; color: var(--muted);
   padding: 0 12px; min-height: 30px; min-width: 30px;
   display: grid; place-items: center;
 }
-.seg button:hover { color: var(--text); background: var(--hover); }
-.seg button.active { background: #EDEDEE; color: #0A0A0B; }
-.seg button:disabled { opacity: .4; cursor: default; }
-.seg .seg-value { color: var(--text); min-width: 52px; }
+.seg button { position: relative; }
+.seg button svg { width: 14px; height: 14px; pointer-events: none; }   /* icon-only options (align) */
+.seg button, .seg .seg-value { border-radius: 0; }
+.seg > :first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.seg > :last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.seg > * + * { margin-left: -1px; }
+.seg button:hover:not(:disabled) { border-color: var(--line); }
+.seg button.active { z-index: 1; }
+.seg button.active, .seg button.active:hover:not(:disabled) { border-color: var(--accent); }
+/* Typed zoom: the % readout turns into this input; same font and size as the text so the bar doesn't shift. */
+input.zoom-input[type=text] { width: 4ch; height: auto; padding: 0; border: 0; background: transparent; text-align: center; color: var(--text); font: inherit; }   /* selector is this specific to beat the global text-input style */
+.seg .seg-value { background: var(--card); border: 1px solid var(--line); color: var(--text); min-width: 52px; }
 
 /* ---------- Checkbox ---------- */
 .check { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; white-space: nowrap; }
@@ -164,19 +186,20 @@ input[type=range]::-webkit-slider-thumb {
 .icon-toggle {
   width: 34px; height: 34px; padding: 0;
   display: grid; place-items: center;
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  color: var(--muted);
 }
-.icon-toggle.on { border-color: var(--accent); color: var(--accent); }
-.icon-toggle:disabled { opacity: .45; cursor: default; }
+/* Same behavior as the segmented toggles: hovering while OFF changes only the icon color (border stays
+   normal); ON keeps the accent border + icon, including while hovered. Placed after the shared hover rule on purpose. */
+.icon-toggle:hover:not(:disabled) { border-color: var(--line); }
+.icon-toggle.on, .icon-toggle.on:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- Status bar ---------- */
+/* Shares the top bar's background (--bg) and border color; text is muted at 11px. */
 #statusbar {
   flex: none;
   height: 30px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px;
-  background: var(--panel);
+  background: var(--bg);
   border-top: 1px solid var(--line);
   font-size: 11px;
   color: var(--muted);

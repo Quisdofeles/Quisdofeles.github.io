@@ -4,11 +4,11 @@
 // Optional "style labels" strip below the canvases lists every color, font and vector used.
 
 import { el, clear, $, checkerIcon, normalizeHex } from './util.js';
-import { state, subscribe, setExport, visibleCanvases, getFont, getVector } from './state.js';
-import { renderCanvasElement, gridColumns } from './preview.js';
-import { cssFamily, fontUrl, fontLabel } from './fonts.js';
-import { buildVectorSvg, vectorUrl } from './svg.js';
-import { isTextType, ROLE_NAMES } from './blocks.js';
+import { state, subscribe, setExport, visibleCanvases, getFont, getMedia } from './state.js';
+import { renderCanvasElement, gridColumns, optionLabel } from './preview.js';
+import { cssFamily, fontCss, fontUrl, fontLabel, DEFAULT_FONT_ID } from './fonts.js';
+import { buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
+import { isTextType } from './blocks.js';
 import { showToast } from './overlays.js';
 
 const CANVAS_W = 384, GAP = 20, PAD = 24;      // must match the preview (see preview.css .canvas and #canvas-grid)
@@ -39,29 +39,37 @@ export function initExport() {
 }
 
 // ---------- Gathering what the canvases use ----------
-// Walks every visible canvas and collects the colors, fonts and vectors actually in use.
+// Walks every visible canvas and collects the colors, fonts and media actually in use.
+// colors = one group per canvas: { label: 'OPTION A', items: [{ name, colors: [hex, ...] }] }. Every colorable
+// thing is listed by name with the color it uses RIGHT NOW: the background, each text block, and each first-level
+// layer of each vector (a layer still on its original colors lists every color the file uses in it).
 function collectUsage(canvases) {
-  const colors = new Map();     // hex -> Set of role names
+  const colors = [];
   const fonts = new Map();      // fontId -> font
-  const vectors = new Map();    // vectorId -> vector
-  for (const cv of canvases) {
-    for (const role of ROLE_NAMES) {
-      const hex = normalizeHex(cv.roles[role]);
-      if (!colors.has(hex)) colors.set(hex, new Set());
-      colors.get(hex).add(role);
-    }
+  const media = new Map();      // mediaId -> media item
+  canvases.forEach((cv, index) => {
+    const items = [{ name: 'background', colors: [normalizeHex(cv.background)] }];
     const walk = (list) => list.forEach((b) => {
       if (b.hidden) return;
       if (isTextType(b.type) && b.text) {
-        const f = getFont(b.fontOverride || cv.fonts[b.type]);
-        if (f) fonts.set(f.id, f);
+        const f = getFont(b.font) || getFont(DEFAULT_FONT_ID);      // same fallback the preview uses
+        fonts.set(f.id, f);
+        items.push({ name: b.name, colors: [normalizeHex(b.color)] });
       }
-      if ((b.type === 'vector' || b.type === 'image') && getVector(b.vectorId)) vectors.set(b.vectorId, getVector(b.vectorId));
+      if (b.type === 'vector' && getMedia(b.mediaId)) {
+        layerInfo(b.mediaId).forEach((layer, i) => {
+          const chosen = (b.layerColors || {})[i];
+          const used = chosen ? [normalizeHex(chosen)] : layer.colors;
+          if (used.length) items.push({ name: `${b.name} / ${layer.name}`, colors: used });
+        });
+      }
+      if ((b.type === 'vector' || b.type === 'image') && getMedia(b.mediaId)) media.set(b.mediaId, getMedia(b.mediaId));
       if (b.children) walk(b.children);
     });
     walk(cv.children);
-  }
-  return { colors, fonts, vectors };
+    colors.push({ label: optionLabel(index), items });
+  });
+  return { colors, fonts, media };
 }
 
 // The library name for a hex, if the user has a color (or palette swatch) with that value.
@@ -77,27 +85,33 @@ function buildStrip(usage, width) {
     el('div', { class: 'export-title', text: title }),
     el('div', { class: 'export-items' }, items));
 
-  const colorItems = [...usage.colors.entries()].map(([hex, roles]) => el('div', { class: 'export-item' },
-    el('span', { class: 'export-chip', style: { background: hex } }),
-    el('div', { class: 'export-text' },
-      el('span', { text: libraryColorName(hex) || [...roles].join(' / ') }),
-      el('span', { class: 'export-sub', text: hex }))));
+  // Colors: a small heading per canvas, then one entry per colorable thing (name + its color chip(s) and hex(es);
+  // a hex that matches a library color also shows that color's name).
+  const colorItems = usage.colors.flatMap((group) => [
+    el('div', { class: 'export-canvas-title', text: group.label }),
+    ...group.items.map((item) => el('div', { class: 'export-item' },
+      el('div', { class: 'export-chips' + (item.colors.length > 1 ? ' multi' : '') },
+        item.colors.map((hex) => el('span', { class: 'export-chip', style: { background: hex } }))),
+      el('div', { class: 'export-text' },
+        el('span', { text: item.name }),
+        item.colors.map((hex) => el('span', { class: 'export-sub', text: libraryColorName(hex) ? `${libraryColorName(hex)} ${hex}` : hex }))))),
+  ]);
 
   const fontItems = [...usage.fonts.values()].map((f) => el('div', { class: 'export-item' },
-    el('span', { class: 'export-font', style: { fontFamily: `'${cssFamily(f)}'`, fontWeight: 'normal', fontStyle: 'normal' }, text: fontLabel(f) })));
+    el('span', { class: 'export-font', style: fontCss(f), text: fontLabel(f) })));
 
-  const vectorItems = [...usage.vectors.values()].map((v) => {
-    // A one-color black version of the vector, with its name beside it.
+  const mediaItems = [...usage.media.values()].map((v) => {
+    // A one-color black version of the media item, with its name beside it.
     const mark = v.kind === 'image'
-      ? el('img', { src: vectorUrl(v), style: { height: '34px', width: 'auto', filter: 'brightness(0)' } })
-      : buildVectorSvg(v.id, () => '#000000', 38) || el('span');
+      ? el('img', { src: mediaUrl(v), style: { height: '34px', width: 'auto', filter: 'brightness(0)' } })
+      : buildVectorSvg(v.id, () => '#000000', 38) || el('span');   // every layer forced to black
     return el('div', { class: 'export-item' }, mark, el('span', { text: v.name }));
   });
 
   const strip = el('div', { class: 'export-strip', style: { width: `${width}px` } });
   if (colorItems.length) strip.append(section('colors', colorItems));
   if (fontItems.length) strip.append(section('fonts', fontItems));
-  if (vectorItems.length) strip.append(section('vectors', vectorItems));
+  if (mediaItems.length) strip.append(section('media', mediaItems));
   return strip;
 }
 
@@ -116,13 +130,16 @@ const MIME = { ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font
 async function buildFontCss(fonts) {
   const faces = [];
   for (const f of fonts) {
+    if (f.builtin) continue;                  // the built-in fonts (Space Grotesk, IBM Plex Mono) are embedded below
     const buf = await (await fetch(fontUrl(f))).arrayBuffer();
     const mime = MIME[f.fileName.split('.').pop().toLowerCase()] || 'font/ttf';
     faces.push(`@font-face{font-family:'${cssFamily(f)}';src:url(data:${mime};base64,${toBase64(buf)});}`);
   }
-  for (const [file, weight] of [['IBMPlexMono-Regular.ttf', 400], ['IBMPlexMono-Medium.ttf', 500]]) {
+  for (const [file, weight] of [['IBMPlexMono-Regular.ttf', 400], ['IBMPlexMono-Medium.ttf', 500], ['IBMPlexMono-Bold.ttf', 700]]) {
     faces.push(`@font-face{font-family:'IBM Plex Mono';font-weight:${weight};src:url(data:font/ttf;base64,${await window.api.readBundledFont(file)});}`);
   }
+  // Space Grotesk is one variable file that covers weights 300-700.
+  faces.push(`@font-face{font-family:'Space Grotesk';font-weight:300 700;src:url(data:font/ttf;base64,${await window.api.readBundledFont('SpaceGrotesk-Variable.ttf')});}`);
   return faces.join('\n');
 }
 

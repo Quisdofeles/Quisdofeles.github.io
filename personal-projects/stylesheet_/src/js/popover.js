@@ -4,7 +4,7 @@
 // and the small name/hex editor used for palette swatches.
 
 import { el, clear, isHex, normalizeHex, slug, $ } from './util.js';
-import { state } from './state.js';
+import { state, allFonts } from './state.js';
 import { BLOCK_TYPES } from './blocks.js';
 import { groupFamilies, cssFamily, closestTo400, familySummary } from './fonts.js';
 
@@ -110,14 +110,13 @@ export function openColorPicker(anchor, { current: currentHex, onPick }) {
 // ---------- Font picker ----------
 // Lists the font FAMILIES, each written in its own typeface. Picking a family selects the weight closest
 // to 400 (the user then changes weight/style with the weight selector next to the picker).
-// onPick(fontId), or onPick(null) when the user picks "none".
-export function openFontPicker(anchor, { currentId, onPick, noneLabel = 'none' }) {
+// Includes the built-in Space Grotesk and IBM Plex Mono. onPick(fontId); a "none" row only appears when `noneLabel` is given (then onPick(null)).
+export function openFontPicker(anchor, { currentId, onPick, noneLabel = null }) {
   const body = scroller();
   const pick = (id) => { closePopover(); onPick(id); };
-  const currentFamily = (state.library.fonts.find((f) => f.id === currentId) || {}).family;
-  body.append(el('button', { class: 'menu-item', on: { click: () => pick(null) } }, noneLabel));
-  const families = groupFamilies(state.library.fonts);
-  if (!families.length) body.append(el('div', { class: 'pop-title', text: 'no fonts yet: use + import' }));
+  const currentFamily = (allFonts().find((f) => f.id === currentId) || {}).family;
+  if (noneLabel) body.append(el('button', { class: 'menu-item', on: { click: () => pick(null) } }, noneLabel));
+  const families = groupFamilies(allFonts());
   families.forEach((fam) => {
     const sample = closestTo400(fam.fonts);
     body.append(el('button', { class: 'menu-item', on: { click: () => pick(sample.id) } },
@@ -144,7 +143,7 @@ export function openColorEditor(anchor, color, { onSave, onDelete }) {
     el('div', { class: 'pop-title', text: 'edit color' }), name, hex,
     el('div', { style: { display: 'flex', gap: '6px', justifyContent: 'space-between' } },
       onDelete ? el('button', { class: 'btn', text: 'delete', on: { click: () => { closePopover(); onDelete(); } } }) : el('span'),
-      el('button', { class: 'btn btn-primary', style: { height: '28px' }, text: 'save', on: { click: save } })));
+      el('button', { class: 'btn', style: { height: '28px' }, text: 'save', on: { click: save } })));
   openPopover(anchor, body);
   name.select();
 }

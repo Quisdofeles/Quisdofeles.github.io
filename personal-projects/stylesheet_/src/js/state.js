@@ -9,9 +9,11 @@
 import { uid, clone, normalizeHex } from './util.js';
 import {
   createBlock, createCanvas, cloneWithNewIds, structureFromCanvas, canvasFromStructure,
-  defaultLayerRoles, isContainer, isTextType, BASE_NAME,
+  isContainer, isTextType, BASE_NAME, DEFAULT_BACKGROUND, DEFAULT_TEXT_COLOR,
   DEFAULT_PRESETS, STARTER_COLORS, STARTER_PALETTES,
 } from './blocks.js';
+import { layerInfo } from './svg.js';
+import { BUILTIN_FONTS, DEFAULT_FONT_ID } from './fonts.js';
 
 const MAX_HISTORY = 50;
 
@@ -44,13 +46,13 @@ function defaultLibrary() {
     id: uid('p'), name: p.name,
     colors: p.colors.map((n) => ({ id: uid('c'), name: byName[n].name, hex: byName[n].hex })),
   }));
-  return { fonts: [], colors, palettes, vectors: [], presets: clone(DEFAULT_PRESETS), trash: [] };
+  return { fonts: [], colors, palettes, media: [], presets: clone(DEFAULT_PRESETS), trash: [] };
 }
 
 function defaultSession() {
   return {
     canvases: [createCanvas({ name: `${BASE_NAME}_A` })],
-    selectedId: null,
+    selection: [],           // ids of the selected nodes (a LIST; see cleanSelection() for the rules)
     zoom: 1,
     pan: { x: 0, y: 0 },
     export: { styleLabels: true, format: 'png', transparent: true, scale: 2 },
@@ -67,20 +69,143 @@ function normalize(loaded, fallback) {
   return out;
 }
 
+// One-time upgrade of saves made before "vectors" became "media". Safe to run on every load: it does nothing
+// once the data is already in the new shape. Also backfills `addedAt` (used for newest-first sorting) so old
+// items keep their current relative order: they get small numbers (their position), older than any real timestamp.
+function migrateOldSaves(library, session) {
+  if (library) {
+    if (library.vectors && !library.media) library.media = library.vectors;
+    delete library.vectors;
+    (library.media || []).forEach((m, i) => { if (m.addedAt === undefined) m.addedAt = i + 1; delete m.layers; });   // layers are now read from the SVG itself
+    (library.trash || []).filter((t) => t.kind === 'media').forEach((t) => { delete t.item.layers; });
+    const defaultIds = new Set(DEFAULT_PRESETS.map((p) => p.id));
+    (library.presets || []).forEach((p, i) => { if (p.addedAt === undefined) p.addedAt = defaultIds.has(p.id) ? 0 : i + 1; });
+    for (const t of library.trash || []) {
+      if (t.kind === 'vector') t.kind = 'media';
+      if (t.kind === 'media' && t.item.addedAt === undefined) t.item.addedAt = 0;
+      if (t.kind === 'preset' && t.item.addedAt === undefined) t.item.addedAt = defaultIds.has(t.item.id) ? 0 : 1;
+    }
+  }
+  if (session) {
+    // Old sessions saved ONE selected id; the selection is now a list.
+    if (!Array.isArray(session.selection)) session.selection = session.selectedId ? [session.selectedId] : [];
+    delete session.selectedId;
+    const walk = (list) => list.forEach((n) => {
+      if ('vectorId' in n) { n.mediaId = n.vectorId; delete n.vectorId; }
+      if (n.children) walk(n.children);
+    });
+    walk(session.canvases || []);
+    migrateRolesToColors(session.canvases || []);
+    migrateFontRoles(session.canvases || []);
+  }
+  if (library) {
+    // Presets store structure only: drop the old role pointers and the removed swatch block from them.
+    const cleanStructure = (list) => list.filter((s) => s.type !== 'swatch').map((s) => {
+      delete s.colorRole;
+      if (s.children) s.children = cleanStructure(s.children);
+      return s;
+    });
+    const cleanPreset = (p) => { if (p.structure && p.structure.children) p.structure.children = cleanStructure(p.structure.children); };
+    (library.presets || []).forEach(cleanPreset);
+    (library.trash || []).filter((t) => t.kind === 'preset').forEach((t) => cleanPreset(t.item));
+  }
+}
+
+// Upgrades the colors/roles model: every canvas used to have 4 roles and blocks pointed at them. Each block now
+// stores its own fixed color, copied from its canvas's role values, so nothing changes visually.
+//  - canvas.roles.background -> canvas.background
+//  - text block colorOverride / roles[colorRole] -> block.color
+//  - vector block layerRoles / layerOverrides (keyed by Illustrator layer NAME) -> block.legacyLayerColors, which
+//    resolveLegacyLayerColors() turns into layerColors (keyed by layer index) once the SVG has been loaded
+//  - swatch blocks no longer exist and are removed
+function migrateRolesToColors(canvases) {
+  const dropSwatches = (list) => list.filter((n) => n.type !== 'swatch');
+  for (const cv of canvases) {
+    const roles = cv.roles || null;
+    const walk = (list) => list.forEach((n) => {
+      if (roles && isTextType(n.type) && ('colorRole' in n || 'colorOverride' in n)) {
+        n.color = n.colorOverride || roles[n.colorRole] || roles.primary;
+      }
+      if (isTextType(n.type)) { delete n.colorRole; delete n.colorOverride; if (!n.color) n.color = DEFAULT_TEXT_COLOR; }
+      if (n.type === 'vector') {
+        if (roles && ('layerRoles' in n || 'layerOverrides' in n)) {
+          const legacy = {};
+          for (const [layer, role] of Object.entries(n.layerRoles || {})) legacy[layer] = roles[role] || roles.primary;
+          for (const [layer, hex] of Object.entries(n.layerOverrides || {})) legacy[layer] = hex;
+          n.legacyLayerColors = legacy;
+        }
+        delete n.layerRoles; delete n.layerOverrides;
+        if (!n.layerColors) n.layerColors = {};
+      }
+      if (n.children) { n.children = dropSwatches(n.children); walk(n.children); }
+    });
+    cv.children = dropSwatches(cv.children || []);
+    walk(cv.children);
+    cv.background = cv.background || (roles && roles.background) || DEFAULT_BACKGROUND;
+    delete cv.roles;
+  }
+}
+
+// Upgrades the font model: canvases used to hold one font per text type (canvas.fonts) plus an optional per-block
+// override. Now every text block stores its OWN font (block.font), so each block gets the font it showed before:
+// its override, else its canvas's font for that type, else the default font, Space Grotesk (those blocks used to show a gray
+// placeholder). canvas.fonts and fontOverride are removed.
+function migrateFontRoles(canvases) {
+  for (const cv of canvases) {
+    const roles = cv.fonts || {};
+    const walk = (list) => list.forEach((n) => {
+      if (isTextType(n.type)) {
+        if (!n.font) n.font = n.fontOverride || roles[n.type] || DEFAULT_FONT_ID;
+        delete n.fontOverride;
+      }
+      if (n.children) walk(n.children);
+    });
+    walk(cv.children || []);
+    delete cv.fonts;
+  }
+}
+
+// Second half of the vector upgrade (needs the SVG loaded, so it runs after the media files load, see app.js).
+// Old layer colors were stored under Illustrator layer names; they now belong to first-level layer indexes.
+// A layer takes the color of the old named layer it is (or contains); an old "whole drawing" color ('*') fills the rest.
+export function resolveLegacyLayerColors() {
+  let changed = false;
+  const walk = (list) => list.forEach((n) => {
+    if (n.type === 'vector' && n.legacyLayerColors) {
+      const layers = layerInfo(n.mediaId);
+      if (layers.length) {
+        const legacy = n.legacyLayerColors;
+        n.layerColors = {};
+        layers.forEach((layer, i) => {
+          const hit = layer.ids.find((id) => id in legacy);
+          const hex = hit ? legacy[hit] : legacy['*'];
+          if (hex) n.layerColors[i] = hex;
+        });
+        delete n.legacyLayerColors;
+        changed = true;
+      }
+    }
+    if (n.children) walk(n.children);
+  });
+  walk(state.session.canvases);
+  if (changed) notify({ session: true });      // not an undo step: it just finishes the upgrade
+}
+
 // Called once at startup with whatever persistence loaded (null on first launch).
 export function initState(library, session) {
   isFirstLaunch = !library && !session;
+  migrateOldSaves(library, session);
   state.library = normalize(library, defaultLibrary());
   state.session = normalize(session, defaultSession());
   state.session.export = { ...defaultSession().export, ...state.session.export };
-  if (!findNode(state.session.selectedId)) state.session.selectedId = null;
+  state.session.selection = cleanSelection(state.session.selection);
   undoStack = [];
   redoStack = [];
 }
 
 // ---------- History ----------
 function snapshot() {
-  return JSON.stringify({ canvases: state.session.canvases, selectedId: state.session.selectedId, library: state.library });
+  return JSON.stringify({ canvases: state.session.canvases, selection: state.session.selection, library: state.library });
 }
 function pushHistory() {
   undoStack.push(snapshot());
@@ -91,7 +216,7 @@ function restore(snap) {
   const data = JSON.parse(snap);
   state.session.canvases = data.canvases;
   state.library = data.library;
-  state.session.selectedId = findNode(data.selectedId) ? data.selectedId : null;
+  state.session.selection = cleanSelection(data.selection || []);   // after the canvases are back, so ids can be checked
 }
 
 export function undo() {
@@ -153,16 +278,51 @@ export function pathTo(id) {
 }
 
 export const visibleCanvases = () => state.session.canvases.filter((c) => !c.hidden);
-export const selectedNode = () => (findNode(state.session.selectedId) || {}).node || null;
 
-// The canvas the current selection belongs to (or null).
-export function selectedCanvas() {
-  const hit = findNode(state.session.selectedId);
-  return hit ? hit.canvas : null;
+// ---------- Selection (a list of ids) ----------
+// Rules, enforced by cleanSelection() every time the selection is set:
+//  - a selection is EITHER blocks that all live in one canvas, OR canvases (never a mix);
+//  - the LAST id in the list is the one just picked. If it doesn't fit the rest (a block from another canvas, a
+//    canvas while blocks are selected, a block while canvases are selected) the older picks are dropped, so the
+//    selection simply switches to the new item. (It never turns into canvases: that could make Delete remove
+//    whole canvases by accident.)
+//  - a block that sits inside another selected block (a group) is dropped: the outer one wins.
+function cleanSelection(ids) {
+  const hits = [...new Set(ids)].map(findNode).filter(Boolean);
+  if (!hits.length) return [];
+  const focus = hits[hits.length - 1];
+  const fits = focus.node.type === 'canvas'
+    ? hits.filter((h) => h.node.type === 'canvas')
+    : hits.filter((h) => h.node.type !== 'canvas' && h.canvas.id === focus.canvas.id);
+  const picked = new Set(fits.map((h) => h.node.id));
+  const insideAPicked = (hit) => {
+    for (let p = hit.parent; p && p.type !== 'canvas'; p = (findNode(p.id) || {}).parent) if (picked.has(p.id)) return true;
+    return false;
+  };
+  return fits.filter((h) => !insideAPicked(h)).map((h) => h.node.id);
 }
 
-export const getFont = (id) => state.library.fonts.find((f) => f.id === id) || null;
-export const getVector = (id) => state.library.vectors.find((v) => v.id === id) || null;
+let anchorId = null;       // the last plainly/ctrl-clicked node: where a Shift-click range starts (not saved)
+export const selectedIds = () => state.session.selection;
+export const isSelected = (id) => state.session.selection.includes(id);
+export const selectedNodes = () => state.session.selection.map((id) => (findNode(id) || {}).node).filter(Boolean);
+
+// The canvases the selection lives in (the canvases themselves, or the one owning the selected blocks).
+export function selectionCanvasIds() {
+  return [...new Set(state.session.selection.map((id) => (findNode(id) || { canvas: {} }).canvas.id).filter(Boolean))];
+}
+
+// Sets the selection inside a change() (no notify of its own); the last id becomes the range anchor.
+function pick(ids) {
+  state.session.selection = cleanSelection(ids);
+  anchorId = ids.length ? ids[ids.length - 1] : null;
+}
+
+// Looks up a font by id: the built-in fonts (Space Grotesk, IBM Plex Mono) first, then the user's library fonts.
+export const getFont = (id) => BUILTIN_FONTS.find((f) => f.id === id) || state.library.fonts.find((f) => f.id === id) || null;
+// Every font a text block can use (built-in + library), for the font pickers.
+export const allFonts = () => [...BUILTIN_FONTS, ...state.library.fonts];
+export const getMedia = (id) => state.library.media.find((m) => m.id === id) || null;
 
 // Looks up a color by id among single colors AND palette swatches (both are draggable "colors").
 export function findColor(id) {
@@ -178,15 +338,15 @@ function allNodes() {
   return out;
 }
 
-// How many blocks use these library items. Fonts: text blocks that resolve to the font (override or canvas role).
-// Vectors: vector/image blocks pointing at it. Colors/palettes/presets store copies, so they are never "in use".
+// How many blocks use these library items. Fonts: text blocks whose own font is one of them.
+// Media: vector/image blocks pointing at it. Colors/palettes/presets store copies, so they are never "in use".
 export function usageCount(kind, ids) {
   const set = new Set(ids);
   let count = 0;
   for (const cv of state.session.canvases) {
     const walk = (list) => list.forEach((n) => {
-      if (kind === 'font' && isTextType(n.type) && set.has(n.fontOverride || cv.fonts[n.type])) count++;
-      if (kind === 'vector' && (n.type === 'vector' || n.type === 'image') && set.has(n.vectorId)) count++;
+      if (kind === 'font' && isTextType(n.type) && set.has(n.font)) count++;
+      if (kind === 'media' && (n.type === 'vector' || n.type === 'image') && set.has(n.mediaId)) count++;
       if (n.children) walk(n.children);
     });
     walk(cv.children);
@@ -194,16 +354,45 @@ export function usageCount(kind, ids) {
   return count;
 }
 
-// Asks every panel to redraw without changing any data (used after fonts/vectors finish loading from disk).
+// Asks every panel to redraw without changing any data (used after fonts/media finish loading from disk).
 export function requestRender() {
   notify({ refresh: true });
 }
 
 // ---------- Selection, view, UI (not undo steps) ----------
-export function selectNode(id) {
-  if (state.session.selectedId === id) return;
-  state.session.selectedId = id;
+// Applies a new selection (cleaned by the rules above) and notifies, but only if it really changed.
+function setSelection(ids) {
+  const next = cleanSelection(ids);
+  const prev = state.session.selection;
+  if (next.length === prev.length && next.every((id, i) => id === prev[i])) return;
+  state.session.selection = next;
   notify({ session: true, selection: true });
+}
+// Plain click: select just this node (null = clear).
+export function selectNode(id) {
+  anchorId = id || null;
+  setSelection(id ? [id] : []);
+}
+export const clearSelection = () => selectNode(null);
+// Drag-select box in the preview: replaces the selection with these ids (they already follow the selection rules).
+export function selectIds(ids) {
+  anchorId = ids.length ? ids[ids.length - 1] : null;
+  setSelection(ids);
+}
+// Ctrl/Shift+click in the preview, Ctrl+click in the tree: add the node to the selection, or remove it if it is in.
+export function toggleSelect(id) {
+  const cur = state.session.selection;
+  anchorId = id;
+  setSelection(cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]);
+}
+// Shift+click in the tree: select every row between the anchor and `id`. `orderedIds` = the rows on screen, top to bottom.
+export function selectRange(id, orderedIds) {
+  const start = orderedIds.indexOf(findNode(anchorId) ? anchorId : state.session.selection[state.session.selection.length - 1]);
+  const end = orderedIds.indexOf(id);
+  if (start < 0 || end < 0) { selectNode(id); return; }
+  const range = orderedIds.slice(Math.min(start, end), Math.max(start, end) + 1);
+  // The clicked row goes last (it is the one that counts when the range crosses canvases); the anchor stays where it was.
+  setSelection([...range.filter((x) => x !== id), id]);
 }
 export function setView(zoom, pan) {
   state.session.zoom = zoom;
@@ -239,6 +428,29 @@ function nextCanvasName(baseName = BASE_NAME) {
   return `${base}_${state.session.canvases.length + 1}`;
 }
 
+// Every name used by a node inside a canvas (the canvas itself is not counted), for unique block names.
+function namesIn(canvas) {
+  const names = new Set();
+  const walk = (list) => list.forEach((n) => { names.add(n.name); if (n.children) walk(n.children); });
+  walk(canvas.children);
+  return names;
+}
+// "heading 1", "heading 2"...: the first number not yet used by a node in this canvas.
+function numberedName(type, canvas) {
+  const used = namesIn(canvas);
+  let n = 1;
+  while (used.has(`${type} ${n}`)) n++;
+  return `${type} ${n}`;
+}
+// "title 1 copy", "title 1 copy 2"...: a unique name for a duplicate/paste (copying a copy doesn't stack suffixes).
+function copyName(name, canvas) {
+  const root = name.replace(/ copy( \d+)?$/, '');
+  const used = namesIn(canvas);
+  let candidate = `${root} copy`;
+  for (let n = 2; used.has(candidate); n++) candidate = `${root} copy ${n}`;
+  return candidate;
+}
+
 // Adds a new canvas (optionally from a preset structure) and selects it. Returns the canvas.
 export function addCanvas({ structure, index } = {}) {
   const name = nextCanvasName(BASE_NAME);
@@ -246,7 +458,7 @@ export function addCanvas({ structure, index } = {}) {
   change(() => {
     const list = state.session.canvases;
     list.splice(index === undefined ? list.length : index, 0, canvas);
-    state.session.selectedId = canvas.id;
+    pick([canvas.id]);
   });
   return canvas;
 }
@@ -261,35 +473,62 @@ export function addBlock(type, parentId, index, extra = {}) {
   if (type === 'canvas') return addCanvas();
   const parent = findNode(parentId);
   if (!parent || !isContainer(parent.node)) return null;
-  const block = createBlock(type, extra);
+  // Blocks added without a name get a numbered one ("heading 1", "heading 2"...), unique inside the canvas.
+  const block = createBlock(type, { name: numberedName(type, parent.canvas), ...extra });
   change(() => {
     const kids = parent.node.children;
     kids.splice(index === undefined ? kids.length : Math.max(0, Math.min(index, kids.length)), 0, block);
-    state.session.selectedId = block.id;
+    pick([block.id]);
   });
   return block;
 }
 
-// Adds a vector/image block already pointing at a library vector.
-export function addVectorBlock(vectorId, parentId, index) {
-  const vec = getVector(vectorId);
-  if (!vec) return null;
-  const type = vec.kind === 'image' ? 'image' : 'vector';
-  const extra = { vectorId, name: vec.name };
-  if (type === 'vector') extra.layerRoles = defaultLayerRoles(vec.layers);
-  return addBlock(type, parentId, index, extra);
+// "+ block" in the layers header. The block goes to the end of every selected canvas (or of the canvas that owns
+// the selected blocks): one new block per canvas, one undo step. A "canvas" just adds a new top-level canvas, and
+// with nothing selected the block gets a new canvas of its own.
+export function addBlockToSelection(type) {
+  if (type === 'canvas') return addCanvas();
+  const targets = selectionCanvasIds();
+  if (!targets.length) return addBlockToNewCanvas(type);
+  const created = [];
+  change(() => {
+    for (const canvasId of targets) {
+      const canvas = findNode(canvasId).node;
+      const block = createBlock(type, { name: numberedName(type, canvas) });
+      canvas.children.push(block);
+      created.push(block.id);
+    }
+    pick(targets.length > 1 ? targets : created);   // several canvases -> keep those canvases selected (blocks in different canvases can't be)
+  });
+  return created;
+}
+
+// Adds a vector/image block already pointing at a library media item.
+export function addMediaBlock(mediaId, parentId, index) {
+  const item = getMedia(mediaId);
+  if (!item) return null;
+  const type = item.kind === 'image' ? 'image' : 'vector';
+  // A new vector shows the colors that are in the file (layerColors starts empty).
+  return addBlock(type, parentId, index, { mediaId, name: item.name });
 }
 
 // Drops a block type onto empty space: a new canvas containing that block (or just a canvas).
 export function addBlockToNewCanvas(type, extra = {}) {
   if (type === 'canvas') return addCanvas();
   const canvas = createCanvas({ name: nextCanvasName(BASE_NAME) });
-  canvas.children.push(createBlock(type, extra));
+  canvas.children.push(createBlock(type, { name: `${type} 1`, ...extra }));
   change(() => {
     state.session.canvases.push(canvas);
-    state.session.selectedId = canvas.children[0].id;
+    pick([canvas.children[0].id]);
   });
   return canvas;
+}
+
+// The text blocks a font drop on `nodeId` will change: if that block is one of several selected text blocks, ALL the
+// selected text blocks (so a font can be dropped on any one of them); otherwise just that block.
+export function fontTargets(nodeId) {
+  const selected = state.session.selection.filter((id) => { const h = findNode(id); return h && isTextType(h.node.type); });
+  return selected.includes(nodeId) ? selected : [nodeId];
 }
 
 // Merges `patch` into a node (shallow). Pass { live: true } for slider ticks.
@@ -305,65 +544,65 @@ export function updateLayout(id, patch, opts = {}) {
   change(() => Object.assign(hit.node.layout, patch), opts.live ? { live: true } : {});
 }
 
-export function setRole(canvasId, role, hex) {
+// ---------- Colors (each colorable thing stores its own; a change never touches any other block) ----------
+// Sets a canvas's background color.
+export function setCanvasBackground(canvasId, hex) {
   const hit = findNode(canvasId);
   if (!hit || hit.node.type !== 'canvas') return;
-  change(() => { hit.node.roles[role] = normalizeHex(hex); });
+  change(() => { hit.node.background = normalizeHex(hex); });
 }
 
-// Sets the font for a text role on a canvas (all blocks of that role update). fontId may be null.
-export function setCanvasFont(canvasId, textType, fontId) {
-  const hit = findNode(canvasId);
-  if (!hit) return;
-  change(() => { hit.node.fonts[textType] = fontId; });
-}
-
-// Sets a vector block's per-layer role; passing a hex sets an override instead.
-export function setLayerColor(blockId, layer, { role, hex, reset }) {
+// Sets a text block's color.
+export function setTextColor(blockId, hex) {
   const hit = findNode(blockId);
-  if (!hit) return;
+  if (!hit || !isTextType(hit.node.type)) return;
+  change(() => { hit.node.color = normalizeHex(hex); });
+}
+
+// Sets the font of the given text blocks (their OWN font; nothing else changes), as one undo step.
+// Non-text ids are ignored. fontId is a library font id or a built-in one.
+export function setBlockFonts(ids, fontId) {
+  const hits = ids.map((id) => findNode(id)).filter((h) => h && isTextType(h.node.type));
+  if (!hits.length) return;
+  change(() => { hits.forEach((h) => { h.node.font = fontId; }); });
+}
+
+// Gives ONE first-level layer of a vector block a color (the whole layer becomes that color).
+// hex = null resets the layer to the original colors from the file.
+export function setLayerColor(blockId, layer, hex) {
+  const hit = findNode(blockId);
+  if (!hit || hit.node.type !== 'vector') return;
   change(() => {
-    const b = hit.node;
-    if (role) { b.layerRoles[layer] = role; delete b.layerOverrides[layer]; }
-    if (hex) b.layerOverrides[layer] = normalizeHex(hex);
-    if (reset) delete b.layerOverrides[layer];
+    if (!hit.node.layerColors) hit.node.layerColors = {};
+    if (hex) hit.node.layerColors[layer] = normalizeHex(hex); else delete hit.node.layerColors[layer];
   });
 }
 
-// A color dropped on something (one undo step). Sets the ROLE that the target uses on its canvas:
-// a canvas (or any non-color block) -> background; a text block -> its color role; a vector block -> the
-// role of the layer under the pointer. Any override that would hide the change is cleared.
+// A color dropped on something (one undo step); it sets just that one thing:
+// a text block -> its color; a vector block -> the layer under the pointer (`layer`, required: with no layer
+// nothing happens); a canvas or any other block -> the canvas background.
 export function dropColor(nodeId, hex, layer) {
   const hit = findNode(nodeId);
   if (!hit) return;
-  const canvas = hit.canvas, node = hit.node;
-  hex = normalizeHex(hex);
-  change(() => {
-    if (isTextType(node.type)) {
-      canvas.roles[node.colorRole] = hex;
-      node.colorOverride = null;
-    } else if (node.type === 'vector') {
-      const key = layer && layer in node.layerRoles ? layer : Object.keys(node.layerRoles)[0];
-      if (key !== undefined) { canvas.roles[node.layerRoles[key] || 'primary'] = hex; delete node.layerOverrides[key]; }
-    } else {
-      canvas.roles.background = hex;
-    }
-  });
+  const node = hit.node;
+  if (node.type === 'vector' && layer === undefined) return;
+  if (isTextType(node.type)) setTextColor(node.id, hex);
+  else if (node.type === 'vector') setLayerColor(node.id, layer, hex);
+  else setCanvasBackground(hit.canvas.id, hex);
 }
 
-// Swaps the vector a block points at, keeping layer roles whose names still exist.
-export function swapVector(blockId, vectorId) {
+// Swaps the media item a block points at. A vector's layer colors belong to the old file's layers, so they reset
+// to the new file's original colors.
+export function swapMedia(blockId, mediaId) {
   const hit = findNode(blockId);
-  const vec = getVector(vectorId);
-  if (!hit || !vec) return;
+  const item = getMedia(mediaId);
+  if (!hit || !item) return;
   change(() => {
     const b = hit.node;
-    const oldName = (getVector(b.vectorId) || {}).name;
-    const fresh = defaultLayerRoles(vec.layers);
-    for (const k of Object.keys(fresh)) if (b.layerRoles && b.layerRoles[k]) fresh[k] = b.layerRoles[k];
-    b.vectorId = vectorId;
-    if (b.type === 'vector') { b.layerRoles = fresh; b.layerOverrides = {}; }
-    if (!oldName || b.name === oldName) b.name = vec.name;
+    const oldName = (getMedia(b.mediaId) || {}).name;
+    b.mediaId = mediaId;
+    if (b.type === 'vector') b.layerColors = {};
+    if (!oldName || b.name === oldName) b.name = item.name;
   });
 }
 
@@ -386,32 +625,150 @@ export function moveNode(id, newParentId, index) {
     let at = index === undefined ? target.length : index;
     if (loc.list === target && loc.index < at) at--;          // removing earlier item shifts the target slot
     target.splice(Math.max(0, Math.min(at, target.length)), 0, moved);
+    pruneEmptyGroups();                                       // the group it left may be empty now
   });
+}
+
+// Removes every group that has no children left (an empty group has nothing to show). Runs inside the same undo
+// step as the move/delete that emptied it, then keeps the selection valid. Nested groups are handled bottom-up.
+function pruneEmptyGroups() {
+  const prune = (list) => {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const n = list[i];
+      if (!n.children) continue;
+      prune(n.children);
+      if (n.type === 'group' && !n.children.length) list.splice(i, 1);
+    }
+  };
+  state.session.canvases.forEach((cv) => prune(cv.children));
+  state.session.selection = cleanSelection(state.session.selection);
+}
+
+// Wraps the selected blocks in a new group (right-click -> group, Ctrl+G), as ONE undo step; the new group becomes
+// the selection. Canvases can't be grouped (they are ignored). The group sits where the first selected block (top of
+// the tree) was, the blocks keep their tree order, and it copies the parent's layout so nothing shifts visually.
+export function groupNodes(ids) {
+  const hits = ids.map((id) => findNode(id)).filter((h) => h && h.node.type !== 'canvas');
+  if (!hits.length) return null;
+  const order = new Map(allNodes().map((n, i) => [n.id, i]));
+  hits.sort((a, b) => order.get(a.node.id) - order.get(b.node.id));
+  const first = hits[0];
+  const group = createBlock('group', { name: numberedName('group', first.canvas), layout: { ...first.parent.layout } });
+  change(() => {
+    first.list.splice(first.index, 1, group);                 // the group takes the first block's slot
+    group.children.push(first.node);
+    for (const hit of hits.slice(1)) {
+      const loc = findNode(hit.node.id);                      // looked up fresh: earlier removals shift the indexes
+      loc.list.splice(loc.index, 1);
+      group.children.push(hit.node);
+    }
+    pruneEmptyGroups();                                       // a group whose blocks all moved out disappears
+    pick([group.id]);
+  });
+  return group;
+}
+
+// Replaces each selected group with its children, in the same spot and order (right-click -> ungroup, Ctrl+Shift+G).
+// One undo step; the freed blocks become the selection. Anything selected that isn't a group is left alone.
+export function ungroupNodes(ids) {
+  const groups = ids.map((id) => findNode(id)).filter((h) => h && h.node.type === 'group');
+  if (!groups.length) return [];
+  const freed = [];
+  change(() => {
+    for (const g of groups) {
+      const loc = findNode(g.node.id);
+      loc.list.splice(loc.index, 1, ...loc.node.children);
+      freed.push(...loc.node.children.map((c) => c.id));
+    }
+    pick(freed);
+  });
+  return freed;
 }
 // True if `id` is somewhere inside `node` (used to block dragging a container into its own child).
 function isInside(node, id) {
   return (node.children || []).some((c) => c.id === id || isInside(c, id));
 }
 
-export function removeNode(id) {
-  const loc = findNode(id);
-  if (!loc) return;
+// Removes every node in `ids` as ONE undo step (Delete key and the right-click menu pass the whole selection).
+export function removeNodes(ids) {
+  if (!ids.some((id) => findNode(id))) return;
   change(() => {
-    loc.list.splice(loc.index, 1);
-    if (!findNode(state.session.selectedId)) state.session.selectedId = null;
+    for (const id of ids) {
+      const loc = findNode(id);               // looked up fresh: an earlier removal may have taken this one with it
+      if (loc) loc.list.splice(loc.index, 1);
+    }
+    pruneEmptyGroups();                      // also keeps the selection valid
   });
 }
 
-export function duplicateNode(id) {
-  const loc = findNode(id);
-  if (!loc) return null;
-  const copy = cloneWithNewIds(loc.node);
-  if (copy.type === 'canvas') copy.name = nextCanvasName(loc.node.name);
+// Duplicates every node in `ids` as ONE undo step; each copy goes right after its original and the copies become
+// the selection. Canvases get the next free letter (lockup_B); blocks get "name copy", "name copy 2"...
+export function duplicateNodes(ids) {
+  const copies = [];
   change(() => {
-    loc.list.splice(loc.index + 1, 0, copy);
-    state.session.selectedId = copy.id;
+    for (const id of ids) {
+      const loc = findNode(id);
+      if (!loc) continue;
+      const copy = cloneWithNewIds(loc.node);
+      copy.name = copy.type === 'canvas' ? nextCanvasName(loc.node.name) : copyName(loc.node.name, loc.canvas);
+      loc.list.splice(loc.index + 1, 0, copy);
+      copies.push(copy.id);
+    }
+    pick(copies);
   });
-  return copy;
+  return copies;
+}
+
+// ---------- Copy / paste (layers tree) ----------
+// The clipboard lives only in memory (not saved, not part of undo): deep copies of what was copied.
+let clipboard = null;      // { kind: 'canvas' | 'blocks', nodes: [...] }
+export const hasClipboard = () => !!clipboard;
+
+export function copyNodes(ids) {
+  const nodes = ids.map((id) => findNode(id)).filter(Boolean).map((hit) => clone(hit.node));
+  if (!nodes.length) return false;
+  clipboard = { kind: nodes[0].type === 'canvas' ? 'canvas' : 'blocks', nodes };
+  return true;
+}
+
+// Pastes the clipboard as ONE undo step and selects the pasted items. Returns false if there was nowhere to paste.
+//  - copied canvases go right after the last selected canvas (or at the end when nothing is selected);
+//  - copied blocks go right after the last selected block, or to the end of each selected canvas.
+export function pasteClipboard() {
+  if (!clipboard) return false;
+  const sel = state.session.selection.map((id) => findNode(id)).filter(Boolean);
+  if (clipboard.kind === 'blocks' && !sel.length) return false;
+  const pasted = [];
+  let spotCanvasIds = [];
+  change(() => {
+    if (clipboard.kind === 'canvas') {
+      const canvases = state.session.canvases;
+      let at = sel.length ? canvases.indexOf(sel[sel.length - 1].canvas) + 1 : canvases.length;
+      for (const node of clipboard.nodes) {
+        const copy = cloneWithNewIds(node);
+        copy.name = nextCanvasName(node.name);
+        canvases.splice(at++, 0, copy);
+        pasted.push(copy.id);
+      }
+    } else {
+      // Where each batch of copies lands: after the last selected block, or at the end of every selected canvas.
+      const spots = sel[0].node.type === 'canvas'
+        ? sel.map((hit) => ({ list: hit.node.children, at: hit.node.children.length, canvas: hit.node }))
+        : [{ list: sel[sel.length - 1].list, at: sel[sel.length - 1].index + 1, canvas: sel[sel.length - 1].canvas }];
+      spotCanvasIds = spots.map((s) => s.canvas.id);
+      for (const spot of spots) {
+        for (const node of clipboard.nodes) {
+          const copy = cloneWithNewIds(node);
+          copy.name = copyName(node.name, spot.canvas);
+          spot.list.splice(spot.at++, 0, copy);
+          pasted.push(copy.id);
+        }
+      }
+    }
+    // Pasting into several canvases keeps those canvases selected; otherwise the pasted items are selected.
+    pick(clipboard.kind === 'blocks' && spotCanvasIds.length > 1 ? spotCanvasIds : pasted);
+  });
+  return true;
 }
 
 export function toggleHidden(id) {
@@ -423,7 +780,7 @@ export function toggleHidden(id) {
 export function clearCanvases() {
   change(() => {
     state.session.canvases = [createCanvas({ name: `${BASE_NAME}_A` })];
-    state.session.selectedId = null;
+    state.session.selection = [];
   });
 }
 
@@ -462,24 +819,25 @@ export function addPaletteColor(paletteId) {
 export function addFonts(entries) {
   change(() => state.library.fonts.push(...entries), { library: true });
 }
-export function addVectors(entries) {
-  change(() => state.library.vectors.push(...entries), { library: true });
+// Entries must carry `addedAt` (Date.now()); the library sorts media newest-first by it.
+export function addMedia(entries) {
+  change(() => state.library.media.push(...entries), { library: true });
 }
 
 export function savePreset(canvasId, name) {
   const hit = findNode(canvasId);
   if (!hit || hit.node.type !== 'canvas') return null;
-  const preset = { id: uid('pr'), name, structure: structureFromCanvas(hit.node) };
+  const preset = { id: uid('pr'), name, addedAt: Date.now(), structure: structureFromCanvas(hit.node) };
   change(() => state.library.presets.push(preset), { library: true });
   return preset;
 }
 
 // ---------- Soft delete (trash) ----------
-const LISTS = { font: 'fonts', color: 'colors', palette: 'palettes', vector: 'vectors', preset: 'presets' };
+const LISTS = { font: 'fonts', color: 'colors', palette: 'palettes', media: 'media', preset: 'presets' };
 
 // Moves library items into the trash as ONE undo step. Blocks that used them are left untouched:
 // they simply fail to find the item and render their gray placeholder (and re-link if it is restored).
-// kind: font | color | palette | vector | preset | palette_color
+// kind: font | color | palette | media | preset | palette_color
 export function trashItems(kind, ids) {
   change(() => {
     for (const id of ids) {
@@ -503,7 +861,7 @@ export function trashItems(kind, ids) {
 // The disk location of a trash entry's file, or null for items without files.
 export function trashFileOf(entry) {
   if (entry.kind === 'font') return { subdir: 'fonts', fileName: entry.item.fileName };
-  if (entry.kind === 'vector') return { subdir: 'vectors', fileName: entry.item.fileName };
+  if (entry.kind === 'media') return { subdir: 'media', fileName: entry.item.fileName };
   return null;
 }
 
