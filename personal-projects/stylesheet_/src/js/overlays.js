@@ -48,6 +48,8 @@ export function confirmDialog({ title, message, confirmLabel = 'confirm', danger
 // Dims the app and shows four step cards in ONE centered row, always in the order 01, 02, 03, 04.
 // The cards are no longer tied to the panels they describe; the row (flex, equal gaps, equal widths) is
 // centered in the window by CSS. Its top edge is HELP_TOP below the top of the preview panel (unchanged height).
+// Each card is only as tall as its own text (tops aligned). Below the row sits one wide IMPORT TIPS box
+// (HELP_TIPS, three columns) whose edges line up with card 01 and card 04.
 // Click anywhere or press Esc to close.
 const HELP_TOP = 120;
 const HELP_CALLOUTS = [
@@ -56,19 +58,35 @@ const HELP_CALLOUTS = [
   { title: '03 — EDITOR', text: 'Layers shows every canvas and the blocks inside it. Drag rows to reorder, double-click to rename, and click the eye to hide. Ctrl+D duplicates, which is the fastest way to make another option. Properties changes the selected item, and its colors section only ever changes that one item: a canvas background, a text color, or one part of a vector.' },
   { title: '04 — EXPORT', text: 'Exports every visible canvas as one image. Hidden canvases are skipped. Style labels adds a strip listing the colors, fonts, and media you used. PNG can have a transparent background, JPEG can\'t. Use 2× or 4× for a sharper image.' },
 ];
+// The three columns of the IMPORT TIPS box under the step cards.
+const HELP_TIPS = [
+  { title: 'MEDIA', text: 'Use + import in media for .svg, .png, and .jpg files. SVGs can be recolored part by part. PNG and JPG images can\'t be recolored, so use them for photos or textures.' },
+  { title: 'SVG SETUP', text: 'Each top-level layer or group in your SVG becomes one part you can recolor, so put each piece you want to color separately on its own layer before exporting. No layer naming needed. Parts keep their original colors until you change them, and a recolored part becomes one solid color. Fit the artboard tightly to your artwork, with no extra space between the vector and the edge of the document. Convert any text to outlines first.' },
+  { title: 'FONTS', text: 'Use + import in fonts for .ttf, .otf, .woff, or .woff2 files. Each file is one weight or style, so import every weight you want. Files from the same family group into one card, and you pick the weight in properties. Variable fonts import as a single weight. .ttf or .otf names read most reliably.' },
+];
 
 export function openHelp() {
   if ($('.help-overlay')) return;
   const overlay = el('div', { class: 'help-overlay' });
   const top = $('#preview').getBoundingClientRect().top + HELP_TOP;   // the row's vertical position
-  overlay.append(el('div', { class: 'help-row', style: { top: `${top}px` } },
-    HELP_CALLOUTS.map((c) => el('div', { class: 'help-callout' }, el('b', { text: c.title }), c.text))));
-  overlay.append(el('div', { class: 'help-footer', text: 'everything saves automatically · ctrl+z to undo · press ? anytime to reopen this · click anywhere to close' }));
+  const row = el('div', { class: 'help-row' },
+    HELP_CALLOUTS.map((c) => el('div', { class: 'help-callout' }, el('b', { text: c.title }), c.text)));
+  // The tips box reuses the .help-callout card look; .help-tips only sets its width.
+  const tips = el('div', { class: 'help-callout help-tips' },
+    el('b', { text: 'IMPORT TIPS' }),
+    el('div', { class: 'help-tips-cols' },
+      HELP_TIPS.map((t) => el('div', {}, el('h4', { text: t.title }), t.text))));
+  const stack = el('div', { class: 'help-stack', style: { top: `${top}px` } }, row, tips);
+  const footer = el('div', { class: 'help-footer', text: 'everything saves automatically · ctrl+z to undo · press ? anytime to reopen this · click anywhere to close' });
+  overlay.append(stack, footer);
   const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); setHelpSeen(); };
   const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
   overlay.addEventListener('click', close);
   document.addEventListener('keydown', onKey, true);
   $('#overlay-root').append(overlay);
+  // Fit check: on short windows the tips box could run into the footer line. Only then switch to the
+  // compact look (slightly smaller padding and text, same words). 12px = minimum breathing room.
+  if (tips.getBoundingClientRect().bottom + 12 > footer.getBoundingClientRect().top) overlay.classList.add('compact');
 }
 
 // ---------- Settings overlay ----------

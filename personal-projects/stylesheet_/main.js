@@ -267,6 +267,18 @@ ipcMain.handle('fonts:bundled', async (e, name) => {
 
 ipcMain.handle('app:version', () => app.getVersion());
 
+// Eyedropper: reads the color of ONE on-screen pixel of the app window at (x, y) in CSS pixels.
+// capturePage grabs exactly what is drawn (vectors, images, text, backgrounds), so it works for any block.
+// The bitmap is BGRA on Windows; on high-DPI screens a 1x1 rect may come back as 2x2, so we read the first pixel.
+ipcMain.handle('eyedropper:sample', async (e, x, y) => {
+  if (!win || !Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const image = await win.webContents.capturePage({ x: Math.floor(x), y: Math.floor(y), width: 1, height: 1 });
+  const px = image.toBitmap();
+  if (px.length < 4) return null;
+  const hex = (n) => n.toString(16).padStart(2, '0').toUpperCase();
+  return `#${hex(px[2])}${hex(px[1])}${hex(px[0])}`;   // BGRA -> #RRGGBB
+});
+
 // ---------- IPC: window controls ----------
 ipcMain.handle('window:minimize', () => win && win.minimize());
 ipcMain.handle('window:toggleMaximize', () => {

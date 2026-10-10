@@ -3,7 +3,8 @@
 // Drag-and-drop out of the library is wired generically in dragdrop.js through data-drag-* attributes.
 // Every list is sorted for display only (see sorting.js); the saved data keeps its own order.
 
-import { el, clear, $, uid, slug, isHex, normalizeHex } from './util.js';
+import { el, clear, $, uid, slug, isHex, normalizeHex, icon } from './util.js';
+import { initEyedropper } from './eyedropper.js';
 import {
   state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor,
   addFonts, addMedia, trashItems, usageCount,
@@ -218,16 +219,22 @@ function renderBlocks() {
 // Left: "label · count" (same style everywhere). Right: a "+ add" button (data-add = its element id), a
 // "+ import" button (data-import = its id; colors/palettes add, media/fonts import) or, with neither, the
 // muted hint "drag in". Both buttons are the same .plus-btn. Built from the data-* attributes in index.html.
+// The colors header also gets the eyedropper tool button (data-eyedropper) just left of its "+ add".
 function buildHeaders() {
   for (const head of document.querySelectorAll('.lib-head')) {
     clear(head);
-    const { label, add, import: importId } = head.dataset;
+    const { label, add, import: importId, eyedropper } = head.dataset;
     const button = (id, text, title) => el('button', { class: 'plus-btn', id, title, text });
+    const main = add ? button(add, '+ add', `add ${label.replace(/s$/, '')}`)
+      : importId ? button(importId, '+ import', `import ${label}`)
+        : el('span', { class: 'lib-hint', text: 'drag in' });
+    // Same look as the export bar's transparent toggle (.icon-toggle), just header-sized (24px).
+    const tool = eyedropper
+      ? el('button', { class: 'icon-toggle tool-btn', id: eyedropper, title: 'eyedropper: click a color in the preview to add it' }, icon('eyedropper'))
+      : null;
     head.append(
       el('span', { class: 'lib-label' }, label, el('span', { class: 'lib-count', dataset: { for: label } })),
-      add ? button(add, '+ add', `add ${label.replace(/s$/, '')}`)
-        : importId ? button(importId, '+ import', `import ${label}`)
-          : el('span', { class: 'lib-hint', text: 'drag in' }));
+      tool ? el('span', { class: 'lib-head-actions' }, tool, main) : main);
   }
 }
 
@@ -311,6 +318,12 @@ export function initLibrary() {
   $('#btn-import-fonts').addEventListener('click', () => runImport('font'));
   $('#btn-import-media').addEventListener('click', () => runImport('media'));
   $('#btn-add-color').addEventListener('click', () => { editingColorId = addColor({ name: 'new_color', hex: '#888888' }).id; renderColors(); });
+  // Eyedropper: a picked color is added exactly like "+ add", but with the picked hex already filled in.
+  // The new card opens in edit mode with the name selected, so the user just types a name and presses Enter.
+  initEyedropper($('#btn-eyedropper'), (hex) => {
+    editingColorId = addColor({ name: 'new_color', hex }).id;
+    renderColors();
+  });
   $('#btn-add-palette').addEventListener('click', () => {
     renamingPaletteId = addPalette(`palette_${state.library.palettes.length + 1}`).id;
     renderPalettes();

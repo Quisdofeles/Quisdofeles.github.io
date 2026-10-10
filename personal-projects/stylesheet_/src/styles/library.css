@@ -29,6 +29,11 @@
 /* The one header style: "label · count" on the left, "drag in" hint or "+ add" button on the right. */
 .lib-label { font-size: 13px; color: var(--muted); }
 .lib-hint { font-size: 12px; color: var(--muted); }
+/* Colors header: the eyedropper tool button sits just left of "+ add". */
+.lib-head-actions { display: flex; align-items: center; gap: 6px; }
+/* The eyedropper is an .icon-toggle (same look/behavior as the export bar's transparent toggle), sized to the 24px header buttons. */
+.icon-toggle.tool-btn { width: 24px; height: 24px; }
+.icon-toggle.tool-btn svg { width: 14px; height: 14px; }
 
 .lib-list {
   flex: 1;

@@ -11,6 +11,11 @@
 }
 #stage.panning { cursor: grabbing; }
 #stage.space-ready { cursor: grab; }
+/* Eyedropper on (eyedropper.js): crosshair over canvases, and the selection outlines are hidden so their
+   accent lines can't be picked by mistake. The space-pan cursor still wins while space is held. */
+#stage.eyedropping:not(.space-ready):not(.panning) .canvas,
+#stage.eyedropping:not(.space-ready):not(.panning) .canvas * { cursor: crosshair !important; }
+#stage.eyedropping .selected { outline: none !important; }
 
 #canvas-grid {
   position: absolute; left: 0; top: 0;

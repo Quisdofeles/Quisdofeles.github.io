@@ -8,14 +8,32 @@
 
 /* ---------- Help overlay ---------- */
 .help-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.78); cursor: pointer; }
-/* One row, centered in the window, equal 16px gaps; `top` is set in overlays.js. Cards stretch to equal height. */
-.help-row { position: absolute; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; }
+/* The card width and the gap are variables so the import tips box can be exactly "4 cards + 3 gaps" wide.
+   Card width: 330px max, shrinks so 4 cards + 3 gaps + 24px side margins fit (290px at 1280). */
+.help-overlay {
+  --help-gap: 24px;
+  --help-card-w: min(330px, calc((100vw - 3 * var(--help-gap) - 48px) / 4));
+}
+/* The stack holds the card row and the tips box under it, centered in the window; `top` is set in overlays.js. */
+.help-stack { position: absolute; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: var(--help-gap); }
+/* One row of step cards, equal gaps. align-items: flex-start = tops aligned, each card as tall as its own text. */
+.help-row { display: flex; align-items: flex-start; gap: var(--help-gap); }
 .help-callout {
-  width: min(300px, calc((100vw - 96px) / 4));   /* all four equal; 300px max, shrinks so 4 cards + 3 gaps + 24px side margins fit (296px at 1280) */
+  width: var(--help-card-w);
   background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-lg);
   padding: 12px 14px; font-size: 12px; line-height: 1.5;
 }
 .help-callout b { color: var(--accent); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; display: block; margin-bottom: 4px; }
+/* Import tips: same card look, as wide as the whole row (left edge = card 01, right edge = card 04). */
+.help-tips { width: calc(4 * var(--help-card-w) + 3 * var(--help-gap)); }
+/* Three equal columns side by side. */
+.help-tips-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--help-gap); }
+/* Column headings: white small caps, quieter than the accent card title. */
+.help-tips-cols h4 { margin: 0 0 2px; color: var(--text); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; }
+/* Compact mode: added by overlays.js only when the tips box would touch the footer (small windows). */
+.help-overlay.compact .help-callout { padding: 9px 12px; font-size: 11px; line-height: 1.45; }
+.help-overlay.compact .help-callout b { margin-bottom: 2px; }
+.help-overlay.compact .help-tips-cols h4 { font-size: 10px; }
 /* One short footer line, bottom center. */
 .help-footer { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); color: var(--muted); font-size: 11px; letter-spacing: 1px; white-space: nowrap; }
 

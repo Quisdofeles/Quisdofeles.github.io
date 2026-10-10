@@ -100,6 +100,8 @@ const SVG = {
   alignVCenter: '<path d="M3.5 3v10M8 5v6M12.5 4v8"/>',
   alignVEnd: '<path d="M3.5 3v10M8 7v6M12.5 5v8"/>',
   eye: '<path d="M1.5 8s2.3-4.5 6.5-4.5S14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="1.8"/>',
+  // eyedropper (pipette): angled tube with a collar and a rounded bulb at the top right
+  eyedropper: '<path d="M8.4 3.6l4 4"/><path d="M9.6 4.8l2.6-2.6a1.35 1.35 0 0 1 1.9 1.9l-2.6 2.6"/><path d="M9.8 5.6L3.8 11.6 3.3 12.7 4.4 12.2 10.4 6.2"/>',
   eyeOff: '<path d="M1.5 8s2.3-4.5 6.5-4.5S14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z" opacity=".45"/><path d="M2.5 13.5l11-11"/>',
 };
 

@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('api', {
 
   getVersion: () => ipcRenderer.invoke('app:version'),
 
+  // Eyedropper: the "#RRGGBB" color of the window pixel at (x, y) (CSS pixels), or null.
+  samplePixel: (x, y) => ipcRenderer.invoke('eyedropper:sample', x, y),
+
   // Window controls (the app is frameless, so the renderer draws its own buttons)
   window: {
     minimize: () => ipcRenderer.invoke('window:minimize'),

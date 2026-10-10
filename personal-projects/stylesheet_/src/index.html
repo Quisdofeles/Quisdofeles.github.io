@@ -51,7 +51,7 @@
                Weights share the panel height: blocks (+ presets) 2, media 1, fonts 1.2, colors 1.5, palettes 1.5 -->
           <!-- Every <header class="lib-head"> is empty here: library.js (buildHeaders) fills them all with the ONE shared
                structure. data-label = the name; data-add = id of a "+ add" button; data-import = id of a "+ import" button
-               (omit both to show the "drag in" hint). -->
+               (omit both to show the "drag in" hint); data-eyedropper = id of the eyedropper tool button (colors only). -->
           <section class="lib-section" style="--w:2" id="sec-blocks">
             <header class="lib-head" data-label="blocks"></header>
             <div class="lib-list scroll-area" id="list-blocks"></div>
@@ -65,7 +65,7 @@
             <div class="lib-list scroll-area" id="list-fonts"></div>
           </section>
           <section class="lib-section" style="--w:1.5" id="sec-colors">
-            <header class="lib-head" data-label="colors" data-add="btn-add-color"></header>
+            <header class="lib-head" data-label="colors" data-add="btn-add-color" data-eyedropper="btn-eyedropper"></header>
             <div class="lib-list scroll-area" id="list-colors"></div>
           </section>
           <section class="lib-section" style="--w:1.5" id="sec-palettes">
