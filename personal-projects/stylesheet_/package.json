@@ -1,14 +1,15 @@
 {
   "name": "stylesheet",
   "productName": "Stylesheet_",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Stylesheet_ by HALFWIT Studios: a fast brand sketchbook.",
   "author": "HALFWIT Studios",
   "private": true,
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis"
+    "dist": "electron-builder --win nsis",
+    "icon": "electron build/make-icon.js"
   },
   "devDependencies": {
     "electron": "^44.7.0",
@@ -36,6 +37,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
       "artifactName": "Stylesheet_-Setup-${version}.${ext}"
     }
   }

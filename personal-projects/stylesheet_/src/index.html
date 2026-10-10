@@ -50,27 +50,27 @@
         </div>
         <div class="library-body">
           <!-- Section order: blocks, media, fonts, colors, palettes (the status bar uses the same order).
-               Weights share the panel height: blocks (+ presets) 2, media 1, fonts 1.2, colors 1.5, palettes 1.5 -->
+               All five sections share the panel height EQUALLY (.lib-section in library.css). -->
           <!-- Every <header class="lib-head"> is empty here: library.js (buildHeaders) fills them all with the ONE shared
                structure. data-label = the name; data-add = id of a "+ add" button; data-import = id of a "+ import" button
                (omit both to show the "drag in" hint); data-eyedropper = id of the eyedropper tool button (colors only). -->
-          <section class="lib-section" style="--w:2" id="sec-blocks">
+          <section class="lib-section" id="sec-blocks">
             <header class="lib-head" data-label="blocks"></header>
             <div class="lib-list scroll-area" id="list-blocks"></div>
           </section>
-          <section class="lib-section" style="--w:1" id="sec-media">
+          <section class="lib-section" id="sec-media">
             <header class="lib-head" data-label="media" data-import="btn-import-media"></header>
             <div class="lib-list scroll-area" id="list-media"></div>
           </section>
-          <section class="lib-section" style="--w:1.2" id="sec-fonts">
+          <section class="lib-section" id="sec-fonts">
             <header class="lib-head" data-label="fonts" data-import="btn-import-fonts"></header>
             <div class="lib-list scroll-area" id="list-fonts"></div>
           </section>
-          <section class="lib-section" style="--w:1.5" id="sec-colors">
+          <section class="lib-section" id="sec-colors">
             <header class="lib-head" data-label="colors" data-add="btn-add-color" data-eyedropper="btn-eyedropper"></header>
             <div class="lib-list scroll-area" id="list-colors"></div>
           </section>
-          <section class="lib-section" style="--w:1.5" id="sec-palettes">
+          <section class="lib-section" id="sec-palettes">
             <header class="lib-head" data-label="palettes" data-add="btn-add-palette"></header>
             <div class="lib-list scroll-area" id="list-palettes"></div>
           </section>
@@ -145,13 +145,23 @@
       <!-- 03 — EDITOR -->
       <aside id="editor" class="panel">
         <div class="panel-head"><span class="section-label">03 — EDITOR</span></div>
-        <div class="layers-head">
-          <span>layers</span>
-          <button class="link-btn" id="btn-add-block">+ block</button>
+        <!-- The space between the header and "save as preset" is split in two (editor.css): properties take their
+             natural height up to 60%, layers take the rest (at least 40%). Each part scrolls inside itself. -->
+        <div class="editor-body">
+          <div class="layers-part">
+            <div class="layers-head">
+              <span>layers</span>
+              <button class="link-btn" id="btn-add-block">+ block</button>
+            </div>
+            <div id="layers" class="scroll-area"></div>
+          </div>
+          <div class="props-part">
+            <div class="props-divider"></div>
+            <!-- Same look as the "layers" header (same class); stays put while the properties below it scroll. -->
+            <div class="layers-head" id="props-head"><span>properties</span></div>
+            <div id="props"></div>
+          </div>
         </div>
-        <div id="layers" class="scroll-area"></div>
-        <div class="props-divider"></div>
-        <div id="props"></div>
         <div class="props-foot" id="preset-foot"></div>
       </aside>
     </main>
@@ -159,7 +169,8 @@
     <!-- ===== Status bar ===== -->
     <footer id="statusbar">
       <span id="status-counts">library: 0 blocks · 0 media · 0 fonts · 0 colors · 0 palettes</span>
-      <span id="status-brand">Stylesheet_ by HALFWIT Studios · v0.1</span>
+      <!-- The version is filled in from package.json at startup (app.js); this text is only the fallback. -->
+      <span id="status-brand">Stylesheet_ by HALFWIT Studios · v1.0.0</span>
     </footer>
   </div>
 

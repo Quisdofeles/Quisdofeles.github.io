@@ -13,7 +13,7 @@
 import { $ } from './util.js';
 import {
   state, findNode, getMedia, findColor, addBlock, addBlockToNewCanvas, addCanvas, addCanvasFromPreset,
-  addMediaBlock, swapMedia, setBlockFonts, fontTargets, dropColor, setCanvasBackground, setTextColor, setLayerColor, moveNode,
+  addMediaBlock, addMediaToNewCanvas, swapMedia, setBlockFonts, fontTargets, dropColor, setCanvasBackground, setTextColor, setLayerColor, moveNode,
 } from './state.js';
 import { isContainer, isTextType } from './blocks.js';
 import { showOutline } from './outline.js';
@@ -67,7 +67,7 @@ function planPreview(e) {
       if (!vec) return null;
       const swappable = blockNode && ((blockNode.node.type === 'vector' && vec.kind === 'svg') || (blockNode.node.type === 'image' && vec.kind === 'image'));
       if (swappable) return { el: blockEl, cls: 'drop-target', run: () => swapMedia(blockNode.node.id, drag.id) };
-      if (!canvasEl) return null;
+      if (!canvasEl) return { el: stage, cls: 'drop-target', run: () => addMediaToNewCanvas(drag.id) };   // empty dot grid: a new (dynamic) canvas with it
       const index = flowIndex(containerEl, e);
       return { el: containerEl, cls: 'drop-target', run: () => addMediaBlock(drag.id, containerEl.dataset.id, index) };
     }

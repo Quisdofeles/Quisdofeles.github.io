@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   saveExport: (dataUrl, format) => ipcRenderer.invoke('export:save', dataUrl, format),   // format: 'png' | 'jpeg' | 'webp'
   openLibraryFolder: () => ipcRenderer.invoke('library:openFolder'),
   readBundledFont: (name) => ipcRenderer.invoke('fonts:bundled', name),
+  installDefaultMedia: () => ipcRenderer.invoke('defaults:installMedia'),   // first launch: copies the logo + wordmark into the library
 
   // Trash: syncTrash makes the disk match the list; purgeTrashFiles deletes for good.
   syncTrash: (files) => ipcRenderer.invoke('trash:sync', files),

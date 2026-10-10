@@ -109,30 +109,70 @@ export function confirmDialog({ title, message, confirmLabel = 'confirm', danger
 // (HELP_TIPS, three columns) whose edges line up with card 01 and card 04.
 // Click anywhere or press Esc to close.
 const HELP_TOP = 120;
+const HELP_TOP_MIN = 24;   // short windows only: the highest the row may move up to fit (see the fit check in openHelp)
+// Each step card is a short list of points (one <li> each), so a lot of detail stays easy to scan.
 const HELP_CALLOUTS = [
-  { title: '01 — LIBRARY', text: 'Everything you bring in lives here. Use + import for media (svg, png, jpg) and fonts, and + add for colors and palettes. Files are copied into the app, so moving or deleting your originals won\'t break anything. Drag any card into the preview or onto a layer. Click a color to edit it. Right-click anything to delete it. Deleted items go to the trash in settings, where you can restore them.' },
-  { title: '02 — PREVIEW', text: 'Drag a block or preset onto the grid to start a canvas. Each canvas is one option, labeled A, B, C, and they arrange themselves automatically. Drop a color onto text, onto one part of a vector, or onto the background to change just that one thing. Click to select. Use − / + or fit to zoom, and hold space or the middle mouse button to pan.' },
-  { title: '03 — EDITOR', text: 'Layers shows every canvas and the blocks inside it. Drag rows to reorder, double-click to rename, and click the eye to hide. Ctrl+D duplicates, which is the fastest way to make another option. Properties changes the selected item, and its colors section only ever changes that one item: a canvas background, a text color, or one part of a vector.' },
-  { title: '04 — EXPORT', text: 'Exports every visible canvas as one image. Hidden canvases are skipped. Style labels adds a strip listing the colors, fonts, and media you used. PNG can have a transparent background, JPEG can\'t. Use 2× or 4× for a sharper image.' },
+  { title: '01 — LIBRARY', points: [
+    'Blocks: drag canvas, vector, image, heading, body or spacer into the preview. Presets you save show up here too.',
+    '+ import copies media (svg, png, jpg) and fonts into the app, so your originals can be moved or deleted.',
+    'Colors: + add one, or use the eyedropper to pick any color straight off a canvas. Click a color to edit its name or hex.',
+    'Palettes: + add a palette, then + for more swatches. A swatch works exactly like a color.',
+    'Drag any card onto a canvas, a block or a layer. Right-click to delete; deleted items wait in settings → trash.',
+  ] },
+  { title: '02 — PREVIEW', points: [
+    'Start with + add canvas, or drop a block, media or preset on the empty grid.',
+    'Each canvas is one option (A, B, C…). The grid lines them up for you, whatever their sizes.',
+    'Drop a color on text, on one part of a vector, or on a background: only that one thing changes. The lime outline shows what will change.',
+    'Click to select, Ctrl/Shift+click to add more, or drag a box to select several. Double-click text to edit it.',
+    'Scroll to zoom, hold space or the middle mouse button to pan, fit to see everything. Double-click the % to type a zoom.',
+  ] },
+  { title: '03 — EDITOR', points: [
+    'Layers lists every canvas and its blocks. Drag rows to reorder or move them, double-click to rename, click the eye to hide.',
+    '+ block adds a block to every selected canvas.',
+    'Right-click a layer to copy, paste, duplicate, group, ungroup or delete. Keys: Ctrl+C / V, Ctrl+D, Ctrl+G, Delete.',
+    'Properties edits what is selected: colors, layout, size (fixed or dynamic, with padding), and a text block\'s font. Double-click any number to type it.',
+    'Save as preset keeps a canvas\'s layout to reuse.',
+  ] },
+  { title: '04 — EXPORT', points: [
+    'Export saves every visible canvas as one image. Hidden canvases are skipped.',
+    'Canvas labels puts OPTION A, B… above each canvas. Style labels adds a strip listing every color, font and media used.',
+    'PNG and WebP can have a transparent background (the checkerboard button). JPEG is always solid.',
+    'Use 1× to share quickly, 2× or 4× for a sharper reference.',
+    'The arrow button above export opens your recent notifications.',
+  ] },
 ];
-// The three columns of the IMPORT TIPS box under the step cards.
+// The three columns of the IMPORT TIPS box under the step cards (also lists of points).
 const HELP_TIPS = [
-  { title: 'MEDIA', text: 'Use + import in media for .svg, .png, and .jpg files. SVGs can be recolored part by part. PNG and JPG images can\'t be recolored, so use them for photos or textures.' },
-  { title: 'SVG SETUP', text: 'Each top-level layer or group in your SVG becomes one part you can recolor, so put each piece you want to color separately on its own layer before exporting. No layer naming needed. Parts keep their original colors until you change them, and a recolored part becomes one solid color. Fit the artboard tightly to your artwork, with no extra space between the vector and the edge of the document. Convert any text to outlines first.' },
-  { title: 'FONTS', text: 'Use + import in fonts for .ttf, .otf, .woff, or .woff2 files. Each file is one weight or style, so import every weight you want. Files from the same family group into one card, and you pick the weight in properties. Variable fonts import as a single weight. .ttf or .otf names read most reliably.' },
+  { title: 'MEDIA', points: [
+    'Use + import in media for .svg, .png and .jpg files.',
+    'SVGs can be recolored part by part. PNG and JPG can\'t be recolored, so use them for photos or textures.',
+    'Drop a media card on a vector or image block to swap it.',
+  ] },
+  { title: 'SVG SETUP', points: [
+    'Each top-level layer or group becomes one part you can recolor; no naming needed. The Stylesheet_ logo in media is an example: background, S and underscore are three parts.',
+    'Parts keep their original colors until you change one; then that part becomes one solid color.',
+    'Fit the artboard tightly to the artwork and convert text to outlines.',
+  ] },
+  { title: 'FONTS', points: [
+    'Use + import in fonts for .ttf, .otf, .woff or .woff2. Space Grotesk and IBM Plex Mono are built in.',
+    'Each file is one weight or style; files from one family share a card. Pick the weight in the font row in properties.',
+    'Variable fonts import as one weight. Fonts are embedded in exports.',
+  ] },
 ];
+// A list of points as a <ul> (used by the step cards and the tips columns).
+const pointList = (points) => el('ul', { class: 'help-points' }, points.map((p) => el('li', { text: p })));
 
 export function openHelp() {
   if ($('.help-overlay')) return;
   const overlay = el('div', { class: 'help-overlay' });
   const top = $('#preview').getBoundingClientRect().top + HELP_TOP;   // the row's vertical position
   const row = el('div', { class: 'help-row' },
-    HELP_CALLOUTS.map((c) => el('div', { class: 'help-callout' }, el('b', { text: c.title }), c.text)));
+    HELP_CALLOUTS.map((c) => el('div', { class: 'help-callout' }, el('b', { text: c.title }), pointList(c.points))));
   // The tips box reuses the .help-callout card look; .help-tips only sets its width.
   const tips = el('div', { class: 'help-callout help-tips' },
     el('b', { text: 'IMPORT TIPS' }),
     el('div', { class: 'help-tips-cols' },
-      HELP_TIPS.map((t) => el('div', {}, el('h4', { text: t.title }), t.text))));
+      HELP_TIPS.map((t) => el('div', {}, el('h4', { text: t.title }), pointList(t.points)))));
   const stack = el('div', { class: 'help-stack', style: { top: `${top}px` } }, row, tips);
   const footer = el('div', { class: 'help-footer', text: 'everything saves automatically · ctrl+z to undo · press ? anytime to reopen this · click anywhere to close' });
   overlay.append(stack, footer);
@@ -143,7 +183,14 @@ export function openHelp() {
   $('#overlay-root').append(overlay);
   // Fit check: on short windows the tips box could run into the footer line. Only then switch to the
   // compact look (slightly smaller padding and text, same words). 12px = minimum breathing room.
-  if (tips.getBoundingClientRect().bottom + 12 > footer.getBoundingClientRect().top) overlay.classList.add('compact');
+  const overflow = () => tips.getBoundingClientRect().bottom + 12 - footer.getBoundingClientRect().top;
+  if (overflow() > 0) overlay.classList.add('compact');
+  // Still too tall (e.g. 1280×720): move the whole stack up by just the missing amount, but never higher than
+  // HELP_TOP_MIN below the top of the preview panel.
+  if (overflow() > 0) {
+    const highest = $('#preview').getBoundingClientRect().top + HELP_TOP_MIN;
+    stack.style.top = `${Math.max(highest, top - overflow())}px`;
+  }
 }
 
 // ---------- Settings overlay ----------

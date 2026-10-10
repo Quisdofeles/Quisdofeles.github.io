@@ -30,6 +30,12 @@
 .help-tips-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--help-gap); }
 /* Column headings: white small caps, quieter than the accent card title. */
 .help-tips-cols h4 { margin: 0 0 2px; color: var(--text); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; }
+/* The points inside a card / tips column: a small lime dash instead of a bullet dot, tight spacing. */
+.help-points { list-style: none; margin: 0; padding: 0; }
+.help-points li { position: relative; padding-left: 12px; }
+.help-points li + li { margin-top: 4px; }
+.help-points li::before { content: '–'; position: absolute; left: 0; color: var(--accent); pointer-events: none; }
+.help-overlay.compact .help-points li + li { margin-top: 2px; }
 /* Compact mode: added by overlays.js only when the tips box would touch the footer (small windows). */
 .help-overlay.compact .help-callout { padding: 9px 12px; font-size: 11px; line-height: 1.45; }
 .help-overlay.compact .help-callout b { margin-bottom: 2px; }

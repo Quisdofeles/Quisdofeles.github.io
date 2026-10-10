@@ -1,17 +1,17 @@
 // export.js: the floating export bar (two rows) and the rendering of the preview to a PNG/JPEG/WebP.
 // The image is drawn from an OFFSCREEN copy of the canvas grid (at 100% zoom, ignoring the current
-// zoom/pan), built with the same renderCanvasElement() the preview uses, then rasterized by html-to-image.
+// zoom/pan), built with the same renderCanvasCell() the preview uses, then rasterized by html-to-image.
 // Optional "style labels" strip below the canvases lists every color, font and vector used.
 
 import { el, clear, $, checkerIcon, normalizeHex } from './util.js';
 import { state, subscribe, setExport, visibleCanvases, getFont, getMedia } from './state.js';
-import { renderCanvasElement, gridColumns, optionLabel } from './preview.js';
+import { renderCanvasCell, applyGridLayout, optionLabel } from './preview.js';
 import { cssFamily, fontCss, fontUrl, fontLabel, DEFAULT_FONT_ID } from './fonts.js';
 import { buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
 import { isTextType } from './blocks.js';
 import { showToast } from './overlays.js';
 
-const CANVAS_W = 384, GAP = 20, PAD = 24;      // must match the preview (see preview.css .canvas and #canvas-grid)
+const PAD = 24;      // the sheet's padding around the grid (the grid itself is laid out by preview.js applyGridLayout())
 const INK = '#111111';
 
 // ---------- The bar ----------
@@ -158,21 +158,23 @@ async function exportImage() {
   const root = $('#export-root');
 
   try {
-    // Build the sheet: the canvases in the auto grid, plus (optionally) the style labels strip.
-    const cols = gridColumns(canvases.length);
-    const gridWidth = cols * CANVAS_W + (cols - 1) * GAP;
-    const grid = el('div', { class: 'export-grid', style: { gridTemplateColumns: `repeat(${cols}, ${CANVAS_W}px)`, gap: `${GAP}px`, width: `${gridWidth}px` } });
+    // Build the sheet: the canvases in the auto grid (the same layout as the preview, real canvas sizes),
+    // plus (optionally) the style labels strip.
+    const grid = el('div', { class: 'export-grid' });
+    applyGridLayout(grid, canvases.length);
     canvases.forEach((cv, i) => {
-      const card = renderCanvasElement(cv, i, { interactive: false });
-      card.style.boxShadow = 'none';                          // shadows would be clipped at the sheet edge
-      grid.append(card);
+      const cell = renderCanvasCell(cv, i, { interactive: false });   // label above + canvas, same as the preview
+      cell.querySelector('.canvas').style.boxShadow = 'none';         // shadows would be clipped at the sheet edge
+      grid.append(cell);
     });
     const usage = collectUsage(canvases);
     const sheet = el('div', { class: 'export-sheet', style: { padding: `${PAD}px`, background: solid ? '#FFFFFF' : 'transparent' } }, grid);
-    if (styleLabels) sheet.append(buildStrip(usage, gridWidth));
     clear(root).append(sheet);
 
     await document.fonts.ready;
+    // Dynamic canvases size themselves from their content, so the grid's width is only known once it is laid out
+    // (after the fonts are ready). The strip is made exactly that wide.
+    if (styleLabels) sheet.append(buildStrip(usage, grid.offsetWidth));
     const fontEmbedCSS = await buildFontCss([...usage.fonts.values()]);
     const options = { pixelRatio: scale, cacheBust: false, fontEmbedCSS, ...(solid ? { backgroundColor: '#FFFFFF' } : {}) };
     let dataUrl;

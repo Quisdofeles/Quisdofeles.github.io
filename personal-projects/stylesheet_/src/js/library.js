@@ -7,9 +7,9 @@ import { el, clear, $, uid, slug, isHex, normalizeHex, icon } from './util.js';
 import { initEyedropper } from './eyedropper.js';
 import {
   state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor,
-  addFonts, addMedia, trashItems, usageCount,
+  addFonts, addMedia, trashItems, usageCount, allFonts,
 } from './state.js';
-import { groupFamilies, familySummary, closestTo400, cssFamily, registerFonts, describeFont } from './fonts.js';
+import { groupFamilies, familySummary, closestTo400, cssFamily, fontCss, registerFonts, describeFont } from './fonts.js';
 import { processSvg, cacheMedia, buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
 import { libraryBlockCount } from './blocks.js';
 import { sortMedia, sortColors, sortPalettes, sortPresets, sortBlockTypes } from './sorting.js';
@@ -84,18 +84,26 @@ function renderMedia() {
 }
 
 // ---------- Fonts ----------
+// The built-in fonts (Space Grotesk, IBM Plex Mono) are shown as cards too, sorted in with the imported ones.
+// They can be dragged like any font, but have no right-click menu: they can't be deleted.
 function renderFonts() {
   redraw($('#list-fonts'), (list) => {
-    const families = groupFamilies(state.library.fonts);   // already alphabetical, case-insensitive
+    const families = groupFamilies(allFonts());   // built-in + library, already alphabetical, case-insensitive
     if (!families.length) list.append(el('div', { class: 'lib-empty', text: 'import .ttf .otf .woff .woff2' }));
     for (const fam of families) {
       const sample = closestTo400(fam.fonts);   // the card previews, and drags, the weight closest to 400
-      const card = el('div', { class: 'card-row', title: fam.family, ...draggable('font', sample.id) },
-        el('span', { class: 'font-aa', text: 'Aa', style: { fontFamily: `'${cssFamily(sample)}'` } }),
-        el('div', { class: 'card-text' },
-          el('span', { class: 'card-title', text: fam.family }),
-          el('span', { class: 'card-sub', text: familySummary(fam.fonts) })));
-      list.append(withDeleteMenu(card, 'font', fam.fonts.map((f) => f.id), fam.family));
+      // A built-in font is drawn with its real family + font-weight (fontCss); an imported one by its own CSS family.
+      const aaStyle = sample.builtin ? fontCss(sample) : { fontFamily: `'${cssFamily(sample)}'` };
+      const deletable = fam.fonts.filter((f) => !f.builtin);   // only imported files can go to the trash
+      const card = el('div', {
+        class: 'card-row', title: deletable.length ? fam.family : `${fam.family} (built-in font, can't be deleted)`,
+        ...draggable('font', sample.id),
+      },
+      el('span', { class: 'font-aa', text: 'Aa', style: aaStyle }),
+      el('div', { class: 'card-text' },
+        el('span', { class: 'card-title', text: fam.family }),
+        el('span', { class: 'card-sub', text: familySummary(fam.fonts) })));
+      list.append(deletable.length ? withDeleteMenu(card, 'font', deletable.map((f) => f.id), fam.family) : card);
     }
   });
 }
@@ -238,10 +246,11 @@ function buildHeaders() {
   }
 }
 
-// Live counts in the headers ("media · 3"). Blocks counts the default blocks plus presets.
+// Live counts in the headers ("media · 3"). Blocks counts the offered blocks plus presets; fonts counts font FAMILIES
+// (= the cards shown, built-in ones included), not files, so the number always matches what is on screen.
 function renderMeta() {
   const l = state.library;
-  const counts = { media: l.media.length, fonts: l.fonts.length, colors: l.colors.length, palettes: l.palettes.length, blocks: libraryBlockCount(l) };
+  const counts = { media: l.media.length, fonts: groupFamilies(allFonts()).length, colors: l.colors.length, palettes: l.palettes.length, blocks: libraryBlockCount(l) };
   for (const span of document.querySelectorAll('.lib-count')) span.textContent = ` · ${counts[span.dataset.for]}`;
 }
 

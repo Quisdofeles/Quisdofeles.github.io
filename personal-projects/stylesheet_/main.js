@@ -252,6 +252,23 @@ ipcMain.handle('files:import', async (e, type) => {
   return imported;
 });
 
+// First launch: copies the default media that ships with the app (src/defaults/media) into library/media and returns
+// the same metadata as an import, in this fixed order (the renderer gives the first one the newest addedAt).
+// Files are read and written (not copyFile) because in the installed app they live inside app.asar.
+const DEFAULT_MEDIA = ['Stylesheet_Logo.svg', 'Stylesheet_Wordmark.svg'];
+ipcMain.handle('defaults:installMedia', async () => {
+  const dir = path.join(libraryDir(), 'media');
+  await fsp.mkdir(dir, { recursive: true });
+  const installed = [];
+  for (const name of DEFAULT_MEDIA) {
+    const data = await fsp.readFile(path.join(__dirname, 'src', 'defaults', 'media', name));
+    const fileName = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}_${name}`;   // same pattern as imports
+    await fsp.writeFile(path.join(dir, fileName), data);
+    installed.push({ kind: 'media', subdir: 'media', fileName, originalName: name, ext: '.svg' });
+  }
+  return installed;
+});
+
 // Returns a library file's text (used for SVG contents).
 ipcMain.handle('files:read', async (e, rel) => fsp.readFile(resolveLibraryPath(rel), 'utf8'));
 

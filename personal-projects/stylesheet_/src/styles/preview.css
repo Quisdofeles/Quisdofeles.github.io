@@ -17,11 +17,10 @@
 #stage.eyedropping:not(.space-ready):not(.panning) .canvas * { cursor: crosshair !important; }
 #stage.eyedropping .selected { outline: none !important; }
 
+/* The grid's columns, gap (20px) and centering are set by applyGridLayout() in preview.js, shared with the export. */
 #canvas-grid {
   position: absolute; left: 0; top: 0;
   display: grid;
-  gap: 20px;
-  align-items: start;
   transform-origin: 0 0;           /* zoom around the grid's top-left; JS adjusts translate to zoom around the cursor */
   will-change: transform;
 }
@@ -66,27 +65,30 @@
 #btn-export.btn:disabled { background: var(--accent); border-color: var(--accent); color: #0A0A0B; opacity: 1; }
 
 /* ---------- Canvases ---------- */
+/* A fixed canvas gets an inline width/height (100% zoom); content that doesn't fit is clipped (overflow: hidden).
+   A dynamic canvas (.dynamic) has no size of its own: it shrink-wraps its content plus padding. */
 .canvas {
   position: relative;
-  width: 384px;                    /* base size at 100% zoom; the height comes from the canvas's aspect ratio */
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0,0,0,.4);
   overflow: hidden;
   cursor: default;
 }
 .canvas.selected { outline: 2px solid var(--accent); outline-offset: 0; }
+/* A grid cell = the OPTION label above the canvas, both left-aligned (renderCanvasCell() in preview.js). */
+.canvas-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .canvas-label {
-  position: absolute; left: 14px; top: 12px;
-  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  font-size: 11px; line-height: 1; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap;
+  color: var(--muted);             /* on the dark dot grid */
   pointer-events: none;            /* decorative */
-  z-index: 1;
 }
+.export-grid .canvas-label { color: #777; }   /* on the export's white/transparent sheet: same gray as its other headings */
 .canvas-content {
-  position: absolute; inset: 0;
-  padding: 36px 28px 28px;
+  position: absolute; inset: 0;    /* fills a fixed canvas; the padding is inline (canvas.padding, set by preview.js) */
   display: flex;
   justify-content: center;         /* center along the flow direction */
 }
+.canvas.dynamic .canvas-content { position: relative; inset: auto; }   /* in the flow, so it gives the card its size */
 .canvas-content.align-start { text-align: left; }
 .canvas-content.align-center { text-align: center; }
 .canvas-content.align-end { text-align: right; }
@@ -139,7 +141,7 @@
 
 /* ---------- Export sheet (built offscreen by export.js; light, client-friendly look) ---------- */
 .export-sheet { display: flex; flex-direction: column; gap: 24px; width: max-content; font-family: var(--font-ui); color: #111; }
-.export-grid { display: grid; align-items: start; }
+.export-grid { display: grid; }   /* columns, gap and centering: applyGridLayout() in preview.js (same as the preview) */
 .export-strip {
   background: #fff; color: #111; border: 1px solid #E2E2E2; border-radius: 8px;
   padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; font-size: 12px;

@@ -11,7 +11,8 @@
 }
 
 .lib-section {
-  flex: var(--w) 1 0;            /* weight set inline in index.html: media 1, fonts 1.2, colors 1.5, palettes 1.5,blocks 2 (see the weights in index.html) */
+  flex: 1 1 0;                   /* every section gets the SAME share of the panel height; the headers are all 28px, so the
+                                    lists (the part that scrolls) end up equal too and scale together with the window */
   min-height: 0;
   display: flex;
   flex-direction: column;

@@ -1,4 +1,4 @@
-// blocks.js: block type definitions, factory functions, default values, the default presets,
+// blocks.js: block type definitions, factory functions, default values, the presets that older versions shipped,
 // and the starter colors/palettes used on first launch.
 // Pure data + functions: this file never touches the DOM or the state object.
 
@@ -6,9 +6,9 @@ import { uid, clone } from './util.js';
 import { DEFAULT_FONT_ID } from './fonts.js';
 
 // ---------- Constants ----------
-// The block types. `glyph` is the small lime icon; `kind` is the muted second line on its library card
-// ("text", "media", "container", ...). (The order blocks appear in the LIBRARY panel is separate: see
-// BLOCK_ORDER in sorting.js. This order is used by the editor's "+ block" menu.)
+// Every block type the app can render and edit. `glyph` is the small lime icon; `kind` is the muted second line on
+// its library card ("text", "media", "container", ...). Not all of them are OFFERED (see OFFERED_BLOCKS below):
+// title, subheading and caption stay here so old saves, old presets and pasted blocks keep working.
 export const BLOCK_TYPES = [
   { type: 'title', glyph: 'T', kind: 'text' },
   { type: 'heading', glyph: 'T', kind: 'text' },
@@ -24,17 +24,33 @@ export const BLOCK_TYPES = [
 // made in the layers tree (select layers, right-click -> group; see groupNodes() in state.js), but they are still a
 // real node type (presets, old saves and the preview use them), so it keeps its icon here.
 const GROUP_GLYPH = '▢';
-// The number shown for "blocks" in the library header AND the status bar: default blocks + saved presets.
-export const libraryBlockCount = (library) => BLOCK_TYPES.length + library.presets.length;
+// The blocks the user can ADD, in this order, in both the library's blocks section and the editor's "+ block" menu
+// (sortBlockTypes() in sorting.js). Edit this list to change what is offered.
+export const OFFERED_BLOCKS = ['canvas', 'vector', 'image', 'heading', 'body', 'spacer'];
+// The number shown for "blocks" in the library header AND the status bar: offered blocks + saved presets.
+export const libraryBlockCount = (library) => OFFERED_BLOCKS.length + library.presets.length;
 export const glyphFor = (type) => (type === 'group' ? GROUP_GLYPH : (BLOCK_TYPES.find((b) => b.type === type) || { glyph: '·' }).glyph);
 
 export const TEXT_TYPES = ['title', 'heading', 'subheading', 'body', 'caption'];
 // Colors are stored directly on the thing they paint (no roles): a canvas has `background`, a text block has `color`,
-// a vector block has `layerColors`. New canvases are white and new text is black.
-export const DEFAULT_BACKGROUND = '#FFFFFF';
+// a vector block has `layerColors`. New canvases are light gray (#EDEDEE, the app's --text color) and new text is black.
+export const DEFAULT_BACKGROUND = '#EDEDEE';
 export const DEFAULT_TEXT_COLOR = '#000000';
-export const DEFAULT_ASPECT = 8 / 9;      // canvas width / height; matches the mockup's slightly tall canvases
 export const BASE_NAME = 'lockup';        // canvases are auto-named lockup_A, lockup_B ...
+
+// Canvas size. A canvas is either FIXED (the user sets width × height, content that doesn't fit is clipped) or
+// DYNAMIC (it shrink-wraps its content plus padding). `canvas.size = { mode, width, height }`, `canvas.padding` = px
+// on all four sides. Empty canvases are fixed 160×160 (a dynamic canvas needs content to have a size at all).
+export const EMPTY_SIZE = 160;
+export const DEFAULT_PADDING = 24;
+export const SIZE_LIMITS = { min: 100, max: 1600 };     // width/height slider range
+export const PADDING_LIMITS = { min: 0, max: 200 };
+// What a canvas looked like before sizes existed (384px wide, height from its aspect, ~28px inset). Used to
+// upgrade old saves and old presets so they look the same (see migrateCanvasSizes() in state.js).
+export const LEGACY_WIDTH = 384;
+export const LEGACY_PADDING = 28;
+export const legacySize = (aspect) => ({ mode: 'fixed', width: LEGACY_WIDTH, height: Math.round(LEGACY_WIDTH / (aspect || 8 / 9)) });
+const emptySize = () => ({ mode: 'fixed', width: EMPTY_SIZE, height: EMPTY_SIZE });
 
 // New text starts as its own type name ("title", "heading"...): a real, editable text value, not a placeholder.
 const TEXT_DEFAULTS = {
@@ -47,6 +63,12 @@ const TEXT_DEFAULTS = {
 
 export const isTextType = (type) => TEXT_TYPES.includes(type);
 export const isContainer = (node) => node.type === 'canvas' || node.type === 'group';
+
+// True if a canvas (or group) shows anything: a visible block, or a visible group that itself shows something.
+// A dynamic canvas needs this (an empty one would have no size), see fixEmptyDynamicCanvases() in state.js.
+export function hasVisibleContent(container) {
+  return (container.children || []).some((n) => !n.hidden && (n.type !== 'group' || hasVisibleContent(n)));
+}
 
 // ---------- Factories ----------
 // Default layout for a container.
@@ -72,7 +94,7 @@ export function createBlock(type, extra = {}) {
   return Object.assign(base, extra);
 }
 
-// Creates a new empty canvas.
+// Creates a new empty canvas: fixed 160×160, padding 24 (pass `size` in `extra` for a canvas that starts with content).
 export function createCanvas(extra = {}) {
   return {
     id: uid('cv'),
@@ -80,7 +102,8 @@ export function createCanvas(extra = {}) {
     name: `${BASE_NAME}_A`,
     background: DEFAULT_BACKGROUND,
     layout: defaultLayout(),
-    aspect: DEFAULT_ASPECT,
+    size: emptySize(),
+    padding: DEFAULT_PADDING,
     hidden: false,
     children: [],
     ...extra,
@@ -108,8 +131,12 @@ function nodeToStructure(node) {
   return s;
 }
 
+// The canvas's size settings (mode, width, height, padding) are structure too, so a preset keeps them.
 export function structureFromCanvas(canvas) {
-  return { name: canvas.name, aspect: canvas.aspect || DEFAULT_ASPECT, layout: { ...canvas.layout }, children: canvas.children.map(nodeToStructure) };
+  return {
+    name: canvas.name, size: { ...canvas.size }, padding: canvas.padding,
+    layout: { ...canvas.layout }, children: canvas.children.map(nodeToStructure),
+  };
 }
 
 function structureToNode(s) {
@@ -124,23 +151,32 @@ function structureToNode(s) {
 }
 
 // Builds a fresh canvas from a preset structure: default colors, default font, placeholder-named text, gray media slots.
+// Size and padding come from the preset (a structure without them would be dynamic, padding 24: it has content).
 export function canvasFromStructure(structure, name) {
   return createCanvas({
     name,
-    aspect: structure.aspect || DEFAULT_ASPECT,
+    size: structure.size ? { ...structure.size } : { mode: 'dynamic', width: EMPTY_SIZE, height: EMPTY_SIZE },
+    padding: structure.padding ?? DEFAULT_PADDING,
     layout: { ...structure.layout },
     children: structure.children.map(structureToNode),
   });
 }
 
-// ---------- Default presets (shipped with the installer) ----------
+// ---------- Legacy presets (shipped by OLDER versions; new installs ship no presets) ----------
+// Kept only so existing libraries that still hold them keep working: their ids decide the "shipped presets go last"
+// sort (sorting.js) and the addedAt backfill, and their structures give the canvas-size upgrade its new settings
+// (migrateCanvasSizes() in state.js). Never added to a new library.
 const stack = (gap, align = 'center') => ({ direction: 'stack', gap, align });
 const row = (gap, align = 'center') => ({ direction: 'row', gap, align });
+// Size settings for the presets: most shrink-wrap their content; business_card and social_post keep the fixed size
+// they always had (384px wide, height from their old aspect 1.75 / 0.8, the old ~28px inset).
+const dynamicSize = () => ({ size: { mode: 'dynamic', width: EMPTY_SIZE, height: EMPTY_SIZE }, padding: DEFAULT_PADDING });
+const legacyFixed = (aspect) => ({ size: legacySize(aspect), padding: LEGACY_PADDING });
 
-export const DEFAULT_PRESETS = [
+export const LEGACY_PRESETS = [
   {
     id: 'preset_symmetrical_logo', name: 'symmetrical_logo',
-    structure: { name: 'symmetrical_logo', aspect: DEFAULT_ASPECT, layout: stack(24), children: [
+    structure: { name: 'symmetrical_logo', ...dynamicSize(), layout: stack(24), children: [
       { type: 'vector', name: 'vector', width: 120 },
       { type: 'title', name: 'title', size: 32 },
       { type: 'caption', name: 'caption', size: 12 },
@@ -148,7 +184,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_horizontal_lockup', name: 'horizontal_lockup',
-    structure: { name: 'horizontal_lockup', aspect: DEFAULT_ASPECT, layout: row(18), children: [
+    structure: { name: 'horizontal_lockup', ...dynamicSize(), layout: row(18), children: [
       { type: 'vector', name: 'vector', width: 90 },
       { type: 'group', name: 'text', layout: stack(4, 'start'), children: [
         { type: 'title', name: 'title', size: 24 },
@@ -158,7 +194,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_type_hierarchy', name: 'type_hierarchy',
-    structure: { name: 'type_hierarchy', aspect: DEFAULT_ASPECT, layout: stack(12, 'start'), children: [
+    structure: { name: 'type_hierarchy', ...dynamicSize(), layout: stack(12, 'start'), children: [
       { type: 'title', name: 'title', size: 32 },
       { type: 'heading', name: 'heading', size: 24 },
       { type: 'subheading', name: 'subheading', size: 18 },
@@ -168,7 +204,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_business_card', name: 'business_card',
-    structure: { name: 'business_card', aspect: 1.75, layout: row(16), children: [
+    structure: { name: 'business_card', ...legacyFixed(1.75), layout: row(16), children: [
       { type: 'vector', name: 'vector', width: 70 },
       { type: 'group', name: 'details', layout: stack(4, 'start'), children: [
         { type: 'title', name: 'title', size: 22 },
@@ -179,7 +215,7 @@ export const DEFAULT_PRESETS = [
   },
   {
     id: 'preset_social_post', name: 'social_post',
-    structure: { name: 'social_post', aspect: 0.8, layout: stack(18), children: [
+    structure: { name: 'social_post', ...legacyFixed(0.8), layout: stack(18), children: [
       { type: 'vector', name: 'vector', width: 90 },
       { type: 'title', name: 'title', size: 34 },
       { type: 'body', name: 'body', size: 14 },
@@ -189,18 +225,27 @@ export const DEFAULT_PRESETS = [
 ];
 
 // ---------- Starter content for first launch ----------
-// A few colors + two palettes so the app isn't blank. (Names match the mockup.)
+// What a brand-new library starts with (only used when there is no library.json yet). The default media files are
+// in src/defaults/media/ and are copied in by app.js on first launch.
 export const STARTER_COLORS = [
-  { name: 'ink', hex: '#1B1B1B' },
-  { name: 'paper', hex: '#F3F0E8' },
-  { name: 'signal_orange', hex: '#E4572E' },
-  { name: 'harbor_blue', hex: '#2E86AB' },
-  { name: 'midnight', hex: '#0D1B2A' },
-  { name: 'sun_gold', hex: '#F2B134' },
-  { name: 'forest', hex: '#2F5D46' },
-  { name: 'slate', hex: '#5B7684' },
+  { name: 'pure_black', hex: '#000000' },
+  { name: 'pure_white', hex: '#FFFFFF' },
+  { name: 'pure_red', hex: '#FF0000' },      // the same red as the "defaults" palette
+  { name: 'neon_lime', hex: '#D9FF43' },
 ];
+// Each palette lists its own colors (name + hex), in the order they appear in the palette.
 export const STARTER_PALETTES = [
-  { name: 'warm_signal', colors: ['paper', 'ink', 'signal_orange', 'harbor_blue'] },
-  { name: 'night_harbor', colors: ['midnight', 'paper', 'sun_gold', 'slate', 'harbor_blue', 'forest'] },
+  { name: 'defaults', colors: [
+    { name: 'white', hex: '#FFFFFF' },
+    { name: 'black', hex: '#000000' },
+    { name: 'red', hex: '#FF0000' },
+  ] },
+  // A few of the app's own UI colors, named after their tokens in tokens.css.
+  { name: 'stylesheet_', colors: [
+    { name: 'panel', hex: '#0F0F11' },
+    { name: 'card', hex: '#141417' },
+    { name: 'line', hex: '#26262B' },
+    { name: 'line_2', hex: '#33333A' },
+    { name: 'accent', hex: '#D9FF43' },
+  ] },
 ];

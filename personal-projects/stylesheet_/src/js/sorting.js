@@ -2,16 +2,16 @@
 // Pure functions: each takes a list and returns a NEW sorted array. The saved data is never reordered,
 // and because the library re-renders from state after every edit, renaming/editing an item re-sorts it.
 
-import { DEFAULT_PRESETS, BLOCK_TYPES } from './blocks.js';
+import { LEGACY_PRESETS, BLOCK_TYPES, OFFERED_BLOCKS } from './blocks.js';
 
-// The order the default blocks appear in the library (hardcoded; edit this list to change it):
-// containers, then media, then text from biggest to smallest, then spacer.
-export const BLOCK_ORDER = ['canvas', 'vector', 'image', 'title', 'heading', 'subheading', 'body', 'caption', 'spacer'];
+// The order the default blocks appear in the library AND the "+ block" menu: the offered blocks, in the order of
+// OFFERED_BLOCKS in blocks.js (canvas, vector, image, heading, body, spacer; edit that list to change it).
+export const BLOCK_ORDER = OFFERED_BLOCKS;
 
-// Block type entries in BLOCK_ORDER (any type missing from the list goes last, in its original order).
+// The offered block type entries, in BLOCK_ORDER. Types that exist but aren't offered (title, subheading, caption)
+// are left out: they still render and edit, they just can't be added any more.
 export function sortBlockTypes() {
-  const rank = (t) => { const i = BLOCK_ORDER.indexOf(t.type); return i < 0 ? BLOCK_ORDER.length : i; };
-  return [...BLOCK_TYPES].sort((a, b) => rank(a) - rank(b));
+  return BLOCK_ORDER.map((type) => BLOCK_TYPES.find((b) => b.type === type)).filter(Boolean);
 }
 
 // Media: newest added first. Items without a timestamp count as oldest; ties keep the saved order (newer entries were pushed later).
@@ -30,9 +30,9 @@ export const sortFamilies = (families) =>
 export const sortPalettes = (palettes) =>
   [...palettes].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
-// Presets: user presets newest first, then the default presets that ship with the app (oldest) in their shipped order.
+// Presets: user presets newest first, then any presets an older version shipped (oldest) in their shipped order.
 export function sortPresets(presets) {
-  const defaultIds = new Set(DEFAULT_PRESETS.map((p) => p.id));
+  const defaultIds = new Set(LEGACY_PRESETS.map((p) => p.id));
   const user = presets.filter((p) => !defaultIds.has(p.id)).sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
   const shipped = presets.filter((p) => defaultIds.has(p.id));
   return [...user, ...shipped];

@@ -5,7 +5,7 @@
 
 import { el, clear, isHex, normalizeHex, slug, $ } from './util.js';
 import { state, allFonts } from './state.js';
-import { BLOCK_TYPES } from './blocks.js';
+import { sortBlockTypes } from './sorting.js';
 import { groupFamilies, cssFamily, closestTo400, familySummary } from './fonts.js';
 
 let current = null;               // { pop, cleanup }
@@ -71,8 +71,9 @@ export function openMenuAt(x, y, items) {
 }
 
 // ---------- Block type menu (the "+ block" button) ----------
+// Offers exactly the blocks the library offers, in the same order (sortBlockTypes() in sorting.js).
 export function openBlockMenu(anchor, onPick) {
-  const list = scroller(BLOCK_TYPES.map((b) => el('button', {
+  const list = scroller(sortBlockTypes().map((b) => el('button', {
     class: 'menu-item',
     on: { click: () => { closePopover(); onPick(b.type); } },
   }, el('span', { class: 'glyph', text: b.glyph }), b.type)));

@@ -2,7 +2,7 @@
 // each block's own colors, flex layout, gray placeholders), plus selection by clicking, zoom and pan.
 // renderCanvasElement() is also used by export.js, so the exported image is drawn by the same code.
 
-import { el, clear, $, contrastColor } from './util.js';
+import { el, clear, $ } from './util.js';
 import {
   state, subscribe, isFirstLaunch, visibleCanvases, selectNode, toggleSelect, selectIds, setGroupCollapsed, setView, getFont, getMedia, addCanvas,
 } from './state.js';
@@ -22,6 +22,22 @@ export function gridColumns(n) {
   if (n <= 4) return 2;
   if (n <= 9) return 3;
   return Math.ceil(Math.sqrt(n));
+}
+
+export const GRID_GAP = 20;     // px between canvases, in the preview and the export
+
+// Lays out a grid element holding `count` canvases (used by the preview AND the export, so they always match).
+// Canvases can be different sizes: CSS grid `auto` tracks make every column as wide as its widest canvas and every
+// row as tall as its tallest one, and each canvas is centered in its cell. `max-content` stops the grid from being
+// squeezed by the window width (that would wrap the text in dynamic canvases).
+export function applyGridLayout(grid, count) {
+  Object.assign(grid.style, {
+    display: 'grid',
+    gridTemplateColumns: `repeat(${gridColumns(count)}, auto)`,
+    gap: `${GRID_GAP}px`,
+    placeItems: 'center',
+    width: 'max-content',
+  });
 }
 
 // "OPTION A", "OPTION B"... by position among visible canvases.
@@ -81,21 +97,31 @@ export function renderCanvasElement(canvas, index, { interactive = true } = {}) 
   // Every selected node (canvas or block) gets the selected outline; a canvas is outlined only when it is itself selected.
   const selectedIds = new Set(interactive ? state.session.selection : []);
   const bg = canvas.background;
+  // Fixed: the card is exactly width × height (content that doesn't fit is clipped by .canvas overflow: hidden).
+  // Dynamic: no size is set; the card shrink-wraps its content plus padding (.canvas.dynamic in preview.css).
+  const dynamic = canvas.size.mode === 'dynamic';
   const card = el('div', {
-    class: 'canvas' + (selectedIds.has(canvas.id) ? ' selected' : ''),
+    class: 'canvas' + (dynamic ? ' dynamic' : '') + (selectedIds.has(canvas.id) ? ' selected' : ''),
     dataset: { id: canvas.id },
-    style: { background: bg, aspectRatio: String(canvas.aspect || 8 / 9) },
+    style: dynamic ? { background: bg } : { background: bg, width: `${canvas.size.width}px`, height: `${canvas.size.height}px` },
   });
-  // The "canvas labels" export setting hides the OPTION label in the preview AND the export (both use this function).
-  // The label is absolutely positioned, so leaving it out never moves or resizes anything.
-  if (state.session.export.canvasLabels) {
-    card.append(el('div', { class: 'canvas-label', text: optionLabel(index), style: { color: contrastColor(bg), opacity: '0.6' } }));
-  }
-  const content = el('div', { class: 'canvas-content' });
+  // (The OPTION label is no longer inside the card: renderCanvasCell() puts it above the canvas.)
+  // Padding = the space between the content and the canvas edge (same on all four sides).
+  const content = el('div', { class: 'canvas-content', style: { padding: `${canvas.padding}px` } });
   applyLayout(content, canvas.layout, 'center');
   canvas.children.forEach((child) => { const c = renderBlock(child, canvas, selectedIds); if (c) content.append(c); });
   card.append(content);
   return card;
+}
+
+// One grid cell: the OPTION A/B… label ABOVE the canvas, left-aligned with its edge, then the canvas card. Used by the
+// preview AND the export, so both match. The label sits outside the card so it never overlaps content, whatever the
+// padding. The "canvas labels" export setting leaves it out (and the space it took) in both.
+export function renderCanvasCell(canvas, index, opts = {}) {
+  const cell = el('div', { class: 'canvas-cell' });
+  if (state.session.export.canvasLabels) cell.append(el('div', { class: 'canvas-label', text: optionLabel(index) }));
+  cell.append(renderCanvasElement(canvas, index, opts));
+  return cell;
 }
 
 // ---------- Grid + view ----------
@@ -105,9 +131,9 @@ let zoomEditing = false;   // true while the zoom percent is an input
 function renderGrid() {
   const grid = $('#canvas-grid');
   const visible = visibleCanvases();
-  grid.style.gridTemplateColumns = `repeat(${gridColumns(visible.length)}, 384px)`;
+  applyGridLayout(grid, visible.length);
   clear(grid);
-  visible.forEach((cv, i) => grid.append(renderCanvasElement(cv, i)));
+  visible.forEach((cv, i) => grid.append(renderCanvasCell(cv, i)));
   $('#grid-info').textContent = `auto grid · ${visible.length} canvas${visible.length === 1 ? '' : 'es'}`;
   $('#stage-empty').style.display = visible.length ? 'none' : 'block';
   // When canvases are added/removed the grid changes shape, so re-fit it (not on ordinary edits).

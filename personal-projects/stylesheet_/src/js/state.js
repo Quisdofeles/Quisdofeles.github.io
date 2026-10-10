@@ -9,8 +9,8 @@
 import { uid, clone, normalizeHex } from './util.js';
 import {
   createBlock, createCanvas, cloneWithNewIds, structureFromCanvas, canvasFromStructure,
-  isContainer, isTextType, BASE_NAME, DEFAULT_BACKGROUND, DEFAULT_TEXT_COLOR,
-  DEFAULT_PRESETS, STARTER_COLORS, STARTER_PALETTES,
+  isContainer, isTextType, hasVisibleContent, BASE_NAME, DEFAULT_TEXT_COLOR,
+  LEGACY_PRESETS, STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE, DEFAULT_PADDING, LEGACY_PADDING, legacySize,
 } from './blocks.js';
 import { layerInfo } from './svg.js';
 import { BUILTIN_FONTS, DEFAULT_FONT_ID } from './fonts.js';
@@ -39,25 +39,27 @@ function notify(meta) {
 }
 
 // ---------- Initial data ----------
+// A brand-new library: the starter colors and palettes, no presets. The default media (logo + wordmark) is added
+// right after by app.js (seedMedia), because copying the files needs the main process.
 function defaultLibrary() {
   const colors = STARTER_COLORS.map((c) => ({ id: uid('c'), ...c }));
-  const byName = Object.fromEntries(colors.map((c) => [c.name, c]));
   const palettes = STARTER_PALETTES.map((p) => ({
     id: uid('p'), name: p.name,
-    colors: p.colors.map((n) => ({ id: uid('c'), name: byName[n].name, hex: byName[n].hex })),
+    colors: p.colors.map((c) => ({ id: uid('c'), name: c.name, hex: c.hex })),
   }));
-  return { fonts: [], colors, palettes, media: [], presets: clone(DEFAULT_PRESETS), trash: [] };
+  return { fonts: [], colors, palettes, media: [], presets: [], trash: [] };
 }
 
 function defaultSession() {
   return {
-    canvases: [createCanvas({ name: `${BASE_NAME}_A` })],
+    canvases: [],            // a new user starts with an empty preview (it shows the "+ add canvas" button)
     selection: [],           // ids of the selected nodes (a LIST; see cleanSelection() for the rules)
     zoom: 1,
     pan: { x: 0, y: 0 },
     // canvasLabels: show the OPTION A/B… label on each canvas (preview and export). Old saves without it get true
-    // because initState() merges these defaults under the saved values.
-    export: { styleLabels: true, canvasLabels: true, format: 'png', transparent: true, scale: 2 },
+    // because initState() merges these defaults under the saved values. A new session: both labels on, PNG,
+    // transparent off, 1× (saved sessions keep their own values).
+    export: { styleLabels: true, canvasLabels: true, format: 'png', transparent: false, scale: 1 },
     collapsedGroups: {},     // editor property groups the user collapsed
     collapsedNodes: {},      // layers-tree nodes the user collapsed
     helpSeen: false,
@@ -80,7 +82,7 @@ function migrateOldSaves(library, session) {
     delete library.vectors;
     (library.media || []).forEach((m, i) => { if (m.addedAt === undefined) m.addedAt = i + 1; delete m.layers; });   // layers are now read from the SVG itself
     (library.trash || []).filter((t) => t.kind === 'media').forEach((t) => { delete t.item.layers; });
-    const defaultIds = new Set(DEFAULT_PRESETS.map((p) => p.id));
+    const defaultIds = new Set(LEGACY_PRESETS.map((p) => p.id));
     (library.presets || []).forEach((p, i) => { if (p.addedAt === undefined) p.addedAt = defaultIds.has(p.id) ? 0 : i + 1; });
     for (const t of library.trash || []) {
       if (t.kind === 'vector') t.kind = 'media';
@@ -110,6 +112,44 @@ function migrateOldSaves(library, session) {
     const cleanPreset = (p) => { if (p.structure && p.structure.children) p.structure.children = cleanStructure(p.structure.children); };
     (library.presets || []).forEach(cleanPreset);
     (library.trash || []).filter((t) => t.kind === 'preset').forEach((t) => cleanPreset(t.item));
+  }
+  migrateCanvasSizes(library, session);
+}
+
+// Upgrades canvases and presets from `aspect` (every canvas was 384px wide, height from its aspect, content inset
+// ~28px) to `size` + `padding`. Saved canvases become FIXED at exactly their old size with padding 28, so they look
+// the same. The presets older versions shipped take their new settings from LEGACY_PRESETS (business_card and social_post: fixed
+// at their old size; the others: dynamic); user-saved presets become fixed at their old size like canvases.
+// Safe to run on every load (it only touches things that still have no `size`). Delete once all old saves are gone.
+function migrateCanvasSizes(library, session) {
+  const upgrade = (obj) => {
+    if (!obj || obj.size) return;
+    obj.size = legacySize(obj.aspect);
+    obj.padding = LEGACY_PADDING;
+    delete obj.aspect;
+  };
+  if (session) (session.canvases || []).forEach(upgrade);
+  if (library) {
+    const shipped = Object.fromEntries(LEGACY_PRESETS.map((p) => [p.id, p.structure]));
+    const upgradePreset = (p) => {
+      if (!p.structure || p.structure.size) return;
+      if (shipped[p.id]) {
+        p.structure.size = { ...shipped[p.id].size };
+        p.structure.padding = shipped[p.id].padding;
+        delete p.structure.aspect;
+      } else upgrade(p.structure);
+    };
+    (library.presets || []).forEach(upgradePreset);
+    (library.trash || []).filter((t) => t.kind === 'preset').forEach((t) => upgradePreset(t.item));
+  }
+}
+
+// A dynamic canvas needs content (an empty one would have no size). Any dynamic canvas that has no visible block
+// left (its last block was deleted, hidden or dragged out) switches to fixed 160×160. Runs after every change(),
+// so it is part of the same undo step as the action that emptied the canvas.
+function fixEmptyDynamicCanvases() {
+  for (const cv of state.session.canvases) {
+    if (cv.size.mode === 'dynamic' && !hasVisibleContent(cv)) cv.size = { mode: 'fixed', width: EMPTY_SIZE, height: EMPTY_SIZE };
   }
 }
 
@@ -143,7 +183,7 @@ function migrateRolesToColors(canvases) {
     });
     cv.children = dropSwatches(cv.children || []);
     walk(cv.children);
-    cv.background = cv.background || (roles && roles.background) || DEFAULT_BACKGROUND;
+    cv.background = cv.background || (roles && roles.background) || '#FFFFFF';   // old canvases were white (not the new #EDEDEE default)
     delete cv.roles;
   }
 }
@@ -201,6 +241,7 @@ export function initState(library, session) {
   state.session = normalize(session, defaultSession());
   state.session.export = { ...defaultSession().export, ...state.session.export };
   state.session.selection = cleanSelection(state.session.selection);
+  fixEmptyDynamicCanvases();
   undoStack = [];
   redoStack = [];
 }
@@ -249,6 +290,7 @@ function change(fn, meta = {}) {
     else { pushHistory(); gestureOpen = false; }
   }
   fn();
+  fixEmptyDynamicCanvases();       // an emptied dynamic canvas falls back to fixed 160×160 (same undo step)
   notify({ session: true, ...meta });
 }
 
@@ -514,10 +556,21 @@ export function addMediaBlock(mediaId, parentId, index) {
   return addBlock(type, parentId, index, { mediaId, name: item.name });
 }
 
+// A media item dropped on the empty dot grid: a new (dynamic) canvas containing a vector/image block with it.
+export function addMediaToNewCanvas(mediaId) {
+  const item = getMedia(mediaId);
+  if (!item) return null;
+  return addBlockToNewCanvas(item.kind === 'image' ? 'image' : 'vector', { mediaId, name: item.name });
+}
+
 // Drops a block type onto empty space: a new canvas containing that block (or just a canvas).
+// A canvas created WITH content starts dynamic (it shrink-wraps the block plus padding 24).
 export function addBlockToNewCanvas(type, extra = {}) {
   if (type === 'canvas') return addCanvas();
-  const canvas = createCanvas({ name: nextCanvasName(BASE_NAME) });
+  const canvas = createCanvas({
+    name: nextCanvasName(BASE_NAME),
+    size: { mode: 'dynamic', width: EMPTY_SIZE, height: EMPTY_SIZE }, padding: DEFAULT_PADDING,
+  });
   canvas.children.push(createBlock(type, { name: `${type} 1`, ...extra }));
   change(() => {
     state.session.canvases.push(canvas);
@@ -544,6 +597,27 @@ export function updateLayout(id, patch, opts = {}) {
   const hit = findNode(id);
   if (!hit || !hit.node.layout) return;
   change(() => Object.assign(hit.node.layout, patch), opts.live ? { live: true } : {});
+}
+
+// ---------- Canvas size ----------
+// Merges `patch` into a canvas's size ({ width, height }). Pass { live: true } for slider ticks.
+export function updateCanvasSize(id, patch, opts = {}) {
+  const hit = findNode(id);
+  if (!hit || hit.node.type !== 'canvas') return;
+  change(() => Object.assign(hit.node.size, patch), opts.live ? { live: true } : {});
+}
+
+// Switches a canvas between 'fixed' and 'dynamic'. Going to fixed takes `current` = the canvas's rendered size at
+// 100% zoom ({ width, height }, measured by the caller), so nothing jumps. Dynamic needs visible content.
+export function setCanvasSizeMode(id, mode, current) {
+  const hit = findNode(id);
+  if (!hit || hit.node.type !== 'canvas' || hit.node.size.mode === mode) return;
+  if (mode === 'dynamic' && !hasVisibleContent(hit.node)) return;
+  change(() => {
+    const size = hit.node.size;
+    size.mode = mode;
+    if (mode === 'fixed' && current) { size.width = current.width; size.height = current.height; }
+  });
 }
 
 // ---------- Colors (each colorable thing stores its own; a change never touches any other block) ----------
@@ -824,6 +898,13 @@ export function addFonts(entries) {
 // Entries must carry `addedAt` (Date.now()); the library sorts media newest-first by it.
 export function addMedia(entries) {
   change(() => state.library.media.push(...entries), { library: true });
+}
+
+// First launch only: puts the default media (logo + wordmark) into the brand-new library. NOT an undo step, so
+// Ctrl+Z can't take the starter content away; the library is saved like after any other library change.
+export function seedMedia(entries) {
+  state.library.media.push(...entries);
+  notify({ library: true });
 }
 
 export function savePreset(canvasId, name) {

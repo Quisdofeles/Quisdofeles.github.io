@@ -6,9 +6,10 @@
 import { el, clear, $, slug, icon } from './util.js';
 import {
   state, subscribe, selectedNodes, findNode, getFont, allFonts, getMedia,
-  setCanvasBackground, setTextColor, setLayerColor, updateNode, updateLayout, endGesture, setGroupCollapsed, savePreset,
+  setCanvasBackground, setTextColor, setLayerColor, updateNode, updateLayout, updateCanvasSize, setCanvasSizeMode,
+  endGesture, setGroupCollapsed, savePreset,
 } from './state.js';
-import { isContainer, isTextType } from './blocks.js';
+import { isContainer, isTextType, hasVisibleContent, SIZE_LIMITS, PADDING_LIMITS } from './blocks.js';
 import { groupFamilies } from './fonts.js';
 import { layerInfo } from './svg.js';
 import { showOutline, clearOutline } from './outline.js';
@@ -78,10 +79,11 @@ function sliderRow(label, value, min, max, unit, onLive) {
   return el('div', { class: 'prop-row slider-row' }, el('span', { class: 'label', text: label }), input, val);
 }
 
-// A segmented toggle. options: [[value, label, title?]]. `label` is text, or an icon element (then pass a title tooltip).
+// A segmented toggle. options: [[value, label, title?, disabled?]]. `label` is text, or an icon element (then pass a
+// title tooltip). A disabled option uses the shared disabled button style.
 function segmented(options, current, onPick) {
-  return el('div', { class: 'seg full' }, options.map(([value, label, title]) => el('button', {
-    class: value === current ? 'active' : '', title: title || null, on: { click: () => onPick(value) },
+  return el('div', { class: 'seg full' }, options.map(([value, label, title, disabled]) => el('button', {
+    class: value === current ? 'active' : '', title: title || null, disabled: !!disabled, on: { click: () => onPick(value) },
   }, label)));
 }
 
@@ -177,6 +179,32 @@ function layoutBody(target) {
     sliderRow('gap', l.gap, 0, 120, 'px', (v) => updateLayout(target.id, { gap: v }, { live: true })));
 }
 
+// The canvas's rendered size at 100% zoom, read from the preview (offsetWidth/Height ignore the zoom transform).
+// A hidden canvas isn't in the preview, so its stored size is used.
+function renderedSize(canvas) {
+  const card = document.querySelector(`#canvas-grid .canvas[data-id="${canvas.id}"]`);
+  return card ? { width: Math.round(card.offsetWidth), height: Math.round(card.offsetHeight) } : { width: canvas.size.width, height: canvas.size.height };
+}
+
+// The "size" group of a canvas: fixed | dynamic, padding, and (fixed only) width and height.
+// Dynamic needs visible content, so it is disabled on an empty canvas. Going dynamic -> fixed keeps the current size.
+function sizeBody(canvas) {
+  const s = canvas.size;
+  const canGrow = hasVisibleContent(canvas);
+  const body = el('div', { class: 'prop-body' },
+    segmented([
+      ['fixed', 'fixed', 'fixed size: set width and height'],
+      ['dynamic', 'dynamic', canGrow ? 'grow and shrink with the content' : 'add content first', !canGrow],
+    ], s.mode, (v) => setCanvasSizeMode(canvas.id, v, v === 'fixed' ? renderedSize(canvas) : null)),
+    sliderRow('padding', canvas.padding, PADDING_LIMITS.min, PADDING_LIMITS.max, 'px', (v) => updateNode(canvas.id, { padding: v }, { live: true })));
+  if (s.mode === 'fixed') {
+    body.append(
+      sliderRow('width', s.width, SIZE_LIMITS.min, SIZE_LIMITS.max, 'px', (v) => updateCanvasSize(canvas.id, { width: v }, { live: true })),
+      sliderRow('height', s.height, SIZE_LIMITS.min, SIZE_LIMITS.max, 'px', (v) => updateCanvasSize(canvas.id, { height: v }, { live: true })));
+  }
+  return body;
+}
+
 function textBody(block) {
   const text = el('input', { type: 'text', class: 'text-input', placeholder: 'text', spellcheck: false });
   text.value = block.text;
@@ -221,6 +249,8 @@ function itemGroups(sel, canvas) {
   // Layout belongs to a container: the item itself, or the container around a selected block.
   const layoutTarget = isContainer(sel) ? sel : (findNode(sel.id).parent || canvas);
   out.push(group('layout', 'layout', layoutBody(layoutTarget)));
+  // A canvas also has its size settings (after layout, so the existing groups stay where they were).
+  if (sel.type === 'canvas') out.push(group('size', 'size', sizeBody(sel)));
 
   const specific = blockGroup(sel);
   if (specific) out.push(specific);
