@@ -9,7 +9,7 @@ import {
   setNodeCollapsed, removeNodes, duplicateNodes, copyNodes, pasteClipboard, hasClipboard, groupNodes, ungroupNodes,
   addBlockToSelection, findNode, getMedia, undo, redo,
 } from './state.js';
-import { glyphFor, isContainer } from './blocks.js';
+import { glyphFor, isContainer, typeLabel } from './blocks.js';
 import { openBlockMenu, openMenuAt } from './popover.js';
 import { showToast } from './overlays.js';
 import { layerInfo } from './svg.js';
@@ -17,7 +17,7 @@ import { layerInfo } from './svg.js';
 let renamingId = null;      // which row is showing its inline rename input
 let visibleIds = [];        // the ids of the rows on screen, top to bottom (Shift+click selects a range of these)
 
-// The muted tag on the right of a row: "canvas", "3 layers", "title"...
+// The muted tag on the right of a row: "board", "3 layers", "title"...
 function tagFor(node) {
   if (node.type === 'vector') {
     const vec = getMedia(node.mediaId);
@@ -25,7 +25,7 @@ function tagFor(node) {
     const count = layerInfo(vec.id).length;
     return count ? `${count} layer${count === 1 ? '' : 's'}` : 'vector';
   }
-  return node.type;
+  return typeLabel(node.type);           // the 'canvas' type shows as "board"
 }
 
 // Builds the row for one node, then recurses into its children (unless collapsed).
@@ -98,7 +98,7 @@ function onRowClick(e, id) {
 
 // Pastes the clipboard, or explains why nothing happened.
 function pasteWithToast() {
-  if (!pasteClipboard()) showToast('select a canvas or a layer to paste into');
+  if (!pasteClipboard()) showToast('select a board or a layer to paste into');
 }
 
 // Right-click on a row: act on the whole selection if the row is part of it, otherwise select just this row first.

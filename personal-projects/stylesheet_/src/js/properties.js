@@ -9,7 +9,7 @@ import {
   setCanvasBackground, setTextColor, setLayerColor, updateNode, updateLayout, updateCanvasSize, setCanvasSizeMode,
   endGesture, setGroupCollapsed, savePreset,
 } from './state.js';
-import { isContainer, isTextType, hasVisibleContent, SIZE_LIMITS, PADDING_LIMITS } from './blocks.js';
+import { isContainer, isTextType, hasVisibleContent, SIZE_LIMITS, PADDING_LIMITS, RADIUS_LIMITS } from './blocks.js';
 import { groupFamilies } from './fonts.js';
 import { layerInfo } from './svg.js';
 import { showOutline, clearOutline } from './outline.js';
@@ -186,7 +186,7 @@ function renderedSize(canvas) {
   return card ? { width: Math.round(card.offsetWidth), height: Math.round(card.offsetHeight) } : { width: canvas.size.width, height: canvas.size.height };
 }
 
-// The "size" group of a canvas: fixed | dynamic, padding, and (fixed only) width and height.
+// The "size" group of a canvas: fixed | dynamic, padding, corner radius, and (fixed only) width and height.
 // Dynamic needs visible content, so it is disabled on an empty canvas. Going dynamic -> fixed keeps the current size.
 function sizeBody(canvas) {
   const s = canvas.size;
@@ -194,9 +194,11 @@ function sizeBody(canvas) {
   const body = el('div', { class: 'prop-body' },
     segmented([
       ['fixed', 'fixed', 'fixed size: set width and height'],
-      ['dynamic', 'dynamic', canGrow ? 'grow and shrink with the content' : 'add content first', !canGrow],
+      ['dynamic', 'dynamic', canGrow ? 'grow and shrink with the content' : 'add content to the board first', !canGrow],
     ], s.mode, (v) => setCanvasSizeMode(canvas.id, v, v === 'fixed' ? renderedSize(canvas) : null)),
-    sliderRow('padding', canvas.padding, PADDING_LIMITS.min, PADDING_LIMITS.max, 'px', (v) => updateNode(canvas.id, { padding: v }, { live: true })));
+    sliderRow('padding', canvas.padding, PADDING_LIMITS.min, PADDING_LIMITS.max, 'px', (v) => updateNode(canvas.id, { padding: v }, { live: true })),
+    // Corner radius of the board (0 = square corners). Placed in "size" for now, right below padding.
+    sliderRow('radius', canvas.radius, RADIUS_LIMITS.min, RADIUS_LIMITS.max, 'px', (v) => updateNode(canvas.id, { radius: v }, { live: true })));
   if (s.mode === 'fixed') {
     body.append(
       sliderRow('width', s.width, SIZE_LIMITS.min, SIZE_LIMITS.max, 'px', (v) => updateCanvasSize(canvas.id, { width: v }, { live: true })),
@@ -258,12 +260,12 @@ function itemGroups(sel, canvas) {
 }
 
 // One selected item: its normal properties. With several items selected every item gets its own section under a
-// small header ("lockup_A / title 1"), and each control only ever edits the item of its own section.
+// small header ("Board 1 / title 1"), and each control only ever edits the item of its own section.
 function renderProps() {
   const props = clear($('#props'));
   const nodes = selectedNodes();
   if (!nodes.length) {
-    props.append(el('div', { class: 'lib-empty', text: 'select a canvas or a block to edit it' }));
+    props.append(el('div', { class: 'lib-empty', text: 'select a board or a block to edit it' }));
     return;
   }
   const multi = nodes.length > 1;
@@ -286,7 +288,7 @@ function renderPresetFoot() {
     namingPreset = false;
     foot.append(el('button', {
       class: 'dashed-btn', text: 'save as preset ▣', disabled: !canvas,
-      title: canvas ? 'save this canvas structure as a preset' : 'select exactly one canvas',
+      title: canvas ? 'save this board structure as a preset' : 'select exactly one board',
       on: { click: () => { namingPreset = true; renderPresetFoot(); } },
     }));
     return;

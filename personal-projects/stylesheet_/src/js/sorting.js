@@ -2,10 +2,10 @@
 // Pure functions: each takes a list and returns a NEW sorted array. The saved data is never reordered,
 // and because the library re-renders from state after every edit, renaming/editing an item re-sorts it.
 
-import { LEGACY_PRESETS, BLOCK_TYPES, OFFERED_BLOCKS } from './blocks.js';
+import { BLOCK_TYPES, OFFERED_BLOCKS } from './blocks.js';
 
 // The order the default blocks appear in the library AND the "+ block" menu: the offered blocks, in the order of
-// OFFERED_BLOCKS in blocks.js (canvas, vector, image, heading, body, spacer; edit that list to change it).
+// OFFERED_BLOCKS in blocks.js (canvas = "board" on screen, vector, image, heading, body, spacer; edit that list to change it).
 export const BLOCK_ORDER = OFFERED_BLOCKS;
 
 // The offered block type entries, in BLOCK_ORDER. Types that exist but aren't offered (title, subheading, caption)
@@ -30,13 +30,8 @@ export const sortFamilies = (families) =>
 export const sortPalettes = (palettes) =>
   [...palettes].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 
-// Presets: user presets newest first, then any presets an older version shipped (oldest) in their shipped order.
-export function sortPresets(presets) {
-  const defaultIds = new Set(LEGACY_PRESETS.map((p) => p.id));
-  const user = presets.filter((p) => !defaultIds.has(p.id)).sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
-  const shipped = presets.filter((p) => defaultIds.has(p.id));
-  return [...user, ...shipped];
-}
+// Presets: newest first (by the addedAt timestamp every saved preset gets).
+export const sortPresets = (presets) => [...presets].sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
 
 // ---------- Colors ----------
 const GRAY_SATURATION = 0.10;   // below this saturation a color counts as a gray/brown and goes in the last group

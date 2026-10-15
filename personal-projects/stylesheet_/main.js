@@ -39,6 +39,63 @@ function resolveLibraryPath(rel) {
   return full;
 }
 
+// ---------- Data version (fresh-start wipe) ----------
+// Every save of library.json and session.json carries `dataVersion`. When the data format changes in a way old
+// files can't be loaded, bump this number: on the next launch, files with no dataVersion or an older one are moved
+// (with the library/ folder) into userData/old-data-backup-<date>/ and the app starts like a first launch.
+// settings.json is never touched. The renderer never sees dataVersion: main adds it on save and strips it on load.
+const DATA_VERSION = 2;
+const DATA_FILES = ['library.json', 'session.json'];
+
+// True if a data file exists but is NOT current-version data (no dataVersion, an older one, or unreadable).
+// A missing file is not "old" (that is a first launch). A NEWER version is left alone.
+function isOldDataFile(name) {
+  const file = jsonPath(name);
+  if (!fs.existsSync(file)) return false;
+  try {
+    const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return !(data && typeof data.dataVersion === 'number' && data.dataVersion >= DATA_VERSION);
+  } catch {
+    return true;   // unreadable: back it up rather than silently overwriting it
+  }
+}
+
+// Moves a file or folder; falls back to copy + delete if a plain rename isn't possible (e.g. across drives).
+function moveSync(from, to) {
+  try {
+    fs.renameSync(from, to);
+  } catch {
+    fs.cpSync(from, to, { recursive: true });
+    fs.rmSync(from, { recursive: true, force: true });
+  }
+}
+
+// Runs once at startup, BEFORE the window exists. If either data file is old-format, moves library.json,
+// session.json (plus any leftover .tmp files) and the library/ folder into a new userData/old-data-backup-<date>/
+// folder (-2, -3... if that name is taken). Returns the backup folder, or null if nothing had to move.
+function backupOldData() {
+  if (!DATA_FILES.some(isOldDataFile)) return null;
+  // Local date (YYYY-MM-DD), so the folder name matches the user's own calendar (toISOString would use UTC).
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  let dir = path.join(userData(), `old-data-backup-${stamp}`);
+  for (let n = 2; fs.existsSync(dir); n++) dir = path.join(userData(), `old-data-backup-${stamp}-${n}`);
+  fs.mkdirSync(dir, { recursive: true });
+  for (const name of [...DATA_FILES, ...DATA_FILES.map((f) => f + '.tmp'), 'library']) {
+    const from = path.join(userData(), name);
+    if (fs.existsSync(from)) moveSync(from, path.join(dir, name));
+  }
+  return dir;
+}
+
+// Adds the current dataVersion to an object before it is written to disk.
+const withVersion = (data) => JSON.stringify({ ...data, dataVersion: DATA_VERSION });
+// Removes dataVersion from a loaded object, so it never ends up inside the renderer's state.
+function withoutVersion(data) {
+  if (data && typeof data === 'object') delete data.dataVersion;
+  return data;
+}
+
 // ---------- Atomic JSON writes ----------
 // Write to name.tmp, then rename over the real file, so a crash can never leave half a file.
 // Writes to the same file are queued so two quick saves never fight over the same .tmp file.
@@ -200,10 +257,11 @@ function registerProtocol() {
 }
 
 // ---------- IPC: JSON data ----------
-ipcMain.handle('library:load', () => readJson('library.json'));
-ipcMain.handle('library:save', (e, data) => writeJsonAtomic('library.json', JSON.stringify(data)));
-ipcMain.handle('session:load', () => readJson('session.json'));
-ipcMain.handle('session:save', (e, data) => writeJsonAtomic('session.json', JSON.stringify(data)));
+// Library and session carry dataVersion on disk only (added on save, removed on load; see "Data version" above).
+ipcMain.handle('library:load', async () => withoutVersion(await readJson('library.json')));
+ipcMain.handle('library:save', (e, data) => writeJsonAtomic('library.json', withVersion(data)));
+ipcMain.handle('session:load', async () => withoutVersion(await readJson('session.json')));
+ipcMain.handle('session:save', (e, data) => writeJsonAtomic('session.json', withVersion(data)));
 // App settings. The renderer can only change "on launch" (takes effect the next time the app starts);
 // the remembered dialog folders are managed here in main and are always kept as they are.
 ipcMain.handle('settings:load', () => getSettings());
@@ -363,11 +421,16 @@ ipcMain.handle('window:isMaximized', () => !!win && win.isMaximized());
 // ---------- App lifecycle ----------
 app.whenReady().then(async () => {
   registerProtocol();
-  // One-time migration: the "vectors" folders were renamed to "media" (live folder and trash folder).
-  // Runs only when the old folder exists and the new one doesn't, so saved files are never lost.
-  for (const base of [libraryDir(), trashDir()]) {
-    const oldDir = path.join(base, 'vectors'), newDir = path.join(base, 'media');
-    if (fs.existsSync(oldDir) && !fs.existsSync(newDir)) fs.renameSync(oldDir, newDir);
+  // Old-format data (no dataVersion, or an older one) is moved into a backup folder so the app starts fresh.
+  // If that fails, quit instead of loading (and later overwriting) data this version can't read.
+  try {
+    const backup = backupOldData();
+    if (backup) console.log(`old data moved to ${backup}`);
+  } catch (err) {
+    dialog.showErrorBox('Stylesheet_ could not start',
+      `Your saved data is from an older version and could not be moved to a backup folder:\n${err.message}\n\nNothing was deleted. Data folder: ${userData()}`);
+    app.quit();
+    return;
   }
   fs.mkdirSync(path.join(libraryDir(), 'fonts'), { recursive: true });
   fs.mkdirSync(path.join(libraryDir(), 'media'), { recursive: true });

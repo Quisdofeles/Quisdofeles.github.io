@@ -3,9 +3,10 @@
 // color picker (library colors, palettes, hex input), font picker (family + weight), block-type menu,
 // and the small name/hex editor used for palette swatches.
 
-import { el, clear, isHex, normalizeHex, slug, $ } from './util.js';
+import { el, clear, isHex, normalizeHex, slug, $, icon } from './util.js';
 import { state, allFonts } from './state.js';
 import { sortBlockTypes } from './sorting.js';
+import { typeLabel } from './blocks.js';
 import { groupFamilies, cssFamily, closestTo400, familySummary } from './fonts.js';
 
 let current = null;               // { pop, cleanup }
@@ -72,11 +73,12 @@ export function openMenuAt(x, y, items) {
 
 // ---------- Block type menu (the "+ block" button) ----------
 // Offers exactly the blocks the library offers, in the same order (sortBlockTypes() in sorting.js).
+// Shows typeLabel() ("board" for the canvas type) but hands the real type name to onPick.
 export function openBlockMenu(anchor, onPick) {
   const list = scroller(sortBlockTypes().map((b) => el('button', {
     class: 'menu-item',
     on: { click: () => { closePopover(); onPick(b.type); } },
-  }, el('span', { class: 'glyph', text: b.glyph }), b.type)));
+  }, el('span', { class: 'glyph', text: b.glyph }), typeLabel(b.type))));
   openPopover(anchor, list);
 }
 
@@ -128,9 +130,17 @@ export function openFontPicker(anchor, { currentId, onPick, noneLabel = null }) 
 }
 
 // ---------- Name + hex editor for a palette swatch ----------
-export function openColorEditor(anchor, color, { onSave, onDelete }) {
-  const name = el('input', { type: 'text', value: color.name, spellcheck: false });
-  const hex = el('input', { type: 'text', value: color.hex, spellcheck: false });
+// `draft` ({ name, hex }, optional) fills the inputs instead of the saved values (used when the popover comes back
+// after its eyedropper). `onEyedropper(draft)` (optional) adds an eyedropper button next to the hex input: clicking it
+// closes the popover and hands over what is typed right now, so the caller can start the tool and reopen it later.
+export function openColorEditor(anchor, color, { onSave, onDelete, onEyedropper, draft }) {
+  const name = el('input', { type: 'text', value: draft ? draft.name : color.name, spellcheck: false });
+  const hex = el('input', { type: 'text', value: draft ? draft.hex : color.hex, spellcheck: false });
+  // Same icon + .icon-toggle look as the colors header eyedropper, sized to the 28px popover inputs.
+  const eye = onEyedropper ? el('button', {
+    class: 'icon-toggle tool-btn edit-eye eyedropper-btn', title: 'eyedropper: click a color in the preview to use it',
+    on: { click: () => { const now = { name: name.value, hex: hex.value }; closePopover(); onEyedropper(now); } },
+  }, icon('eyedropper')) : null;
   const save = () => {
     if (!isHex(hex.value)) { hex.classList.add('invalid'); return; }
     closePopover();
@@ -141,7 +151,8 @@ export function openColorEditor(anchor, color, { onSave, onDelete }) {
     input.addEventListener('input', () => input.classList.remove('invalid'));
   }
   const body = el('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', padding: '2px' } },
-    el('div', { class: 'pop-title', text: 'edit color' }), name, hex,
+    el('div', { class: 'pop-title', text: 'edit color' }), name,
+    el('div', { class: 'edit-hex-row' }, hex, eye),
     el('div', { style: { display: 'flex', gap: '6px', justifyContent: 'space-between' } },
       onDelete ? el('button', { class: 'btn', text: 'delete', on: { click: () => { closePopover(); onDelete(); } } }) : el('span'),
       el('button', { class: 'btn', style: { height: '28px' }, text: 'save', on: { click: save } })));

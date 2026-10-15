@@ -1,6 +1,6 @@
 ﻿// app.js: entry point. Loads data, wires the modules together, and does the first render.
 
-import { state, subscribe, requestRender, pathTo, selectNode, resolveLegacyLayerColors, allFonts, isFirstLaunch, seedMedia } from './state.js';
+import { state, subscribe, requestRender, pathTo, selectNode, allFonts, isFirstLaunch, seedMedia } from './state.js';
 import { loadAll, startPersistence, whenTrashSynced } from './persistence.js';
 import { initTopbar, renderBreadcrumb } from './topbar.js';
 import { initLibrary } from './library.js';
@@ -31,7 +31,6 @@ async function syncLoadedFiles() {
   await whenTrashSynced();    // a restored file may still be moving back out of the trash folder
   await registerFonts(state.library.fonts);
   await ensureMediaLoaded(state.library.media);
-  resolveLegacyLayerColors();   // finishes upgrading vectors saved before per-layer colors (needs the SVGs loaded)
   if (missingMedia) requestRender();
 }
 

@@ -7,6 +7,7 @@
 // A plan may also carry `outline`: the exact thing a color/font drop will change (a text block's glyphs, one vector
 // layer, a canvas edge), drawn in accent by outline.js. Color and font drops on the preview use ONLY that outline
 // (el is null), not a box around the whole block.
+// A plan may also carry `insert` (palette drops only): where the accent insertion line goes between swatches.
 //
 // Payload kinds: font | color | media | block | preset | node (a row in the layers tree).
 
@@ -14,6 +15,7 @@ import { $ } from './util.js';
 import {
   state, findNode, getMedia, findColor, addBlock, addBlockToNewCanvas, addCanvas, addCanvasFromPreset,
   addMediaBlock, addMediaToNewCanvas, swapMedia, setBlockFonts, fontTargets, dropColor, setCanvasBackground, setTextColor, setLayerColor, moveNode,
+  insertPaletteColor, movePaletteColor,
 } from './state.js';
 import { isContainer, isTextType } from './blocks.js';
 import { showOutline } from './outline.js';
@@ -158,9 +160,75 @@ function planRow(rowEl, e) {
   }
 }
 
+// ---------- Planning: drops on a palette card in the library ----------
+// A color (library color, or a swatch of ANOTHER palette) is copied in; a swatch of THIS palette is moved (reorder).
+// Over a swatch, its left/right half means before/after it; in the gap between two swatches of one row, the nearest
+// swatch decides. Anywhere else on the card (name, empty space, the "+" tile) means the end of the palette.
+function planPalette(cardEl, e) {
+  if (drag.kind !== 'color') return null;
+  const palette = state.library.palettes.find((p) => p.id === cardEl.dataset.paletteId);
+  const color = findColor(drag.id);
+  if (!palette || !color) return null;
+  const grid = cardEl.querySelector('.palette-grid');
+  const swatches = [...grid.querySelectorAll('.palette-swatch')];   // same order as palette.colors
+
+  // The swatch the pointer aims at: the one under it, or (in a gap of the grid) the nearest one in the same row.
+  let over = e.target.closest('.palette-swatch');
+  if (!over && e.target === grid) {
+    let best = Infinity;
+    for (const s of swatches) {
+      const r = s.getBoundingClientRect();
+      if (e.clientY < r.top || e.clientY > r.bottom) continue;      // other rows don't count
+      const d = Math.abs(e.clientX - (r.left + r.width / 2));
+      if (d < best) { best = d; over = s; }
+    }
+  }
+
+  let index = palette.colors.length;    // default: the end
+  let line;                             // where the insertion line is drawn: { ref, side }
+  if (over) {
+    const r = over.getBoundingClientRect();
+    const after = e.clientX > r.left + r.width / 2;
+    index = swatches.indexOf(over) + (after ? 1 : 0);
+    line = { ref: over, side: after ? 'after' : 'before' };
+  } else {
+    line = swatches.length ? { ref: swatches[swatches.length - 1], side: 'after' } : { ref: grid.querySelector('.palette-add'), side: 'before' };
+  }
+
+  const own = palette.colors.some((c) => c.id === drag.id);
+  return {
+    el: cardEl, cls: 'drop-target', insert: { grid, ...line }, effect: own ? 'move' : 'copy',
+    run: own
+      ? () => movePaletteColor(palette.id, drag.id, index)
+      : () => insertPaletteColor(palette.id, { name: color.name, hex: color.hex }, index),
+  };
+}
+
+// ---------- Palette insertion line ----------
+// One thin accent line, placed inside the hovered palette's grid between two swatches (or at a row's edge).
+// It is absolutely positioned, so it never takes a grid cell, and ignores the pointer (library.css .palette-insert).
+let insertLine = null;
+function showInsertLine(insert) {
+  if (!insert || !insert.ref) { if (insertLine) { insertLine.remove(); insertLine = null; } return; }
+  if (!insertLine) { insertLine = document.createElement('div'); insertLine.className = 'palette-insert'; }
+  if (insertLine.parentElement !== insert.grid) insert.grid.append(insertLine);
+  const ref = insert.ref;
+  // The neighbor on the other side of the line, if it sits in the same row: the line goes halfway between the two.
+  const other = insert.side === 'after' ? ref.nextElementSibling : ref.previousElementSibling;
+  const sameRow = other && other !== insertLine && other.offsetTop === ref.offsetTop;
+  let x;
+  if (insert.side === 'after') x = sameRow ? (ref.offsetLeft + ref.offsetWidth + other.offsetLeft) / 2 : ref.offsetLeft + ref.offsetWidth + 3;
+  else x = sameRow ? (other.offsetLeft + other.offsetWidth + ref.offsetLeft) / 2 : ref.offsetLeft - 3;
+  insertLine.style.left = `${Math.round(x - 1)}px`;     // the line is 2px wide; center it on x
+  insertLine.style.top = `${ref.offsetTop}px`;
+  insertLine.style.height = `${ref.offsetHeight}px`;
+}
+
 // ---------- Planning: any target ----------
 function planDrop(e) {
   if (!drag) return null;
+  const paletteEl = e.target.closest('.palette-card[data-palette-id]');   // a palette in the library
+  if (paletteEl) return planPalette(paletteEl, e);
   const colorEl = e.target.closest('[data-drop-color]');               // a row in the editor's "colors" section
   if (colorEl) {
     const hex = drag.kind === 'color' ? hexOf(drag.id) : null;
@@ -192,6 +260,7 @@ function setHot(next) {
     if (hot && hot.el) hot.el.classList.add(hot.cls);
   }
   showOutline(next ? next.outline : null);      // null clears it
+  showInsertLine(next ? next.insert : null);    // palette drops: where the color will land (null removes it)
 }
 function endDrag() {
   setHot(null);
@@ -213,7 +282,7 @@ export function initDragDrop() {
   document.addEventListener('dragover', (e) => {
     e.preventDefault();                       // also stops files dragged from Explorer from navigating the window
     const plan = drag ? planDrop(e) : null;
-    e.dataTransfer.dropEffect = plan ? (drag.kind === 'node' ? 'move' : 'copy') : 'none';
+    e.dataTransfer.dropEffect = plan ? (plan.effect || (drag.kind === 'node' ? 'move' : 'copy')) : 'none';
     setHot(plan);
   });
 

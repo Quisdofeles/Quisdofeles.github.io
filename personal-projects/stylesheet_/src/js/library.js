@@ -1,25 +1,29 @@
 // library.js: renders the Library panel (media, fonts, colors, palettes, blocks + presets) from state,
 // and handles importing files, adding colors/palettes, inline editing, and right-click delete.
+// Eyedroppers (eyedropper.js): the colors and palettes HEADERS create something new from a picked color; the color
+// card's edit mode and the palette swatch editor have their own eyedropper that changes the color being edited.
 // Drag-and-drop out of the library is wired generically in dragdrop.js through data-drag-* attributes.
 // Every list is sorted for display only (see sorting.js); the saved data keeps its own order.
 // Any one section can be expanded to fill the panel (session.expandedSection), which also shows a search box that
 // filters that section's list (applyExpanded / buildSearch below).
 
 import { el, clear, $, uid, slug, isHex, normalizeHex, icon } from './util.js';
-import { initEyedropper } from './eyedropper.js';
+import { initEyedropper, addEyedropperButton, startEyedropper, stopEyedropper } from './eyedropper.js';
 import {
-  state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor,
+  state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor, findColor,
   addFonts, addMedia, trashItems, usageCount, allFonts, setExpandedSection,
 } from './state.js';
 import { groupFamilies, familySummary, closestTo400, cssFamily, fontCss, registerFonts, describeFont } from './fonts.js';
 import { processSvg, cacheMedia, buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
-import { libraryBlockCount } from './blocks.js';
+import { libraryBlockCount, typeLabel } from './blocks.js';
 import { sortMedia, sortColors, sortPalettes, sortPresets, sortBlockTypes } from './sorting.js';
 import { openMenuAt, openColorEditor } from './popover.js';
 import { confirmDialog, showToast } from './overlays.js';
 
 // Small bits of UI state that live only in this module (not saved).
 let editingColorId = null;        // which color card is in inline-edit mode
+let colorDraft = null;            // { id, name, hex } typed in that card, kept while its edit-mode eyedropper runs
+let pickingColorId = null;        // the color card whose edit-mode eyedropper is running right now
 let renamingPaletteId = null;     // which palette name is being renamed
 let pendingSwatchEditId = null;   // a just-added palette swatch that should open its editor
 let searchText = '';              // the search box of the EXPANDED section (only one can be expanded); never saved
@@ -50,7 +54,9 @@ function redraw(list, build) {
 }
 
 // ---------- Delete (always asks first) ----------
-// Asks for confirmation, says how many blocks use the item, then moves it to the trash (undoable).
+// Asks for confirmation, says how many blocks use the item, then moves it to the trash (undoable)
+// and shows a "moved … to trash" notice. Cancelling shows nothing.
+// `label` is the display name: file name (media), family (fonts), or the item's name.
 async function deleteWithConfirm(kind, ids, label) {
   const used = usageCount(kind, ids);
   const how = 'You can restore it from settings → trash, or press Ctrl+Z.';
@@ -58,7 +64,9 @@ async function deleteWithConfirm(kind, ids, label) {
     ? `"${label}" is used by ${used} block${used === 1 ? '' : 's'}. After deleting, ${used === 1 ? 'that block falls' : 'those blocks fall'} back to ${kind === 'font' ? 'Space Grotesk' : 'the gray placeholder'}. ${how}`
     : `"${label}" will move to the trash. ${how}`;
   const ok = await confirmDialog({ title: `delete ${label}?`, message, confirmLabel: 'delete', danger: true });
-  if (ok) trashItems(kind, ids);
+  if (!ok) return;
+  trashItems(kind, ids);
+  showToast(`moved ${label} to trash`);
 }
 
 // Attaches a right-click → delete menu to a library element.
@@ -133,30 +141,70 @@ function renderFonts() {
 // Commits an inline edit of a color card (name + hex).
 function commitColorEdit(color, nameInput, hexInput) {
   editingColorId = null;
+  colorDraft = null;
   if (!isHex(hexInput.value)) { renderColors(); return; }
   updateColor(color.id, { name: slug(nameInput.value) || color.name, hex: normalizeHex(hexInput.value) });
   renderColors();
 }
 
+// Ends a color card's edit without saving (Esc).
+function cancelColorEdit() {
+  editingColorId = null;
+  colorDraft = null;
+  renderColors();
+}
+
+// The edit-mode eyedropper of a color card: changes THAT color's hex. While it runs the card stays in edit mode
+// (pickingColorId stops the inputs' blur from saving or cancelling the edit) and what is typed is kept in colorDraft.
+// Afterwards the card is drawn in edit mode again: with the picked hex (already saved, one undo step), or unchanged.
+function startColorPick(color, button, nameInput, hexInput) {
+  colorDraft = { id: color.id, name: nameInput.value, hex: hexInput.value };
+  pickingColorId = color.id;
+  const back = () => { pickingColorId = null; editingColorId = color.id; renderColors(); };
+  startEyedropper({
+    button,
+    onPick: (hex) => { colorDraft.hex = normalizeHex(hex); updateColor(color.id, { hex }); back(); },
+    // replaced = another eyedropper was started instead: the edit then simply ends unsaved (like Esc), so the card
+    // doesn't pull the focus back while the other eyedropper runs.
+    onCancel: (replaced) => { if (replaced) { pickingColorId = null; cancelColorEdit(); } else back(); },
+  });
+}
+
 function colorCard(color) {
-  const swatch = el('span', { class: 'swatch-sq', style: { background: color.hex } });
+  // In edit mode the card shows what is typed (colorDraft) when the edit came back from its eyedropper.
+  const draft = editingColorId === color.id && colorDraft && colorDraft.id === color.id ? colorDraft : null;
+  const shownHex = draft && isHex(draft.hex) ? normalizeHex(draft.hex) : color.hex;
+  const swatch = el('span', { class: 'swatch-sq', style: { background: shownHex } });
   if (editingColorId !== color.id) {
     const card = el('div', {
       class: 'card-row', ...draggable('color', color.id),
-      on: { click: () => { editingColorId = color.id; renderColors(); } },
+      on: { click: () => { editingColorId = color.id; colorDraft = null; renderColors(); } },
     }, swatch, el('div', { class: 'card-text' },
       el('span', { class: 'card-title', text: color.name }),
       el('span', { class: 'card-sub', text: color.hex })));
     return withDeleteMenu(card, 'color', [color.id], color.name);
   }
   // Edit mode: two small inputs replace the text. Enter or leaving the card saves, Esc cancels.
-  const nameInput = el('input', { type: 'text', value: color.name, spellcheck: false });
-  const hexInput = el('input', { type: 'text', value: color.hex, spellcheck: false });
-  const card = el('div', { class: 'card-row', style: { cursor: 'default' } }, swatch, el('div', { class: 'color-edit' }, nameInput, hexInput));
+  // The hex input has an eyedropper button next to it (same look as the header one, sized to the 22px inputs).
+  const nameInput = el('input', { type: 'text', value: draft ? draft.name : color.name, spellcheck: false });
+  const hexInput = el('input', { type: 'text', value: draft ? draft.hex : color.hex, spellcheck: false });
+  const eye = el('button', {
+    class: 'icon-toggle tool-btn edit-eye eyedropper-btn' + (pickingColorId === color.id ? ' on' : ''),
+    title: 'eyedropper: click a color in the preview to use it',
+  }, icon('eyedropper'));
+  // preventDefault on press keeps the focus in the input, so starting the pick never blurs (= saves) the edit.
+  eye.addEventListener('pointerdown', (e) => e.preventDefault());
+  eye.addEventListener('mousedown', (e) => e.preventDefault());
+  eye.addEventListener('click', () => {
+    if (pickingColorId === color.id) stopEyedropper();   // clicking it again switches it off (= cancel)
+    else startColorPick(color, eye, nameInput, hexInput);
+  });
+  const card = el('div', { class: 'card-row', style: { cursor: 'default' } }, swatch,
+    el('div', { class: 'color-edit' }, nameInput, el('div', { class: 'color-edit-hex' }, hexInput, eye)));
   for (const input of [nameInput, hexInput]) {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') commitColorEdit(color, nameInput, hexInput);
-      if (e.key === 'Escape') { editingColorId = null; renderColors(); }
+      if (e.key === 'Escape') cancelColorEdit();
     });
     input.addEventListener('input', () => {
       const ok = isHex(hexInput.value);
@@ -164,12 +212,22 @@ function colorCard(color) {
       if (ok) swatch.style.background = normalizeHex(hexInput.value);
     });
   }
-  card.addEventListener('focusout', (e) => { if (!card.contains(e.relatedTarget) && editingColorId === color.id) commitColorEdit(color, nameInput, hexInput); });
-  setTimeout(() => { nameInput.focus(); nameInput.select(); }, 0);
+  // Leaving the card saves, except while its eyedropper runs (the click on the canvas moves the focus away) and
+  // while the list is being redrawn (removing a focused input must never count as "leaving").
+  card.addEventListener('focusout', (e) => {
+    if (redrawingColors || pickingColorId === color.id) return;
+    if (!card.contains(e.relatedTarget) && editingColorId === color.id) commitColorEdit(color, nameInput, hexInput);
+  });
+  if (pickingColorId !== color.id) setTimeout(() => { nameInput.focus(); nameInput.select(); }, 0);
   return card;
 }
 
+let redrawingColors = false;   // true while renderColors() rebuilds the list (see the focusout guard above)
 function renderColors() {
+  redrawingColors = true;
+  try { drawColors(); } finally { redrawingColors = false; }
+}
+function drawColors() {
   redraw($('#list-colors'), (list) => {
     // Grouped by hue. Search: name or hex. The card being edited always stays visible (e.g. a just-picked eyedropper
     // color named "new_color" while the search says "blue"), so its name can still be typed.
@@ -180,6 +238,30 @@ function renderColors() {
 }
 
 // ---------- Palettes ----------
+// Opens the small name/hex editor of a palette swatch. Its eyedropper changes THAT swatch: the popover closes while
+// the tool runs, then reopens on the same swatch, with the picked hex (saved, one undo step) or with the old values.
+// `draft` = what was typed before the pick (the name typed but not saved yet is kept).
+function openSwatchEditor(swatch, color, draft = null) {
+  openColorEditor(swatch, color, {
+    draft,
+    onSave: (patch) => updateColor(color.id, patch),
+    onDelete: () => deleteWithConfirm('palette_color', [color.id], color.name),
+    onEyedropper: (typed) => startEyedropper({
+      onPick: (hex) => { updateColor(color.id, { hex }); reopenSwatchEditor(color.id, { name: typed.name, hex: normalizeHex(hex) }); },
+      // replaced = another eyedropper was started instead: then the popover stays closed (nothing changed anyway).
+      onCancel: (replaced) => { if (!replaced) reopenSwatchEditor(color.id, typed); },
+    }),
+  });
+}
+
+// Finds the swatch on screen again (the palettes list may have been redrawn) and reopens its editor.
+// Nothing opens if the swatch is gone or its section is hidden (another library section is expanded).
+function reopenSwatchEditor(colorId, draft) {
+  const swatch = document.querySelector(`#list-palettes .palette-swatch[data-drag-id="${colorId}"]`);
+  const color = findColor(colorId);
+  if (swatch && color && swatch.offsetParent) openSwatchEditor(swatch, color, draft);
+}
+
 function renderPalettes() {
   redraw($('#list-palettes'), (list) => {
     // Search: the palette's name, or any swatch's name or hex (a match shows the whole card). A palette being renamed,
@@ -214,37 +296,36 @@ function renderPalettes() {
           class: 'palette-swatch', style: { background: color.hex }, ...draggable('color', color.id),
         });
         attachSwatchTip(swatch, color);   // name + hex on hover (swatches have no visible label)
-        swatch.addEventListener('click', () => openColorEditor(swatch, color, {
-          onSave: (patch) => updateColor(color.id, patch),
-          onDelete: () => deleteWithConfirm('palette_color', [color.id], color.name),
-        }));
+        swatch.addEventListener('click', () => openSwatchEditor(swatch, color));
         withDeleteMenu(swatch, 'palette_color', [color.id], color.name);
         grid.append(swatch);
         if (pendingSwatchEditId === color.id) { pendingSwatchEditId = null; setTimeout(() => swatch.click(), 0); }
       }
       grid.append(el('button', { class: 'palette-add', text: '+', title: 'add color', on: { click: () => { pendingSwatchEditId = addPaletteColor(pal.id).id; renderPalettes(); } } }));
 
-      const card = el('div', { class: 'palette-card' }, nameNode, grid);
+      // data-palette-id makes the whole card a drop target for colors (dragdrop.js planPalette).
+      const card = el('div', { class: 'palette-card', dataset: { paletteId: pal.id } }, nameNode, grid);
       list.append(withDeleteMenu(card, 'palette', [pal.id], pal.name));
     }
   });
 }
 
 // ---------- Blocks + presets (one section) ----------
-// Default blocks first (fixed order), then the saved presets (newest first, shipped defaults last).
+// Default blocks first (fixed order), then the saved presets (newest first).
 // Both are single-column .card-row cards (same as fonts/colors): icon in a 34px slot, name, muted second line.
 // Blocks show what kind of block they are ("text", "container", "media"...); presets show "preset" and a dashed border.
+// The card shows typeLabel() ("board" for the canvas type); the drag payload keeps the real type name.
 function renderBlocks() {
   redraw($('#list-blocks'), (list) => {
-    // Search: block and preset names.
-    const blocks = sortBlockTypes().filter((b) => matches(b.type));
+    // Search: block names as shown (so "board" matches) and preset names.
+    const blocks = sortBlockTypes().filter((b) => matches(typeLabel(b.type)));
     const presets = sortPresets(state.library.presets).filter((p) => matches(p.name));
     if (!blocks.length && !presets.length) list.append(noMatches());
     for (const b of blocks) {
       list.append(el('div', { class: 'card-row', ...draggable('block', b.type) },
         el('span', { class: 'icon-slot', text: b.glyph }),
         el('div', { class: 'card-text' },
-          el('span', { class: 'card-title', text: b.type }),
+          el('span', { class: 'card-title', text: typeLabel(b.type) }),
           el('span', { class: 'card-sub', text: b.kind }))));
     }
     for (const p of presets) {
@@ -262,7 +343,8 @@ function renderBlocks() {
 // Left: "label · count" (same style everywhere). Right: a "+ add" button (data-add = its element id), a
 // "+ import" button (data-import = its id; colors/palettes add, media/fonts import) or, with neither, the
 // muted hint "drag in". Both buttons are the same .plus-btn. Built from the data-* attributes in index.html.
-// The colors header also gets the eyedropper tool button (data-eyedropper) just left of its "+ add".
+// The colors and palettes headers also get an eyedropper tool button (data-eyedropper) just left of their "+ add".
+// A HEADER eyedropper creates something new (a color / a palette); edit-menu eyedroppers change the thing being edited.
 // EVERY header ends with the expand/collapse button, so all five line up in one column at the far right.
 // Under every header sits a search box; CSS only shows it while that section is expanded.
 function buildHeaders() {
@@ -274,8 +356,11 @@ function buildHeaders() {
       : importId ? button(importId, '+ import', `import ${label}`)
         : el('span', { class: 'lib-hint', text: 'drag in' });
     // Same look as the export bar's transparent toggle (.icon-toggle), just header-sized (24px).
+    const toolTitle = label === 'palettes'
+      ? 'eyedropper: click a color in the preview to start a new palette with it'
+      : 'eyedropper: click a color in the preview to add it';
     const tool = eyedropper
-      ? el('button', { class: 'icon-toggle tool-btn', id: eyedropper, title: 'eyedropper: click a color in the preview to add it' }, icon('eyedropper'))
+      ? el('button', { class: 'icon-toggle tool-btn', id: eyedropper, title: toolTitle }, icon('eyedropper'))
       : null;
     // Expand/collapse: also an .icon-toggle; it shows the "on" look (accent border + icon) while its section is expanded.
     const expandBtn = el('button', {
@@ -412,18 +497,28 @@ export function initLibrary() {
   $('#btn-import-fonts').addEventListener('click', () => runImport('font'));
   $('#btn-import-media').addEventListener('click', () => runImport('media'));
   $('#btn-add-color').addEventListener('click', () => { editingColorId = addColor({ name: 'new_color', hex: '#888888' }).id; renderColors(); });
-  // Eyedropper: a picked color is added exactly like "+ add", but with the picked hex already filled in.
+  initEyedropper();   // the one shared eyedropper tool (all four eyedropper buttons use it; one runs at a time)
+  // Colors header eyedropper: a picked color is added exactly like "+ add", but with the picked hex already filled in.
   // The new card opens in edit mode with the name selected, so the user just types a name and presses Enter.
   // (If another section is expanded the colors list is hidden; the color is still added, but not opened for editing,
   // because a hidden input can't take focus. The view does not switch sections.)
-  initEyedropper($('#btn-eyedropper'), (hex) => {
+  addEyedropperButton($('#btn-eyedropper'), (hex) => {
     const id = addColor({ name: 'new_color', hex }).id;
     const hidden = state.session.expandedSection && state.session.expandedSection !== 'colors';
     editingColorId = hidden ? null : id;
+    colorDraft = null;
     renderColors();
   });
   $('#btn-add-palette').addEventListener('click', () => {
     renamingPaletteId = addPalette(`palette_${state.library.palettes.length + 1}`).id;
+    renderPalettes();
+  });
+  // Palettes header eyedropper: like "+ add" (new palette_N, renaming starts), but its one swatch is the picked
+  // color, named new_color. One undo step. Same hidden-section rule as the colors one above.
+  addEyedropperButton($('#btn-eyedropper-palette'), (hex) => {
+    const id = addPalette(`palette_${state.library.palettes.length + 1}`, hex).id;
+    const hidden = state.session.expandedSection && state.session.expandedSection !== 'palettes';
+    renamingPaletteId = hidden ? null : id;
     renderPalettes();
   });
 

@@ -94,6 +94,10 @@
 .color-edit { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .color-edit input { height: 22px; font-size: 12px; width: 100%; }
 .color-edit input.invalid { border-color: var(--danger); }
+/* Hex input + its eyedropper button on one line; the button is the header eyedropper's .icon-toggle, sized to the 22px inputs. */
+.color-edit-hex { display: flex; gap: 4px; min-width: 0; }
+.color-edit-hex input { flex: 1; min-width: 0; }
+.icon-toggle.tool-btn.edit-eye { width: 22px; height: 22px; flex: none; }
 
 /* ---------- Palettes ---------- */
 /* The palette card itself is NOT draggable, so it has no hover effect; only its swatches do. */
@@ -106,7 +110,10 @@
 .palette-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; display: block; }
 .palette-name-input { height: 22px; width: 100%; font-size: 12px; margin-bottom: 6px; }
 /* 6 columns of 26px squares (smaller than the 34px color-card swatch); wraps to new rows for any number of colors. */
-.palette-grid { display: grid; grid-template-columns: repeat(6, 26px); justify-content: space-between; gap: 6px; }
+.palette-grid { display: grid; grid-template-columns: repeat(6, 26px); justify-content: space-between; gap: 6px; position: relative; }   /* relative: holds the drop insertion line */
+/* Drop insertion line (dragdrop.js showInsertLine): where a dragged color will land between swatches. Absolutely
+   positioned, so it takes no grid cell; it ignores the pointer so the drop still lands on the swatch under it. */
+.palette-insert { position: absolute; width: 2px; border-radius: 1px; background: var(--accent); pointer-events: none; }
 .palette-swatch {
   width: 100%; height: auto; aspect-ratio: 1; align-self: start;   /* perfect squares */
   border-radius: var(--radius-sm);

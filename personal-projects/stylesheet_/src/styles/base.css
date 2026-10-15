@@ -137,7 +137,7 @@ select option { background: var(--card); color: var(--text); }
   align-items: stretch;
 }
 .seg button, .seg .seg-value {
-  padding: 0 12px; min-height: 30px; min-width: 30px;
+  padding: 0 var(--toggle-pad-x); min-height: var(--toggle-h); min-width: var(--toggle-h);   /* 0 12px / 30px (tokens.css) */
   display: grid; place-items: center;
 }
 .seg button { position: relative; }
@@ -183,8 +183,10 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* ---------- Icon toggle (transparent background checkerboard) ---------- */
+/* A square exactly as tall as the segmented toggle buttons (--toggle-h), so it matches the format toggle
+   next to it. Smaller uses (library header eyedroppers, expand buttons...) set their own size. */
 .icon-toggle {
-  width: 34px; height: 34px; padding: 0;
+  width: var(--toggle-h); height: var(--toggle-h); padding: 0;
   display: grid; place-items: center;
 }
 /* Same behavior as the segmented toggles: hovering while OFF changes only the icon color (border stays

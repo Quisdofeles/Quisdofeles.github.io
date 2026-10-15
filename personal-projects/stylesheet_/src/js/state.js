@@ -9,11 +9,10 @@
 import { uid, clone, normalizeHex } from './util.js';
 import {
   createBlock, createCanvas, cloneWithNewIds, structureFromCanvas, canvasFromStructure,
-  isContainer, isTextType, hasVisibleContent, BASE_NAME, DEFAULT_TEXT_COLOR,
-  LEGACY_PRESETS, STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE, DEFAULT_PADDING, LEGACY_PADDING, legacySize,
+  isContainer, isTextType, hasVisibleContent, BASE_NAME,
+  STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE, DEFAULT_PADDING,
 } from './blocks.js';
-import { layerInfo } from './svg.js';
-import { BUILTIN_FONTS, DEFAULT_FONT_ID } from './fonts.js';
+import { BUILTIN_FONTS } from './fonts.js';
 
 const MAX_HISTORY = 50;
 
@@ -52,13 +51,12 @@ function defaultLibrary() {
 
 function defaultSession() {
   return {
-    canvases: [],            // a new user starts with an empty preview (it shows the "+ add canvas" button)
+    canvases: [],            // a new user starts with an empty preview (it shows the "+ add board" button)
     selection: [],           // ids of the selected nodes (a LIST; see cleanSelection() for the rules)
     zoom: 1,
     pan: { x: 0, y: 0 },
-    // canvasLabels: show the OPTION A/B… label on each canvas (preview and export). Old saves without it get true
-    // because initState() merges these defaults under the saved values. A new session: both labels on, PNG,
-    // transparent off, 1× (saved sessions keep their own values).
+    // canvasLabels: show each board's name above it (preview and export; "board labels" on screen).
+    // A new session: both labels on, PNG, transparent off, 1× (saved sessions keep their own values).
     export: { styleLabels: true, canvasLabels: true, format: 'png', transparent: false, scale: 1 },
     collapsedGroups: {},     // editor property groups the user collapsed
     collapsedNodes: {},      // layers-tree nodes the user collapsed
@@ -67,82 +65,12 @@ function defaultSession() {
   };
 }
 
-// Fills in anything missing from a loaded file so older saves keep working.
+// Fills in any top-level key missing from a loaded file with its default (a safety net for a hand-edited or partly
+// written file). Old-format saves never get here: main.js backs them up and the app starts fresh (see dataVersion).
 function normalize(loaded, fallback) {
   const out = { ...fallback, ...(loaded || {}) };
   for (const key of Object.keys(fallback)) if (out[key] === undefined || out[key] === null) out[key] = fallback[key];
   return out;
-}
-
-// One-time upgrade of saves made before "vectors" became "media". Safe to run on every load: it does nothing
-// once the data is already in the new shape. Also backfills `addedAt` (used for newest-first sorting) so old
-// items keep their current relative order: they get small numbers (their position), older than any real timestamp.
-function migrateOldSaves(library, session) {
-  if (library) {
-    if (library.vectors && !library.media) library.media = library.vectors;
-    delete library.vectors;
-    (library.media || []).forEach((m, i) => { if (m.addedAt === undefined) m.addedAt = i + 1; delete m.layers; });   // layers are now read from the SVG itself
-    (library.trash || []).filter((t) => t.kind === 'media').forEach((t) => { delete t.item.layers; });
-    const defaultIds = new Set(LEGACY_PRESETS.map((p) => p.id));
-    (library.presets || []).forEach((p, i) => { if (p.addedAt === undefined) p.addedAt = defaultIds.has(p.id) ? 0 : i + 1; });
-    for (const t of library.trash || []) {
-      if (t.kind === 'vector') t.kind = 'media';
-      if (t.kind === 'media' && t.item.addedAt === undefined) t.item.addedAt = 0;
-      if (t.kind === 'preset' && t.item.addedAt === undefined) t.item.addedAt = defaultIds.has(t.item.id) ? 0 : 1;
-    }
-  }
-  if (session) {
-    // Old sessions saved ONE selected id; the selection is now a list.
-    if (!Array.isArray(session.selection)) session.selection = session.selectedId ? [session.selectedId] : [];
-    delete session.selectedId;
-    const walk = (list) => list.forEach((n) => {
-      if ('vectorId' in n) { n.mediaId = n.vectorId; delete n.vectorId; }
-      if (n.children) walk(n.children);
-    });
-    walk(session.canvases || []);
-    migrateRolesToColors(session.canvases || []);
-    migrateFontRoles(session.canvases || []);
-  }
-  if (library) {
-    // Presets store structure only: drop the old role pointers and the removed swatch block from them.
-    const cleanStructure = (list) => list.filter((s) => s.type !== 'swatch').map((s) => {
-      delete s.colorRole;
-      if (s.children) s.children = cleanStructure(s.children);
-      return s;
-    });
-    const cleanPreset = (p) => { if (p.structure && p.structure.children) p.structure.children = cleanStructure(p.structure.children); };
-    (library.presets || []).forEach(cleanPreset);
-    (library.trash || []).filter((t) => t.kind === 'preset').forEach((t) => cleanPreset(t.item));
-  }
-  migrateCanvasSizes(library, session);
-}
-
-// Upgrades canvases and presets from `aspect` (every canvas was 384px wide, height from its aspect, content inset
-// ~28px) to `size` + `padding`. Saved canvases become FIXED at exactly their old size with padding 28, so they look
-// the same. The presets older versions shipped take their new settings from LEGACY_PRESETS (business_card and social_post: fixed
-// at their old size; the others: dynamic); user-saved presets become fixed at their old size like canvases.
-// Safe to run on every load (it only touches things that still have no `size`). Delete once all old saves are gone.
-function migrateCanvasSizes(library, session) {
-  const upgrade = (obj) => {
-    if (!obj || obj.size) return;
-    obj.size = legacySize(obj.aspect);
-    obj.padding = LEGACY_PADDING;
-    delete obj.aspect;
-  };
-  if (session) (session.canvases || []).forEach(upgrade);
-  if (library) {
-    const shipped = Object.fromEntries(LEGACY_PRESETS.map((p) => [p.id, p.structure]));
-    const upgradePreset = (p) => {
-      if (!p.structure || p.structure.size) return;
-      if (shipped[p.id]) {
-        p.structure.size = { ...shipped[p.id].size };
-        p.structure.padding = shipped[p.id].padding;
-        delete p.structure.aspect;
-      } else upgrade(p.structure);
-    };
-    (library.presets || []).forEach(upgradePreset);
-    (library.trash || []).filter((t) => t.kind === 'preset').forEach((t) => upgradePreset(t.item));
-  }
 }
 
 // A dynamic canvas needs content (an empty one would have no size). Any dynamic canvas that has no visible block
@@ -154,90 +82,10 @@ function fixEmptyDynamicCanvases() {
   }
 }
 
-// Upgrades the colors/roles model: every canvas used to have 4 roles and blocks pointed at them. Each block now
-// stores its own fixed color, copied from its canvas's role values, so nothing changes visually.
-//  - canvas.roles.background -> canvas.background
-//  - text block colorOverride / roles[colorRole] -> block.color
-//  - vector block layerRoles / layerOverrides (keyed by Illustrator layer NAME) -> block.legacyLayerColors, which
-//    resolveLegacyLayerColors() turns into layerColors (keyed by layer index) once the SVG has been loaded
-//  - swatch blocks no longer exist and are removed
-function migrateRolesToColors(canvases) {
-  const dropSwatches = (list) => list.filter((n) => n.type !== 'swatch');
-  for (const cv of canvases) {
-    const roles = cv.roles || null;
-    const walk = (list) => list.forEach((n) => {
-      if (roles && isTextType(n.type) && ('colorRole' in n || 'colorOverride' in n)) {
-        n.color = n.colorOverride || roles[n.colorRole] || roles.primary;
-      }
-      if (isTextType(n.type)) { delete n.colorRole; delete n.colorOverride; if (!n.color) n.color = DEFAULT_TEXT_COLOR; }
-      if (n.type === 'vector') {
-        if (roles && ('layerRoles' in n || 'layerOverrides' in n)) {
-          const legacy = {};
-          for (const [layer, role] of Object.entries(n.layerRoles || {})) legacy[layer] = roles[role] || roles.primary;
-          for (const [layer, hex] of Object.entries(n.layerOverrides || {})) legacy[layer] = hex;
-          n.legacyLayerColors = legacy;
-        }
-        delete n.layerRoles; delete n.layerOverrides;
-        if (!n.layerColors) n.layerColors = {};
-      }
-      if (n.children) { n.children = dropSwatches(n.children); walk(n.children); }
-    });
-    cv.children = dropSwatches(cv.children || []);
-    walk(cv.children);
-    cv.background = cv.background || (roles && roles.background) || '#FFFFFF';   // old canvases were white (not the new #EDEDEE default)
-    delete cv.roles;
-  }
-}
-
-// Upgrades the font model: canvases used to hold one font per text type (canvas.fonts) plus an optional per-block
-// override. Now every text block stores its OWN font (block.font), so each block gets the font it showed before:
-// its override, else its canvas's font for that type, else the default font, Space Grotesk (those blocks used to show a gray
-// placeholder). canvas.fonts and fontOverride are removed.
-function migrateFontRoles(canvases) {
-  for (const cv of canvases) {
-    const roles = cv.fonts || {};
-    const walk = (list) => list.forEach((n) => {
-      if (isTextType(n.type)) {
-        if (!n.font) n.font = n.fontOverride || roles[n.type] || DEFAULT_FONT_ID;
-        delete n.fontOverride;
-      }
-      if (n.children) walk(n.children);
-    });
-    walk(cv.children || []);
-    delete cv.fonts;
-  }
-}
-
-// Second half of the vector upgrade (needs the SVG loaded, so it runs after the media files load, see app.js).
-// Old layer colors were stored under Illustrator layer names; they now belong to first-level layer indexes.
-// A layer takes the color of the old named layer it is (or contains); an old "whole drawing" color ('*') fills the rest.
-export function resolveLegacyLayerColors() {
-  let changed = false;
-  const walk = (list) => list.forEach((n) => {
-    if (n.type === 'vector' && n.legacyLayerColors) {
-      const layers = layerInfo(n.mediaId);
-      if (layers.length) {
-        const legacy = n.legacyLayerColors;
-        n.layerColors = {};
-        layers.forEach((layer, i) => {
-          const hit = layer.ids.find((id) => id in legacy);
-          const hex = hit ? legacy[hit] : legacy['*'];
-          if (hex) n.layerColors[i] = hex;
-        });
-        delete n.legacyLayerColors;
-        changed = true;
-      }
-    }
-    if (n.children) walk(n.children);
-  });
-  walk(state.session.canvases);
-  if (changed) notify({ session: true });      // not an undo step: it just finishes the upgrade
-}
-
-// Called once at startup with whatever persistence loaded (null on first launch).
+// Called once at startup with whatever persistence loaded (null on first launch, including right after main.js
+// backed up old-format data: then both files are gone, so it is a first launch).
 export function initState(library, session) {
   isFirstLaunch = !library && !session;
-  migrateOldSaves(library, session);
   state.library = normalize(library, defaultLibrary());
   state.session = normalize(session, defaultSession());
   state.session.export = { ...defaultSession().export, ...state.session.export };
@@ -468,15 +316,13 @@ export function setHelpSeen() {
 }
 
 // ---------- Canvas + block mutations ----------
-// Picks the next unused name for a canvas copy: lockup_A -> lockup_B (first free letter).
-function nextCanvasName(baseName = BASE_NAME) {
-  const base = baseName.replace(/_[A-Z]$/, '');
+// Picks the name for a new canvas, copy or paste: "Board 1", "Board 2"... the first number no canvas uses yet.
+// (A renamed canvas frees its number, so the next new one may fill that gap.)
+function nextCanvasName() {
   const used = new Set(state.session.canvases.map((c) => c.name));
-  for (let i = 0; i < 26; i++) {
-    const name = `${base}_${String.fromCharCode(65 + i)}`;
-    if (!used.has(name)) return name;
-  }
-  return `${base}_${state.session.canvases.length + 1}`;
+  let n = 1;
+  while (used.has(`${BASE_NAME} ${n}`)) n++;
+  return `${BASE_NAME} ${n}`;
 }
 
 // Every name used by a node inside a canvas (the canvas itself is not counted), for unique block names.
@@ -504,7 +350,7 @@ function copyName(name, canvas) {
 
 // Adds a new canvas (optionally from a preset structure) and selects it. Returns the canvas.
 export function addCanvas({ structure, index } = {}) {
-  const name = nextCanvasName(BASE_NAME);
+  const name = nextCanvasName();
   const canvas = structure ? canvasFromStructure(structure, name) : createCanvas({ name });
   change(() => {
     const list = state.session.canvases;
@@ -575,7 +421,7 @@ export function addMediaToNewCanvas(mediaId) {
 export function addBlockToNewCanvas(type, extra = {}) {
   if (type === 'canvas') return addCanvas();
   const canvas = createCanvas({
-    name: nextCanvasName(BASE_NAME),
+    name: nextCanvasName(),
     size: { mode: 'dynamic', width: EMPTY_SIZE, height: EMPTY_SIZE }, padding: DEFAULT_PADDING,
   });
   canvas.children.push(createBlock(type, { name: `${type} 1`, ...extra }));
@@ -785,7 +631,7 @@ export function removeNodes(ids) {
 }
 
 // Duplicates every node in `ids` as ONE undo step; each copy goes right after its original and the copies become
-// the selection. Canvases get the next free letter (lockup_B); blocks get "name copy", "name copy 2"...
+// the selection. Canvases get the first free number ("Board 3"); blocks get "name copy", "name copy 2"...
 export function duplicateNodes(ids) {
   const copies = [];
   change(() => {
@@ -793,7 +639,7 @@ export function duplicateNodes(ids) {
       const loc = findNode(id);
       if (!loc) continue;
       const copy = cloneWithNewIds(loc.node);
-      copy.name = copy.type === 'canvas' ? nextCanvasName(loc.node.name) : copyName(loc.node.name, loc.canvas);
+      copy.name = copy.type === 'canvas' ? nextCanvasName() : copyName(loc.node.name, loc.canvas);
       loc.list.splice(loc.index + 1, 0, copy);
       copies.push(copy.id);
     }
@@ -829,7 +675,7 @@ export function pasteClipboard() {
       let at = sel.length ? canvases.indexOf(sel[sel.length - 1].canvas) + 1 : canvases.length;
       for (const node of clipboard.nodes) {
         const copy = cloneWithNewIds(node);
-        copy.name = nextCanvasName(node.name);
+        copy.name = nextCanvasName();
         canvases.splice(at++, 0, copy);
         pasted.push(copy.id);
       }
@@ -859,10 +705,10 @@ export function toggleHidden(id) {
   if (loc) change(() => { loc.node.hidden = !loc.node.hidden; });
 }
 
-// "clear canvas" in settings: removes every canvas and leaves one empty lockup_A. Undoable.
+// "clear boards" in settings: removes every canvas and leaves one empty "Board 1". Undoable.
 export function clearCanvases() {
   change(() => {
-    state.session.canvases = [createCanvas({ name: `${BASE_NAME}_A` })];
+    state.session.canvases = [createCanvas({ name: `${BASE_NAME} 1` })];
     state.session.selection = [];
   });
 }
@@ -882,8 +728,9 @@ export function updateColor(id, patch) {
   change(() => Object.assign(color, patch), { library: true });
 }
 
-export function addPalette(name) {
-  const palette = { id: uid('p'), name, colors: [{ id: uid('c'), name: 'new_color', hex: '#888888' }] };
+// A new palette with one swatch: gray from "+ add", or the picked color from the palettes header eyedropper.
+export function addPalette(name, hex = '#888888') {
+  const palette = { id: uid('p'), name, colors: [{ id: uid('c'), name: 'new_color', hex: normalizeHex(hex) }] };
   change(() => state.library.palettes.push(palette), { library: true });
   return palette;
 }
@@ -897,6 +744,29 @@ export function addPaletteColor(paletteId) {
   const color = { id: uid('c'), name: 'new_color', hex: '#888888' };
   change(() => p.colors.push(color), { library: true });
   return color;
+}
+
+// Drag a color (library color or another palette's swatch) onto a palette: adds a COPY (new id, same name + hex)
+// at `index` (0 = first; the end when past it). Later edits of the original don't change the copy. One undo step.
+export function insertPaletteColor(paletteId, { name, hex }, index) {
+  const p = state.library.palettes.find((x) => x.id === paletteId);
+  if (!p) return;
+  const color = { id: uid('c'), name, hex: normalizeHex(hex) };
+  const at = Math.max(0, Math.min(index, p.colors.length));
+  change(() => p.colors.splice(at, 0, color), { library: true });
+}
+
+// Drag a swatch within its OWN palette: moves it (no copy). `index` is the insertion point in the list as it is
+// now (before the swatch is taken out), the same number the drop line shows. A drop on its own spot does nothing.
+export function movePaletteColor(paletteId, colorId, index) {
+  const p = state.library.palettes.find((x) => x.id === paletteId);
+  if (!p) return;
+  const from = p.colors.findIndex((c) => c.id === colorId);
+  if (from < 0) return;
+  let to = Math.max(0, Math.min(index, p.colors.length));
+  if (to > from) to -= 1;          // taking the swatch out shifts every later spot one to the left
+  if (to === from) return;         // no history entry for a drop that changes nothing
+  change(() => { const [c] = p.colors.splice(from, 1); p.colors.splice(to, 0, c); }, { library: true });
 }
 
 export function addFonts(entries) {

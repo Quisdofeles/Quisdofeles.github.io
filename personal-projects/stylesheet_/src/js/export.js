@@ -5,7 +5,7 @@
 
 import { el, clear, $, checkerIcon, normalizeHex } from './util.js';
 import { state, subscribe, setExport, visibleCanvases, getFont, getMedia } from './state.js';
-import { renderCanvasCell, applyGridLayout, optionLabel } from './preview.js';
+import { renderCanvasCell, applyGridLayout } from './preview.js';
 import { cssFamily, fontCss, fontUrl, fontLabel, DEFAULT_FONT_ID } from './fonts.js';
 import { buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
 import { isTextType } from './blocks.js';
@@ -31,7 +31,7 @@ function renderBar() {
 export function initExport() {
   $('#opt-transparent').append(checkerIcon());
   $('#opt-labels').addEventListener('change', (e) => setExport({ styleLabels: e.target.checked }));
-  // Hides/shows the OPTION A/B… label on every canvas (preview.js redraws when this changes).
+  // "board labels": hides/shows the name label above every canvas (preview.js redraws when this changes).
   $('#opt-canvas-labels').addEventListener('change', (e) => setExport({ canvasLabels: e.target.checked }));
   document.querySelectorAll('#seg-format button').forEach((b) => b.addEventListener('click', () => setExport({ format: b.dataset.format })));
   document.querySelectorAll('#seg-scale button').forEach((b) => b.addEventListener('click', () => setExport({ scale: Number(b.dataset.scale) })));
@@ -43,14 +43,14 @@ export function initExport() {
 
 // ---------- Gathering what the canvases use ----------
 // Walks every visible canvas and collects the colors, fonts and media actually in use.
-// colors = one group per canvas: { label: 'OPTION A', items: [{ name, colors: [hex, ...] }] }. Every colorable
+// colors = one group per canvas: { label: <the canvas's name, e.g. 'Board 1'>, items: [{ name, colors: [hex, ...] }] }. Every colorable
 // thing is listed by name with the color it uses RIGHT NOW: the background, each text block, and each first-level
 // layer of each vector (a layer still on its original colors lists every color the file uses in it).
 function collectUsage(canvases) {
   const colors = [];
   const fonts = new Map();      // fontId -> font
   const media = new Map();      // mediaId -> media item
-  canvases.forEach((cv, index) => {
+  canvases.forEach((cv) => {
     const items = [{ name: 'background', colors: [normalizeHex(cv.background)] }];
     const walk = (list) => list.forEach((b) => {
       if (b.hidden) return;
@@ -70,7 +70,7 @@ function collectUsage(canvases) {
       if (b.children) walk(b.children);
     });
     walk(cv.children);
-    colors.push({ label: optionLabel(index), items });
+    colors.push({ label: cv.name, items });   // the strip's heading for this board = its name (also when board labels are off)
   });
   return { colors, fonts, media };
 }
@@ -149,7 +149,7 @@ async function buildFontCss(fonts) {
 // ---------- Export ----------
 async function exportImage() {
   const canvases = visibleCanvases();
-  if (!canvases.length) { showToast('nothing to export: add a canvas first', { warn: true }); return; }
+  if (!canvases.length) { showToast('nothing to export: add a board first', { warn: true }); return; }
   const { styleLabels, format, transparent, scale } = state.session.export;
   const solid = format === 'jpeg' || !transparent;           // JPEG is always on a solid background
   const btn = $('#btn-export');

@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- index.html: the one and only page of Stylesheet_.
      It holds the static skeleton (top bar, three panels, status bar). JavaScript modules fill in
-     the lists, canvases and controls. Load order: tokens first, then base, then one CSS file per panel. -->
+     the lists, boards (canvases in code) and controls. Load order: tokens first, then base, then one CSS file per panel. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -53,7 +53,7 @@
                All five sections share the panel height EQUALLY (.lib-section in library.css). -->
           <!-- Every <header class="lib-head"> is empty here: library.js (buildHeaders) fills them all with the ONE shared
                structure. data-label = the name; data-add = id of a "+ add" button; data-import = id of a "+ import" button
-               (omit both to show the "drag in" hint); data-eyedropper = id of the eyedropper tool button (colors only). -->
+               (omit both to show the "drag in" hint); data-eyedropper = id of the eyedropper tool button (colors and palettes). -->
           <section class="lib-section" id="sec-blocks">
             <header class="lib-head" data-label="blocks"></header>
             <div class="lib-list scroll-area" id="list-blocks"></div>
@@ -71,7 +71,7 @@
             <div class="lib-list scroll-area" id="list-colors"></div>
           </section>
           <section class="lib-section" id="sec-palettes">
-            <header class="lib-head" data-label="palettes" data-add="btn-add-palette"></header>
+            <header class="lib-head" data-label="palettes" data-add="btn-add-palette" data-eyedropper="btn-eyedropper-palette"></header>
             <div class="lib-list scroll-area" id="list-palettes"></div>
           </section>
         </div>
@@ -81,12 +81,13 @@
       <section id="preview">
         <div id="stage">
           <div id="canvas-grid"></div>
-          <div id="stage-empty"><button class="dashed-btn" id="btn-add-canvas">drag in a canvas or preset</button></div>
+          <!-- Visible text says "board"; ids and classes keep "canvas" (UI says board, code says canvas). -->
+          <div id="stage-empty"><button class="dashed-btn" id="btn-add-canvas">+ add board</button></div>
         </div>
 
         <div class="float-bar" id="preview-bar">
           <span class="section-label">02 — PREVIEW</span>
-          <span class="muted" id="grid-info">auto grid · 0 canvases</span>
+          <span class="muted" id="grid-info">auto grid · 0 boards</span>
           <span class="grow"></span>
           <span class="muted">zoom</span>
           <div class="seg">
@@ -104,7 +105,7 @@
               <label class="check"><input type="checkbox" id="opt-labels"><span class="box"></span><span>style labels</span></label>
             </div>
             <div class="export-row">
-              <label class="check"><input type="checkbox" id="opt-canvas-labels"><span class="box"></span><span>canvas labels</span></label>
+              <label class="check"><input type="checkbox" id="opt-canvas-labels"><span class="box"></span><span>board labels</span></label>
             </div>
           </div>
           <div class="export-col">

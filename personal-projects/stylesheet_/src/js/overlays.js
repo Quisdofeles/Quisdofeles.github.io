@@ -1,5 +1,6 @@
 // overlays.js: notifications (toasts + the notification log), the confirm dialog, the help overlay, and the
-// settings overlay (clear canvas, open library folder, default export scale, trash, version).
+// settings overlay (clear boards, open library folder, default export scale, trash, version).
+// All visible text says "board"; the code underneath still says canvas (clearCanvases() etc.).
 
 import { el, clear, $, icon } from './util.js';
 import {
@@ -15,25 +16,32 @@ const LOG_MAX = 25;
 const notices = [];          // { message, warn, time }, oldest first
 let logOpen = false;
 
+// How long a toast's fade-out takes. Must match the .toast.fading transition in overlays.css.
+const TOAST_FADE_MS = 1000;
+
 // Shows a notice. Never blocks anything.
-export function showToast(message, { warn = false, ms = 4500 } = {}) {
+// The toast stays fully visible for `ms`, then fades out over TOAST_FADE_MS and is removed.
+export function showToast(message, { warn = false, ms = 3000 } = {}) {
   notices.push({ message, warn, time: new Date() });
   if (notices.length > LOG_MAX) notices.shift();
   if (logOpen) { renderLog(); return; }
   const toast = noticeEntry(notices[notices.length - 1]);   // exactly the same entry the open log shows
   $('#toast-stack').append(toast);                 // appended last = newest at the bottom, nearest the button
-  setTimeout(() => { toast.remove(); }, ms);
+  setTimeout(() => {
+    toast.classList.add('fading');                 // CSS fades the opacity to 0
+    setTimeout(() => { toast.remove(); }, TOAST_FADE_MS);
+  }, ms);
 }
 
 // "9:42" style clock time (24-hour, no leading zero on the hour).
 const clockTime = (d) => `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-// One notice as a toast-style entry (message + muted time), 34px tall like the log button.
-// Used for BOTH the fading toasts and the open log, so they always look and size the same.
+// One notice as a toast-style entry (message + muted time), one line = the toggle height, like the log button;
+// long messages wrap onto more lines. Used for BOTH the fading toasts and the open log, so they always look and size the same.
 function noticeEntry(n) {
   return el('div', {
     class: 'toast log-entry' + (n.warn ? ' warn' : ''),
-    title: n.message,                              // full text on hover when the message is cut off
+    title: n.message,                              // full text on hover
   }, el('span', { class: 'log-msg', text: n.message }), el('span', { class: 'log-time', text: clockTime(n.time) }));
 }
 
@@ -113,29 +121,29 @@ const HELP_TOP_MIN = 24;   // short windows only: the highest the row may move u
 // Each step card is a short list of points (one <li> each), so a lot of detail stays easy to scan.
 const HELP_CALLOUTS = [
   { title: '01 — LIBRARY', points: [
-    'Blocks: drag canvas, vector, image, heading, body or spacer into the preview. Presets you save show up here too.',
+    'Blocks: drag board, vector, image, heading, body or spacer into the preview. Presets you save show up here too.',
     '+ import copies media (svg, png, jpg) and fonts into the app, so your originals can be moved or deleted.',
-    'Colors: + add one, or use the eyedropper to pick any color straight off a canvas. Click a color to edit its name or hex.',
+    'Colors: + add one, or use the eyedropper to pick any color straight off a board. Click a color to edit its name or hex.',
     'Palettes: + add a palette, then + for more swatches. A swatch works exactly like a color.',
-    'Drag any card onto a canvas, a block or a layer. Right-click to delete; deleted items wait in settings → trash.',
+    'Drag any card onto a board, a block or a layer. Right-click to delete; deleted items wait in settings → trash.',
   ] },
   { title: '02 — PREVIEW', points: [
-    'Start with + add canvas, or drop a block, media or preset on the empty grid.',
-    'Each canvas is one option (A, B, C…). The grid lines them up for you, whatever their sizes.',
+    'Start with + add board, or drop a block, media or preset on the empty grid.',
+    'Each board is one option, labeled with its name (Board 1, 2…; rename it in layers). The grid lines them up, whatever their sizes.',
     'Drop a color on text, on one part of a vector, or on a background: only that one thing changes. The lime outline shows what will change.',
     'Click to select, Ctrl/Shift+click to add more, or drag a box to select several. Double-click text to edit it.',
     'Scroll to zoom, hold space or the middle mouse button to pan, fit to see everything. Double-click the % to type a zoom.',
   ] },
   { title: '03 — EDITOR', points: [
-    'Layers lists every canvas and its blocks. Drag rows to reorder or move them, double-click to rename, click the eye to hide.',
-    '+ block adds a block to every selected canvas.',
+    'Layers lists every board and its blocks. Drag rows to reorder or move them, double-click to rename, click the eye to hide.',
+    '+ block adds a block to every selected board.',
     'Right-click a layer to copy, paste, duplicate, group, ungroup or delete. Keys: Ctrl+C / V, Ctrl+D, Ctrl+G, Delete.',
-    'Properties edits what is selected: colors, layout, size (fixed or dynamic, with padding), and a text block\'s font. Double-click any number to type it.',
-    'Save as preset keeps a canvas\'s layout to reuse.',
+    'Properties edits what is selected: colors, layout, size (fixed or dynamic, padding, corner radius), and a text block\'s font. Double-click any number to type it.',
+    'Save as preset keeps a board\'s layout to reuse.',
   ] },
   { title: '04 — EXPORT', points: [
-    'Export saves every visible canvas as one image. Hidden canvases are skipped.',
-    'Canvas labels puts OPTION A, B… above each canvas. Style labels adds a strip listing every color, font and media used.',
+    'Export saves every visible board as one image. Hidden boards are skipped.',
+    'Board labels puts each board\'s name above it. Style labels adds a strip listing every color, font and media used.',
     'PNG and WebP can have a transparent background (the checkerboard button). JPEG is always solid.',
     'Use 1× to share quickly, 2× or 4× for a sharper reference.',
     'The arrow button above export opens your recent notifications.',
@@ -254,9 +262,9 @@ export function openSettings() {
       el('div', { class: 'modal-head' }, el('span', { class: 'section-label', text: 'settings' }),
         el('button', { class: 'link-btn', text: 'close', on: { click: close } })),
       el('div', { class: 'modal-body' },
-        row('clear canvas', el('button', { class: 'btn btn-danger', text: 'clear', on: { click: async () => {
-          const ok = await confirmDialog({ title: 'clear canvas?', message: 'This removes every canvas and leaves one empty canvas. Your library is untouched. You can undo it with Ctrl+Z.', confirmLabel: 'clear', danger: true });
-          if (ok) { clearCanvases(); showToast('canvas cleared (Ctrl+Z to undo)'); }
+        row('clear boards', el('button', { class: 'btn btn-danger', text: 'clear', on: { click: async () => {
+          const ok = await confirmDialog({ title: 'clear boards?', message: 'This removes every board and leaves one empty board. Your library is untouched. You can undo it with Ctrl+Z.', confirmLabel: 'clear', danger: true });
+          if (ok) { clearCanvases(); showToast('boards cleared (Ctrl+Z to undo)'); }
         } } })),
         row('library folder', el('button', { class: 'btn', text: 'open', on: { click: () => window.api.openLibraryFolder() } })),
         row('default export scale', scaleSeg),

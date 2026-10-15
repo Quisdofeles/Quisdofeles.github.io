@@ -1,4 +1,4 @@
-// preview.js: the middle panel. Renders every visible canvas from state (auto grid, OPTION labels,
+// preview.js: the middle panel. Renders every visible canvas ("board" on screen) from state (auto grid, name labels,
 // each block's own colors, flex layout, gray placeholders), plus selection by clicking, zoom and pan.
 // renderCanvasElement() is also used by export.js, so the exported image is drawn by the same code.
 
@@ -39,9 +39,6 @@ export function applyGridLayout(grid, count) {
     width: 'max-content',
   });
 }
-
-// "OPTION A", "OPTION B"... by position among visible canvases.
-export const optionLabel = (index) => `OPTION ${String.fromCharCode(65 + (index % 26))}`;
 
 const ALIGN = { start: 'flex-start', center: 'center', end: 'flex-end' };
 
@@ -99,13 +96,16 @@ export function renderCanvasElement(canvas, index, { interactive = true } = {}) 
   const bg = canvas.background;
   // Fixed: the card is exactly width × height (content that doesn't fit is clipped by .canvas overflow: hidden).
   // Dynamic: no size is set; the card shrink-wraps its content plus padding (.canvas.dynamic in preview.css).
+  // The corner radius is the canvas's own (canvas.radius); overflow: hidden clips the content and, in a transparent
+  // PNG/WebP export, leaves the area outside the rounded corners transparent.
   const dynamic = canvas.size.mode === 'dynamic';
+  const look = { background: bg, borderRadius: `${canvas.radius}px` };
   const card = el('div', {
     class: 'canvas' + (dynamic ? ' dynamic' : '') + (selectedIds.has(canvas.id) ? ' selected' : ''),
     dataset: { id: canvas.id },
-    style: dynamic ? { background: bg } : { background: bg, width: `${canvas.size.width}px`, height: `${canvas.size.height}px` },
+    style: dynamic ? look : { ...look, width: `${canvas.size.width}px`, height: `${canvas.size.height}px` },
   });
-  // (The OPTION label is no longer inside the card: renderCanvasCell() puts it above the canvas.)
+  // (The name label is not inside the card: renderCanvasCell() puts it above the canvas.)
   // Padding = the space between the content and the canvas edge (same on all four sides).
   const content = el('div', { class: 'canvas-content', style: { padding: `${canvas.padding}px` } });
   applyLayout(content, canvas.layout, 'center');
@@ -114,12 +114,13 @@ export function renderCanvasElement(canvas, index, { interactive = true } = {}) 
   return card;
 }
 
-// One grid cell: the OPTION A/B… label ABOVE the canvas, left-aligned with its edge, then the canvas card. Used by the
-// preview AND the export, so both match. The label sits outside the card so it never overlaps content, whatever the
-// padding. The "canvas labels" export setting leaves it out (and the space it took) in both.
+// One grid cell: the canvas's NAME as a label ABOVE the canvas (exactly as typed, e.g. "Board 1"), left-aligned with its
+// edge, then the canvas card. Used by the preview AND the export, so both match; renaming a canvas in the layers tree
+// redraws both. The label sits outside the card so it never overlaps content, whatever the padding. The
+// "board labels" export setting (session.export.canvasLabels) leaves it out (and the space it took) in both.
 export function renderCanvasCell(canvas, index, opts = {}) {
   const cell = el('div', { class: 'canvas-cell' });
-  if (state.session.export.canvasLabels) cell.append(el('div', { class: 'canvas-label', text: optionLabel(index) }));
+  if (state.session.export.canvasLabels) cell.append(el('div', { class: 'canvas-label', text: canvas.name }));
   cell.append(renderCanvasElement(canvas, index, opts));
   return cell;
 }
@@ -134,7 +135,7 @@ function renderGrid() {
   applyGridLayout(grid, visible.length);
   clear(grid);
   visible.forEach((cv, i) => grid.append(renderCanvasCell(cv, i)));
-  $('#grid-info').textContent = `auto grid · ${visible.length} canvas${visible.length === 1 ? '' : 'es'}`;
+  $('#grid-info').textContent = `auto grid · ${visible.length} board${visible.length === 1 ? '' : 's'}`;
   $('#stage-empty').style.display = visible.length ? 'none' : 'block';
   // When canvases are added/removed the grid changes shape, so re-fit it (not on ordinary edits).
   if (lastCount !== null && lastCount !== visible.length) fit();
@@ -352,8 +353,8 @@ export function initPreview() {
   if (isFirstLaunch) fit(); else applyView();
   applyView();
 
-  // Remembers whether the canvases were last drawn with OPTION labels, so the one export setting that
-  // affects the preview ("canvas labels") redraws it, while the other export settings don't.
+  // Remembers whether the canvases were last drawn with name labels, so the one export setting that
+  // affects the preview ("board labels") redraws it, while the other export settings don't.
   let labelsShown = state.session.export.canvasLabels;
   subscribe((meta) => {
     if (meta.view) { applyView(); return; }

@@ -67,12 +67,6 @@ function nameOf(layer) {
   return displayLayerName(raw);
 }
 
-// Every id found on the layer or the groups inside it. Only used to upgrade old saves, whose colors were
-// stored under Illustrator layer names (see state.js resolveLegacyLayerColors).
-function legacyIdsOf(layer) {
-  return [layer, ...layer.querySelectorAll('g')].map((g) => g.getAttribute('id')).filter(Boolean);
-}
-
 // ---------- Style scoping ----------
 // Rewrites a <style> block: drops at-rules and scopes every selector to this vector so classes like
 // ".cls-1" from two different SVGs can never collide. The paint declarations are KEPT (original colors).
@@ -126,8 +120,8 @@ function analyzeLayer(layer, root) {
 }
 
 // ---------- Main entry ----------
-// Parses, sanitizes and prepares an SVG. Returns { markup, layers } where layers = [{ name, colors, ids }]
-// (name: the layer's display name, colors: the hexes it really uses, ids: for upgrading old saves).
+// Parses, sanitizes and prepares an SVG. Returns { markup, layers } where layers = [{ name, colors }]
+// (name: the layer's display name, colors: the hexes it really uses).
 // Throws if the text isn't a valid SVG.
 export function processSvg(text, vid) {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
@@ -136,7 +130,7 @@ export function processSvg(text, vid) {
 
   sanitize(parsed);
   const found = findLayers(parsed);
-  const layers = found.map((g, i) => ({ name: nameOf(g) || `layer ${i + 1}`, colors: [], ids: legacyIdsOf(g) }));
+  const layers = found.map((g, i) => ({ name: nameOf(g) || `layer ${i + 1}`, colors: [] }));
   found.forEach((g, i) => g.setAttribute('data-layer', String(i)));
 
   // Prefix every id (clip paths, gradients, layers...) per vector and fix references to them.

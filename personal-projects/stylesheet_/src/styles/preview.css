@@ -46,19 +46,21 @@
   z-index: 5;
 }
 #preview-bar { top: 24px; height: 56px; }
-/* Export bar: two columns, each two stacked rows. Column 1: the style labels / canvas labels checkboxes.
+/* Export bar: two columns, each two stacked rows. Column 1: the style labels / board labels checkboxes.
    Column 2: format + transparent toggle, then scale. The export button sits top right.
    Height = 10px padding + 34px row + 8px gap + 34px row + 10px padding (+ border).
    If this height changes, update .toast-stack's bottom in overlays.css so toasts stay above the bar. */
 #export-bar { bottom: 24px; height: auto; padding: 10px 16px; gap: 28px; align-items: flex-start; }
 .export-col { display: flex; flex-direction: column; gap: 8px; }
-.export-row { display: flex; align-items: center; gap: 12px; height: 34px; }   /* 34px = the transparent toggle's height */
+.export-row { display: flex; align-items: center; gap: 12px; height: 34px; }   /* rows stay 34px (the bar's size and the #notify offset depend on it); the 30px toggles are centered in them */
 #export-bar .bar-label { width: 6ch; }      /* same width for "format" and "scale" so both toggles start on one edge */
 /* The one unique button: at rest it is the normal shared button; it only turns solid accent (background AND
    border) with dark text while hovered, and a shade darker while pressed. The ID selector beats the shared
    hover rule, which would otherwise make the text accent on an accent fill.
-   Normal height, pinned to the top right of the bar (the bar uses align-items: flex-start). */
-#btn-export.btn { height: 36px; padding: 0 20px; }
+   Same height and side padding as the format toggle buttons (--toggle-h / --toggle-pad-x), pinned to the
+   top right of the bar (the bar uses align-items: flex-start). The margin-top centers it in the 34px first
+   row, so its top and bottom line up with the format toggle's. */
+#btn-export.btn { height: var(--toggle-h); padding: 0 var(--toggle-pad-x); margin-top: calc((34px - var(--toggle-h)) / 2); }
 #btn-export.btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #0A0A0B; }
 #btn-export.btn:active:not(:disabled) { background: #C4E63B; border-color: #C4E63B; color: #0A0A0B; }
 /* While exporting the button is disabled ("exporting…"): keep the solid accent look instead of the dimmed disabled one. */
@@ -69,7 +71,7 @@
    A dynamic canvas (.dynamic) has no size of its own: it shrink-wraps its content plus padding. */
 .canvas {
   position: relative;
-  border-radius: 8px;
+  border-radius: 8px;              /* fallback only: preview.js sets each canvas's own radius inline */
   box-shadow: 0 10px 30px rgba(0,0,0,.4);
   overflow: hidden;
   cursor: default;
@@ -78,7 +80,7 @@
 /* A grid cell = the OPTION label above the canvas, both left-aligned (renderCanvasCell() in preview.js). */
 .canvas-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .canvas-label {
-  font-size: 11px; line-height: 1; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap;
+  font-size: 11px; line-height: 1; letter-spacing: 2px; white-space: nowrap;   /* the board's name exactly as typed (no uppercase) */
   color: var(--muted);             /* on the dark dot grid */
   pointer-events: none;            /* decorative */
 }
@@ -129,7 +131,7 @@
    target or a color row is hovered). They only exist in the live preview, never in an export. */
 .canvas.pick-bg::after {                   /* canvas background: a frame just inside the canvas edge */
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  border: 3px solid var(--accent); border-radius: 8px;
+  border: 3px solid var(--accent); border-radius: inherit;   /* follows the board's own corner radius */
 }
 .block.pick-text {                         /* text: a stroke around each character (outside half only, the fill stays visible) */
   -webkit-text-stroke: 3px var(--accent); paint-order: stroke fill;

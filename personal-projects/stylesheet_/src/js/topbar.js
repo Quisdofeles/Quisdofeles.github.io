@@ -28,7 +28,7 @@ export async function initTopbar({ onHelp, onSettings } = {}) {
   showMax(await window.api.window.isMaximized());
 }
 
-// Draws the breadcrumb: "/ lockup_A / tagline". Parents muted, last item white, each clickable.
+// Draws the breadcrumb: "/ Board 1 / tagline". Parents muted, last item white, each clickable.
 // `path` is an array of nodes from the canvas down to the selected node (empty = nothing selected).
 // With more than one node selected (`count` > 1) it just says "/ N selected" (nothing to click).
 export function renderBreadcrumb(path, onSelect, count = path.length ? 1 : 0) {

@@ -29,4 +29,10 @@
   --font-brand: 'Space Grotesk', sans-serif;             /* wordmark only, 700 */
 
   --row-h: 36px;          /* height of a property control row in the editor */
+
+  /* Segmented toggle button size (PNG | JPEG | WEBP and every other .seg). The export bar's transparency
+     toggle and export button, and the notification button / toasts / log entries reuse these two values
+     so they always match the format toggle exactly. */
+  --toggle-h: 30px;       /* height */
+  --toggle-pad-x: 12px;   /* left/right padding (vertical padding is 0; the text is centered in the height) */
 }

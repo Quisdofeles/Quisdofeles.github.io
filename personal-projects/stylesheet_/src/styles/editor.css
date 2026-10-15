@@ -62,7 +62,7 @@
 #props { flex: 0 1 auto; min-height: 0; overflow-y: auto; padding: 0 16px; }
 #props::-webkit-scrollbar { width: 4px; }
 #props::-webkit-scrollbar-thumb { background: #3A3A41; border-radius: 2px; }   /* lime-while-dragging rule is in base.css */
-/* Several items selected: one stacked section per item, each under a small header naming it ("lockup_A / title 1"). */
+/* Several items selected: one stacked section per item, each under a small header naming it ("Board 1 / title 1"). */
 .prop-item + .prop-item { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
 .prop-item-head { color: var(--text); padding: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prop-group { margin-bottom: 4px; }
