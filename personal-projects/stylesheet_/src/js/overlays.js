@@ -121,7 +121,7 @@ const HELP_TOP_MIN = 24;   // short windows only: the highest the row may move u
 // Each step card is a short list of points (one <li> each), so a lot of detail stays easy to scan.
 const HELP_CALLOUTS = [
   { title: '01 — LIBRARY', points: [
-    'Blocks: drag board, vector, image, heading, body or spacer into the preview. Presets you save show up here too.',
+    'Blocks: drag board, group, vector, image, heading or body into the preview. Presets you save show up here too.',
     '+ import copies media (svg, png, jpg) and fonts into the app, so your originals can be moved or deleted.',
     'Colors: + add one, or use the eyedropper to pick any color straight off a board. Click a color to edit its name or hex.',
     'Palettes: + add a palette, then + for more swatches. A swatch works exactly like a color.',
@@ -138,7 +138,7 @@ const HELP_CALLOUTS = [
     'Layers lists every board and its blocks. Drag rows to reorder or move them, double-click to rename, click the eye to hide.',
     '+ block adds a block to every selected board.',
     'Right-click a layer to copy, paste, duplicate, group, ungroup or delete. Keys: Ctrl+C / V, Ctrl+D, Ctrl+G, Delete.',
-    'Properties edits what is selected: colors, layout, size (fixed or dynamic, padding, corner radius), and a text block\'s font. Double-click any number to type it.',
+    'Properties edits what is selected: colors, text and font, size, spacing (padding or margin, per side with the link button, and offsets) and layout. Double-click any number to type it.',
     'Save as preset keeps a board\'s layout to reuse.',
   ] },
   { title: '04 — EXPORT', points: [

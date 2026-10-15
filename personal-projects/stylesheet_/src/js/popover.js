@@ -1,12 +1,13 @@
 // popover.js: small floating panels anchored to a button or a point (an addition to the CLAUDE.md file list).
 // One popover is open at a time. Contains the generic popover + context menu, and the specific ones:
-// color picker (library colors, palettes, hex input), font picker (family + weight), block-type menu,
+// color picker (library colors, palettes, hex input), font picker (family + weight), block-type menu, media picker,
 // and the small name/hex editor used for palette swatches.
 
 import { el, clear, isHex, normalizeHex, slug, $, icon } from './util.js';
 import { state, allFonts } from './state.js';
-import { sortBlockTypes } from './sorting.js';
+import { sortBlockTypes, sortMedia } from './sorting.js';
 import { typeLabel } from './blocks.js';
+import { mediaUrl } from './svg.js';
 import { groupFamilies, cssFamily, closestTo400, familySummary } from './fonts.js';
 
 let current = null;               // { pop, cleanup }
@@ -84,10 +85,15 @@ export function openBlockMenu(anchor, onPick) {
 
 // ---------- Color picker ----------
 // Lists library colors and palettes plus a hex input. onPick(hex) is called with an uppercase "#RRGGBB".
-export function openColorPicker(anchor, { current: currentHex, onPick }) {
+// `noneLabel` (optional, used by group backgrounds) adds a first row that calls onPick(null) = no color (transparent).
+export function openColorPicker(anchor, { current: currentHex, onPick, noneLabel = null }) {
   const pick = (hex) => { closePopover(); onPick(normalizeHex(hex)); };
   const body = scroller();
   const lib = state.library;
+  if (noneLabel) {
+    body.append(el('button', { class: 'menu-item', on: { click: () => { closePopover(); onPick(null); } } },
+      el('span', { class: 'chip' }), noneLabel, currentHex ? null : el('span', { class: 'sub', text: '✓' })));
+  }
   if (lib.colors.length) {
     body.append(el('div', { class: 'pop-title', text: 'colors' }));
     lib.colors.forEach((c) => body.append(el('button', { class: 'menu-item', on: { click: () => pick(c.hex) } },
@@ -126,6 +132,19 @@ export function openFontPicker(anchor, { currentId, onPick, noneLabel = null }) 
       el('span', { style: { fontFamily: `'${cssFamily(sample)}'` }, text: fam.family }),
       fam.family === currentFamily ? el('span', { class: 'sub', text: '✓' }) : el('span', { class: 'sub', text: familySummary(fam.fonts) })));
   });
+  openPopover(anchor, body);
+}
+
+// ---------- Media picker (a board's / group's background image) ----------
+// Lists the library's media (newest first, like the library), each with a small thumbnail. onPick(mediaId).
+export function openMediaPicker(anchor, { currentId, onPick }) {
+  const body = scroller();
+  const media = sortMedia(state.library.media);
+  if (!media.length) body.append(el('div', { class: 'pop-title', text: 'no media yet: + import in the library' }));
+  media.forEach((m) => body.append(el('button', { class: 'menu-item', title: m.name, on: { click: () => { closePopover(); onPick(m.id); } } },
+    el('img', { class: 'chip media-chip', src: mediaUrl(m), alt: '', draggable: false }),
+    el('span', { class: 'media-name', text: m.name }),
+    el('span', { class: 'sub', text: m.id === currentId ? '✓' : (m.kind === 'svg' ? 'svg' : 'image') }))));
   openPopover(anchor, body);
 }
 

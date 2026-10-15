@@ -86,7 +86,7 @@
 }
 .export-grid .canvas-label { color: #777; }   /* on the export's white/transparent sheet: same gray as its other headings */
 .canvas-content {
-  position: absolute; inset: 0;    /* fills a fixed canvas; the padding is inline (canvas.padding, set by preview.js) */
+  position: absolute; inset: 0;    /* fills a fixed canvas; the per-side padding is inline (canvas.padding, set by preview.js) */
   display: flex;
   justify-content: center;         /* center along the flow direction */
 }
@@ -105,9 +105,26 @@
 .block-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.15; }
 .block-text.is-empty { opacity: .4; }      /* cleared text shows the block's type name, faded */
 .block-group { display: flex; }
+.block-group.clips { overflow: hidden; }   /* any group that isn't fit × fit clips its content, like a board (preview.js) */
 .block-vector svg { display: block; height: auto; }
 .block-vector img, .block-image img { display: block; width: 100%; height: auto; }
-.block-spacer { flex: none; }
+
+/* ---------- Background layer (boards and groups; backgroundLayer() in preview.js) ----------
+   Holds the background image and any fill images. isolation makes the board/group its own stacking context, so the
+   layer's z-index -1 puts it above the element's background color but below its content. */
+.canvas, .block-group { isolation: isolate; }
+.bg-layer {
+  position: absolute; inset: 0; z-index: -1;      /* covers the whole element, padding included */
+  border-radius: inherit; overflow: hidden;       /* clipped to the board's / group's corner radius */
+  pointer-events: none;                           /* clicks on the background image go to the board/group itself */
+}
+.bg-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }   /* object-fit (cover/contain) is inline */
+.bg-layer .bg-placeholder { position: absolute; inset: 0; border-radius: 0; padding: 0; }  /* preset slot / missing media */
+/* An image block with fill on: covers its parent edge to edge, behind the parent's other content. It is still a
+   layer you can click, so it takes the pointer back. */
+.block.fill-image { position: absolute; inset: 0; max-width: none; pointer-events: auto; }
+.block.fill-image img { width: 100%; height: 100%; object-fit: cover; }
+.block.fill-image.selected { outline-offset: -2px; }    /* inside the edge, or the parent's clipping would hide it */
 
 /* Gray placeholder for a media slot with nothing assigned (or whose vector/image was deleted). Text has no placeholder box any more. */
 .placeholder {
@@ -129,7 +146,7 @@
 
 /* "What is about to change" outlines in the accent color (added by outline.js while a color/font is dragged over a
    target or a color row is hovered). They only exist in the live preview, never in an export. */
-.canvas.pick-bg::after {                   /* canvas background: a frame just inside the canvas edge */
+.canvas.pick-bg::after, .block-group.pick-bg::after {   /* board or group background: a frame just inside its edge */
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   border: 3px solid var(--accent); border-radius: inherit;   /* follows the board's own corner radius */
 }

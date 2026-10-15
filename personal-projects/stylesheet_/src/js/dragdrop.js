@@ -15,10 +15,13 @@ import { $ } from './util.js';
 import {
   state, findNode, getMedia, findColor, addBlock, addBlockToNewCanvas, addCanvas, addCanvasFromPreset,
   addMediaBlock, addMediaToNewCanvas, swapMedia, setBlockFonts, fontTargets, dropColor, setCanvasBackground, setTextColor, setLayerColor, moveNode,
-  insertPaletteColor, movePaletteColor,
+  insertPaletteColor, movePaletteColor, setGroupBackground, backgroundTargetOf, setBgImage,
 } from './state.js';
 import { isContainer, isTextType } from './blocks.js';
 import { showOutline } from './outline.js';
+
+// The accent outline for a board's or group's background: its edge.
+const bgOutline = (node) => (node.type === 'group' ? { type: 'group', blockId: node.id } : { type: 'canvas', canvasId: node.id });
 
 let drag = null;          // { kind, id } of the drag in progress (dragover can't read dataTransfer, so we keep it here)
 let hot = null;           // { el, cls } currently outlined
@@ -80,7 +83,8 @@ function planPreview(e) {
       return { el: null, outline: { type: 'text', blockIds: targets }, run: () => setBlockFonts(targets, drag.id) };
     }
     case 'color': {
-      // A color changes exactly one thing: a text block, ONE vector layer (the one under the pointer), or a canvas background.
+      // A color changes exactly one thing: a text block, ONE vector layer (the one under the pointer), or one
+      // background: a group's (empty space inside it), an image's container's (group or board), or the board's.
       const hex = hexOf(drag.id);
       if (!hex || !canvasEl) return null;
       if (blockNode && isTextType(blockNode.node.type)) {
@@ -92,7 +96,8 @@ function planPreview(e) {
         const layer = layerEl.getAttribute('data-layer');
         return { el: null, outline: { type: 'layer', blockId: blockNode.node.id, layer }, run: () => dropColor(blockNode.node.id, hex, layer) };
       }
-      return { el: null, outline: { type: 'canvas', canvasId: canvasEl.dataset.id }, run: () => dropColor(canvasEl.dataset.id, hex) };
+      const targetId = blockNode ? blockNode.node.id : canvasEl.dataset.id;
+      return { el: null, outline: bgOutline(backgroundTargetOf(targetId)), run: () => dropColor(targetId, hex) };
     }
     default:
       return null;
@@ -153,7 +158,8 @@ function planRow(rowEl, e) {
       if (!hex) return null;
       if (isTextType(node.type)) return { el: rowEl, cls: 'drop-into', outline: { type: 'text', blockId: node.id }, run: () => dropColor(node.id, hex) };
       if (node.type === 'vector') return null;                       // a vector has several layers: drop on one in the preview or in its colors section
-      return { el: rowEl, cls: 'drop-into', outline: { type: 'canvas', canvasId: target.canvas.id }, run: () => dropColor(node.id, hex) };
+      // A group row -> that group's background; an image row -> its container's; a board (or other) row -> the board's.
+      return { el: rowEl, cls: 'drop-into', outline: bgOutline(backgroundTargetOf(node.id)), run: () => dropColor(node.id, hex) };
     }
     default:
       return null;
@@ -233,10 +239,17 @@ function planDrop(e) {
   if (colorEl) {
     const hex = drag.kind === 'color' ? hexOf(drag.id) : null;
     if (!hex) return null;
-    const { dropColor: what, nodeId, layerKey: layer } = colorEl.dataset;       // what = 'canvas' | 'text' | 'layer'
+    const { dropColor: what, nodeId, layerKey: layer } = colorEl.dataset;       // what = 'canvas' | 'group' | 'text' | 'layer'
     if (what === 'canvas') return { el: colorEl, cls: 'drop-target', outline: { type: 'canvas', canvasId: nodeId }, run: () => setCanvasBackground(nodeId, hex) };
+    if (what === 'group') return { el: colorEl, cls: 'drop-target', outline: { type: 'group', blockId: nodeId }, run: () => setGroupBackground(nodeId, hex) };
     if (what === 'text') return { el: colorEl, cls: 'drop-target', outline: { type: 'text', blockId: nodeId }, run: () => setTextColor(nodeId, hex) };
     return { el: colorEl, cls: 'drop-target', outline: { type: 'layer', blockId: nodeId, layer }, run: () => setLayerColor(nodeId, layer, hex) };
+  }
+  const mediaEl = e.target.closest('[data-drop-media]');               // the "background image" row of a board/group in the properties
+  if (mediaEl) {
+    const hit = findNode(mediaEl.dataset.dropMedia);
+    if (drag.kind !== 'media' || !getMedia(drag.id) || !hit) return null;
+    return { el: mediaEl, cls: 'drop-target', outline: bgOutline(hit.node), run: () => setBgImage(hit.node.id, drag.id) };
   }
   const fontEl = e.target.closest('[data-drop-font]');                 // the font row of a text block's section in the properties
   if (fontEl) {

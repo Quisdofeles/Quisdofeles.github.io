@@ -9,8 +9,8 @@
 import { uid, clone, normalizeHex } from './util.js';
 import {
   createBlock, createCanvas, cloneWithNewIds, structureFromCanvas, canvasFromStructure,
-  isContainer, isTextType, hasVisibleContent, BASE_NAME,
-  STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE, DEFAULT_PADDING,
+  isContainer, isTextType, hasVisibleContent, BASE_NAME, groupingDefaults,
+  STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE,
 } from './blocks.js';
 import { BUILTIN_FONTS } from './fonts.js';
 
@@ -232,14 +232,18 @@ function allNodes() {
 }
 
 // How many blocks use these library items. Fonts: text blocks whose own font is one of them.
-// Media: vector/image blocks pointing at it. Colors/palettes/presets store copies, so they are never "in use".
+// Media: vector/image blocks pointing at it, plus boards and groups using it as their background image.
+// Colors/palettes/presets store copies, so they are never "in use".
 export function usageCount(kind, ids) {
   const set = new Set(ids);
   let count = 0;
+  const usesAsBackground = (n) => kind === 'media' && n.bgImage && set.has(n.bgImage.mediaId);
   for (const cv of state.session.canvases) {
+    if (usesAsBackground(cv)) count++;
     const walk = (list) => list.forEach((n) => {
       if (kind === 'font' && isTextType(n.type) && set.has(n.font)) count++;
       if (kind === 'media' && (n.type === 'vector' || n.type === 'image') && set.has(n.mediaId)) count++;
+      if (usesAsBackground(n)) count++;
       if (n.children) walk(n.children);
     });
     walk(cv.children);
@@ -422,7 +426,7 @@ export function addBlockToNewCanvas(type, extra = {}) {
   if (type === 'canvas') return addCanvas();
   const canvas = createCanvas({
     name: nextCanvasName(),
-    size: { mode: 'dynamic', width: EMPTY_SIZE, height: EMPTY_SIZE }, padding: DEFAULT_PADDING,
+    size: { mode: 'dynamic', width: EMPTY_SIZE, height: EMPTY_SIZE },   // padding: createCanvas()'s default 24 on every side
   });
   canvas.children.push(createBlock(type, { name: `${type} 1`, ...extra }));
   change(() => {
@@ -481,6 +485,20 @@ export function setCanvasBackground(canvasId, hex) {
   change(() => { hit.node.background = normalizeHex(hex); });
 }
 
+// Sets a group's background color. hex = null makes it transparent ("none"; also what reset does).
+export function setGroupBackground(groupId, hex) {
+  const hit = findNode(groupId);
+  if (!hit || hit.node.type !== 'group') return;
+  change(() => { hit.node.background = hex ? normalizeHex(hex) : null; });
+}
+
+// Sets (or swaps) the background image of a board or group, keeping its fit (cover for a new one). One undo step.
+export function setBgImage(nodeId, mediaId) {
+  const hit = findNode(nodeId);
+  if (!hit || !isContainer(hit.node) || !getMedia(mediaId)) return;
+  change(() => { hit.node.bgImage = { mediaId, fit: (hit.node.bgImage || {}).fit || 'cover' }; });
+}
+
 // Sets a text block's color.
 export function setTextColor(blockId, hex) {
   const hit = findNode(blockId);
@@ -507,17 +525,30 @@ export function setLayerColor(blockId, layer, hex) {
   });
 }
 
+// The container whose BACKGROUND a color dropped on `node` changes: a group itself; an image block's own
+// container (the group or board it sits in); anything else -> its board. Exported for dragdrop.js (the outline).
+export function backgroundTargetOf(nodeId) {
+  const hit = findNode(nodeId);
+  if (!hit) return null;
+  if (hit.node.type === 'canvas' || hit.node.type === 'group') return hit.node;
+  if (hit.node.type === 'image' && hit.parent && hit.parent.type === 'group') return hit.parent;
+  return hit.canvas;
+}
+
 // A color dropped on something (one undo step); it sets just that one thing:
 // a text block -> its color; a vector block -> the layer under the pointer (`layer`, required: with no layer
-// nothing happens); a canvas or any other block -> the canvas background.
+// nothing happens); a group -> its background; an image -> its container's background (group or board);
+// a canvas or anything else -> the canvas background.
 export function dropColor(nodeId, hex, layer) {
   const hit = findNode(nodeId);
   if (!hit) return;
   const node = hit.node;
   if (node.type === 'vector' && layer === undefined) return;
-  if (isTextType(node.type)) setTextColor(node.id, hex);
-  else if (node.type === 'vector') setLayerColor(node.id, layer, hex);
-  else setCanvasBackground(hit.canvas.id, hex);
+  if (isTextType(node.type)) { setTextColor(node.id, hex); return; }
+  if (node.type === 'vector') { setLayerColor(node.id, layer, hex); return; }
+  const target = backgroundTargetOf(node.id);
+  if (target.type === 'group') setGroupBackground(target.id, hex);
+  else setCanvasBackground(target.id, hex);
 }
 
 // Swaps the media item a block points at. A vector's layer colors belong to the old file's layers, so they reset
@@ -554,35 +585,33 @@ export function moveNode(id, newParentId, index) {
     let at = index === undefined ? target.length : index;
     if (loc.list === target && loc.index < at) at--;          // removing earlier item shifts the target slot
     target.splice(Math.max(0, Math.min(at, target.length)), 0, moved);
-    pruneEmptyGroups();                                       // the group it left may be empty now
+    keepSelectionValid();                                     // e.g. a selected block moved into a selected group
   });
 }
 
-// Removes every group that has no children left (an empty group has nothing to show). Runs inside the same undo
-// step as the move/delete that emptied it, then keeps the selection valid. Nested groups are handled bottom-up.
-function pruneEmptyGroups() {
-  const prune = (list) => {
-    for (let i = list.length - 1; i >= 0; i--) {
-      const n = list[i];
-      if (!n.children) continue;
-      prune(n.children);
-      if (n.type === 'group' && !n.children.length) list.splice(i, 1);
-    }
-  };
-  state.session.canvases.forEach((cv) => prune(cv.children));
+// Re-applies the selection rules after the tree changed shape (deleted ids drop out, an inner block of a selected
+// group is dropped). Empty groups are NOT removed any more: you can build empty layouts first and fill them later.
+function keepSelectionValid() {
   state.session.selection = cleanSelection(state.session.selection);
 }
 
 // Wraps the selected blocks in a new group (right-click -> group, Ctrl+G), as ONE undo step; the new group becomes
 // the selection. Canvases can't be grouped (they are ignored). The group sits where the first selected block (top of
-// the tree) was, the blocks keep their tree order, and it copies the parent's layout so nothing shifts visually.
+// the tree) was, the blocks keep their tree order, and it is set up so nothing shifts visually: no background,
+// fit × fit, no padding, square corners (groupingDefaults() in blocks.js) and a copy of the parent's layout.
+// One extra rule: if a grouped block is a group that FILLS an axis, the new group fills that axis too, so the inner
+// fill keeps filling the same space (inside a fit group it would act like fit and shrink).
 export function groupNodes(ids) {
   const hits = ids.map((id) => findNode(id)).filter((h) => h && h.node.type !== 'canvas');
   if (!hits.length) return null;
   const order = new Map(allNodes().map((n, i) => [n.id, i]));
   hits.sort((a, b) => order.get(a.node.id) - order.get(b.node.id));
   const first = hits[0];
-  const group = createBlock('group', { name: numberedName('group', first.canvas), layout: { ...first.parent.layout } });
+  const fills = (key) => hits.some((h) => h.node.type === 'group' && h.node.size[key] === 'fill');
+  const extra = groupingDefaults();
+  if (fills('widthMode')) extra.size.widthMode = 'fill';
+  if (fills('heightMode')) extra.size.heightMode = 'fill';
+  const group = createBlock('group', { ...extra, name: numberedName('group', first.canvas), layout: { ...first.parent.layout } });
   change(() => {
     first.list.splice(first.index, 1, group);                 // the group takes the first block's slot
     group.children.push(first.node);
@@ -591,7 +620,6 @@ export function groupNodes(ids) {
       loc.list.splice(loc.index, 1);
       group.children.push(hit.node);
     }
-    pruneEmptyGroups();                                       // a group whose blocks all moved out disappears
     pick([group.id]);
   });
   return group;
@@ -626,7 +654,7 @@ export function removeNodes(ids) {
       const loc = findNode(id);               // looked up fresh: an earlier removal may have taken this one with it
       if (loc) loc.list.splice(loc.index, 1);
     }
-    pruneEmptyGroups();                      // also keeps the selection valid
+    keepSelectionValid();
   });
 }
 

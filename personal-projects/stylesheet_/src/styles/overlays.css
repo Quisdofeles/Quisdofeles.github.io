@@ -88,6 +88,9 @@
 .menu-item .glyph { color: var(--accent); width: 14px; text-align: center; }
 .menu-item .sub { margin-left: auto; color: var(--muted); font-size: 11px; }
 .menu-item .chip { width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; }
+/* Media picker (background images): a small thumbnail instead of a color chip, and a name that truncates. */
+.menu-item .media-chip { object-fit: contain; background: rgba(128,128,128,.22); }
+.menu-item .media-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pop-palette { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 2px 4px 6px; }
 .pop-palette .chip-btn { height: 20px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); padding: 0; }
 .pop-palette .chip-btn:hover { outline: 1px solid var(--accent); }

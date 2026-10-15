@@ -5,6 +5,7 @@
 //
 // A target is one of:
 //   { type: 'canvas', canvasId }               -> the canvas edge (its background)
+//   { type: 'group',  blockId }                -> a group's edge (its background or background image)
 //   { type: 'text',   blockId }                -> the glyphs of that text block
 //   { type: 'text',   blockIds: [...] }        -> the glyphs of several text blocks at once (a font dropped on a multi-selection)
 //   { type: 'layer',  blockId, layer }         -> the shapes of one first-level layer of a vector block
@@ -42,6 +43,13 @@ function apply(t) {
     if (!card) return null;
     card.classList.add('pick-bg');                      // draws an accent frame just inside the canvas edge
     return { node: card, undo: () => card.classList.remove('pick-bg') };
+  }
+
+  if (t.type === 'group') {
+    const box = grid().querySelector(`.block-group[data-id="${t.blockId}"]`);
+    if (!box) return null;
+    box.classList.add('pick-bg');                       // the same accent frame as a board, following the group's radius
+    return { node: box, undo: () => box.classList.remove('pick-bg') };
   }
 
   if (t.type === 'text') {

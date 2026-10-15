@@ -5,7 +5,7 @@
 import { BLOCK_TYPES, OFFERED_BLOCKS } from './blocks.js';
 
 // The order the default blocks appear in the library AND the "+ block" menu: the offered blocks, in the order of
-// OFFERED_BLOCKS in blocks.js (canvas = "board" on screen, vector, image, heading, body, spacer; edit that list to change it).
+// OFFERED_BLOCKS in blocks.js (canvas = "board" on screen, group, vector, image, heading, body; edit that list to change it).
 export const BLOCK_ORDER = OFFERED_BLOCKS;
 
 // The offered block type entries, in BLOCK_ORDER. Types that exist but aren't offered (title, subheading, caption)

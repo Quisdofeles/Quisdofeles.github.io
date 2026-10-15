@@ -102,12 +102,27 @@ button.prop-row { width: 100%; text-align: left; }   /* look comes from the shar
 .slider-row .label { min-width: 44px; flex: none; white-space: nowrap; }
 .slider-row input[type=range] { flex: 1; min-width: 0; }
 .slider-row .val { width: 44px; text-align: right; color: var(--muted); flex: none; cursor: text; }
+/* Spacing group: the padding/margin link toggle (shared .icon-toggle look, 22px like the color card's eyedropper so it
+   fits the compact 26px rows) at the end of the first row, and an equal empty slot on the other rows so every slider
+   in the group ends at the same x. */
+.slider-row .link-toggle, .slider-row .link-slot { width: 22px; height: 22px; flex: none; }
+.slider-row .link-toggle svg { width: 14px; height: 14px; }
 /* The number turns into this box on double-click (selector is specific enough to beat the global text-input style). */
 .slider-row input.val-input[type=text] { width: 44px; flex: none; height: auto; padding: 0; border: 0; border-bottom: 1px solid var(--accent); border-radius: 0; background: transparent; text-align: right; color: var(--text); font: inherit; }
 
 /* Segmented toggles in the editor match the 36px (or compact) row height. */
 .seg.full { display: flex; width: 100%; height: var(--row-h); }
 .seg.full button { flex: 1; min-height: 0; padding: 0 6px; }
+/* A label + segmented toggle on one line (group width/height modes, image fill, background image fit; modeRow() in
+   properties.js). The label gets the slider rows' 10px inset and 44px minimum, so it lines up with the slider labels. */
+.mode-row { display: flex; align-items: center; gap: 10px; }
+.mode-row > .label { min-width: 54px; padding-left: 10px; flex: none;   /* 54 = 10px inset + 44px (border-box) */ color: var(--text); font-weight: 500; white-space: nowrap; }
+.mode-row .seg.full { flex: 1; width: auto; min-width: 0; }
+/* Background image row (appearance group): a small thumbnail instead of a color swatch; the file name truncates. */
+.bgimg-btn .bg-thumb { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; object-fit: cover; }
+.bgimg-btn .bg-thumb.empty { background: rgba(128,128,128,.4); }   /* a slot without media (preset, deleted item): gray */
+.bgimg-btn .hex { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clear-link { font-size: 14px; text-decoration: none; }   /* the × that removes a background image */
 .split-row { display: flex; gap: 4px; }
 .split-row .seg:first-child { flex: 2; }
 .split-row .seg:last-child { flex: 3; }
@@ -149,6 +164,7 @@ button.prop-row { width: 100%; text-align: left; }   /* look comes from the shar
   .prop-group { margin-bottom: 2px; }
   .prop-body { gap: 2px; padding-bottom: 2px; }
   .prop-row { font-size: 12px; padding: 0 8px; }
+  .mode-row > .label { font-size: 12px; padding-left: 8px; min-width: 52px; }   /* matches the compact .prop-row text and inset */
   .props-foot { padding: 4px 16px 8px; }
   .props-foot .dashed-btn { height: 28px; }
   .text-input { font-size: 12px; }

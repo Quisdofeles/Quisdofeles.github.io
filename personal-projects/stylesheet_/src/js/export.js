@@ -1,7 +1,7 @@
 // export.js: the floating export bar (two rows) and the rendering of the preview to a PNG/JPEG/WebP.
 // The image is drawn from an OFFSCREEN copy of the canvas grid (at 100% zoom, ignoring the current
 // zoom/pan), built with the same renderCanvasCell() the preview uses, then rasterized by html-to-image.
-// Optional "style labels" strip below the canvases lists every color, font and vector used.
+// Optional "style labels" strip below the canvases lists every color, font and media item used (background images too).
 
 import { el, clear, $, checkerIcon, normalizeHex } from './util.js';
 import { state, subscribe, setExport, visibleCanvases, getFont, getMedia } from './state.js';
@@ -44,16 +44,24 @@ export function initExport() {
 // ---------- Gathering what the canvases use ----------
 // Walks every visible canvas and collects the colors, fonts and media actually in use.
 // colors = one group per canvas: { label: <the canvas's name, e.g. 'Board 1'>, items: [{ name, colors: [hex, ...] }] }. Every colorable
-// thing is listed by name with the color it uses RIGHT NOW: the background, each text block, and each first-level
-// layer of each vector (a layer still on its original colors lists every color the file uses in it).
+// thing is listed by name with the color it uses RIGHT NOW: the background, each group's background (by the
+// group's name; transparent groups are left out), each text block, and each first-level layer of each vector (a layer
+// still on its original colors lists every color the file uses in it). Background images (boards and groups) are
+// listed under media, like vector and image blocks.
 function collectUsage(canvases) {
   const colors = [];
   const fonts = new Map();      // fontId -> font
   const media = new Map();      // mediaId -> media item
+  const addBgImage = (node) => { if (node.bgImage && getMedia(node.bgImage.mediaId)) media.set(node.bgImage.mediaId, getMedia(node.bgImage.mediaId)); };
   canvases.forEach((cv) => {
     const items = [{ name: 'background', colors: [normalizeHex(cv.background)] }];
+    addBgImage(cv);
     const walk = (list) => list.forEach((b) => {
       if (b.hidden) return;
+      if (b.type === 'group') {
+        if (b.background) items.push({ name: b.name, colors: [normalizeHex(b.background)] });
+        addBgImage(b);
+      }
       if (isTextType(b.type) && b.text) {
         const f = getFont(b.font) || getFont(DEFAULT_FONT_ID);      // same fallback the preview uses
         fonts.set(f.id, f);

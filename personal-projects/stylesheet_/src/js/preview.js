@@ -8,7 +8,7 @@ import {
 } from './state.js';
 import { fontCss, DEFAULT_FONT_ID } from './fonts.js';
 import { buildVectorSvg, mediaUrl } from './svg.js';
-import { isTextType } from './blocks.js';
+import { isTextType, sidesCss, isFillImage, hasVisibleContent, groupClips, GROUP_EMPTY_MIN, EMPTY_SIZE } from './blocks.js';
 
 const MIN_ZOOM = 0.25, MAX_ZOOM = 4;
 // Where the canvas grid's top-left sits inside the stage at pan (0, 0): below the floating top bar.
@@ -58,11 +58,93 @@ const placeholder = (kind, label, widthPx) => el('div', {
   class: `placeholder ${kind}`, text: label, style: widthPx ? { width: `${widthPx}px` } : {},
 });
 
-// Builds the DOM for one block. Colors and fonts are the block's own.
-// Returns null for hidden blocks (they are not rendered at all).
-function renderBlock(block, canvas, selectedIds) {
-  if (block.hidden) return null;
+// ---------- Container backgrounds (boards and groups) ----------
+// Paint order inside a board or group, back to front:
+//   1. its background color (on the element itself)
+//   2. its background image (bgImage), then any fill images (image blocks with fill on), in layer order
+//   3. its normal content (the flex flow)
+// 2 lives in one .bg-layer: absolutely positioned over the whole element (padding ignored), clipped to the corner
+// radius, at z-index -1. The board/group is `isolation: isolate` (preview.css), so -1 means "above my own
+// background, below my content". Returns null when there is nothing to draw there.
+function backgroundLayer(container, fillImages, selectedIds) {
+  if (!container.bgImage && !fillImages.length) return null;
+  const layer = el('div', { class: 'bg-layer' });
+  const bi = container.bgImage;
+  if (bi) {
+    const item = getMedia(bi.mediaId);
+    // SVGs are shown as the file is (original colors); a missing item (preset slot, deleted media) is gray.
+    layer.append(item
+      ? el('img', { class: 'bg-image', src: mediaUrl(item), alt: '', draggable: false, style: { objectFit: bi.fit } })
+      : el('div', { class: 'placeholder bg-placeholder' }));
+  }
+  fillImages.forEach((b) => layer.append(renderFillImage(b, selectedIds)));
+  return layer;
+}
+
+// An image block with fill on: covers its parent edge to edge (object-fit: cover). It is still a normal block
+// (data-id), so it can be clicked/selected; its width, margin and offset are not used.
+function renderFillImage(block, selectedIds) {
+  const node = el('div', { class: 'block block-image fill-image' + (selectedIds.has(block.id) ? ' selected' : ''), dataset: { id: block.id } });
+  const item = getMedia(block.mediaId);
+  node.append(item
+    ? el('img', { src: mediaUrl(item), alt: item.name, draggable: false })
+    : el('div', { class: 'placeholder bg-placeholder', text: 'image' }));
+  return node;
+}
+
+// Renders a container's children: fill images go into its background layer, everything else into `flow`.
+// `ctx` describes the container for its children's sizing (see groupSizing()).
+function renderChildren(container, host, flow, ctx, selectedIds) {
+  const visible = container.children.filter((c) => !c.hidden);
+  const layer = backgroundLayer(container, visible.filter(isFillImage), selectedIds);
+  if (layer) host.prepend(layer);
+  visible.filter((c) => !isFillImage(c)).forEach((child) => flow.append(renderBlock(child, ctx, selectedIds)));
+}
+
+// Group sizing. `ctx` = the parent container: { direction: 'stack' | 'row', defW, defH }, where defW/defH say whether
+// the parent has a size of its own on that axis (a fixed board: yes; a dynamic board: no; a group: a fixed axis yes,
+// a fill axis only if ITS parent's is, a fit axis no). Fill only works against a definite parent axis; otherwise it
+// behaves like fit, except that an EMPTY group gets 160px on that axis (not the 40px minimum). Along the parent's direction fill = flex: 1 (fill siblings share the space equally); across
+// it, fill = stretch. Returns the ctx for the group's own children.
+function groupSizing(node, group, ctx) {
+  const s = group.size;
+  const empty = !hasVisibleContent(group);
+  const axes = [
+    { prop: 'width', mode: s.widthMode, value: s.width, def: ctx.defW, main: ctx.direction === 'row', min: 'minWidth' },
+    { prop: 'height', mode: s.heightMode, value: s.height, def: ctx.defH, main: ctx.direction !== 'row', min: 'minHeight' },
+  ];
+  for (const a of axes) {
+    if (a.mode === 'fixed') {
+      node.style[a.prop] = `${a.value}px`;
+      if (a.main) node.style.flexShrink = '0';                // a fixed size never gets squeezed by its neighbours
+      continue;
+    }
+    if (a.mode === 'fill' && a.def) {
+      if (a.main) { node.style.flex = '1 1 0'; node.style[a.min] = '0'; } else node.style.alignSelf = 'stretch';
+    } else if (a.mode === 'fill' && empty) {
+      // Fill can't resolve here (dynamic board or fit group) and there is no content to fit: use 160px on this
+      // axis (like a fixed size) instead of collapsing to the 40px minimum. With content it fits the content.
+      node.style[a.prop] = `${EMPTY_SIZE}px`;
+      if (a.main) node.style.flexShrink = '0';
+      continue;
+    }
+    if (empty) node.style[a.min] = `${GROUP_EMPTY_MIN}px`;   // an empty fit/fill group stays visible and droppable
+  }
+  return {
+    direction: group.layout.direction,
+    defW: s.widthMode === 'fixed' || (s.widthMode === 'fill' && ctx.defW),
+    defH: s.heightMode === 'fixed' || (s.heightMode === 'fill' && ctx.defH),
+  };
+}
+
+// Builds the DOM for one block. Colors and fonts are the block's own. `ctx` = its container (see groupSizing()).
+// Hidden blocks are filtered out by renderChildren(), so this always returns an element.
+function renderBlock(block, ctx, selectedIds) {
   const node = el('div', { class: `block block-${block.type}` + (selectedIds.has(block.id) ? ' selected' : ''), dataset: { id: block.id } });
+  // Spacing: margin is real layout space (pushes neighbours away in the stack/row); offset is a transform, so it only
+  // moves the block visually and never shifts neighbours or changes a dynamic canvas's size.
+  node.style.margin = sidesCss(block.margin);
+  if (block.offset.x || block.offset.y) node.style.transform = `translate(${block.offset.x}px, ${block.offset.y}px)`;
 
   if (isTextType(block.type)) {
     // Every text block has its own font. A font that was deleted from the library falls back to Space Grotesk (the default) so the
@@ -80,11 +162,17 @@ function renderBlock(block, canvas, selectedIds) {
   } else if (block.type === 'image') {
     const vec = getMedia(block.mediaId);
     node.append(vec ? el('img', { src: mediaUrl(vec), alt: vec.name, style: { width: `${block.width}px` }, draggable: false }) : placeholder('box', 'image', block.width));
-  } else if (block.type === 'spacer') {
-    node.style.width = node.style.height = `${block.size}px`;
   } else if (block.type === 'group') {
-    applyLayout(node, block.layout, 'flex-start');
-    block.children.forEach((child) => { const c = renderBlock(child, canvas, selectedIds); if (c) node.append(c); });
+    // Like a small board: its own background (null = transparent), corner radius, padding and layout. Content is
+    // centered along the flow like a board's (only noticeable when the group is bigger than its content).
+    // Only a fit × fit group (e.g. one made with Ctrl+G) lets content stick out; any other group clips it.
+    applyLayout(node, block.layout, 'center');
+    Object.assign(node.style, {
+      background: block.background || 'transparent', borderRadius: `${block.radius}px`, padding: sidesCss(block.padding),
+    });
+    if (groupClips(block)) node.classList.add('clips');
+    const inner = groupSizing(node, block, ctx);
+    renderChildren(block, node, node, inner, selectedIds);
   }
   return node;
 }
@@ -106,11 +194,13 @@ export function renderCanvasElement(canvas, index, { interactive = true } = {}) 
     style: dynamic ? look : { ...look, width: `${canvas.size.width}px`, height: `${canvas.size.height}px` },
   });
   // (The name label is not inside the card: renderCanvasCell() puts it above the canvas.)
-  // Padding = the space between the content and the canvas edge (same on all four sides).
-  const content = el('div', { class: 'canvas-content', style: { padding: `${canvas.padding}px` } });
+  // Padding = the space between the content and the canvas edge, per side (top, right, bottom, left).
+  const content = el('div', { class: 'canvas-content', style: { padding: sidesCss(canvas.padding) } });
   applyLayout(content, canvas.layout, 'center');
-  canvas.children.forEach((child) => { const c = renderBlock(child, canvas, selectedIds); if (c) content.append(c); });
   card.append(content);
+  // A fixed board has a definite width and height, so groups inside can fill it; a dynamic one has neither.
+  const ctx = { direction: canvas.layout.direction, defW: !dynamic, defH: !dynamic };
+  renderChildren(canvas, card, content, ctx, selectedIds);    // the background layer goes into the card, under the content
   return card;
 }
 
@@ -326,7 +416,7 @@ function initInteraction() {
     const textEl = e.target.closest('.block-text[data-id]');
     if (!textEl || e.ctrlKey || e.metaKey || e.shiftKey) return;
     selectNode(textEl.dataset.id);
-    if (state.session.collapsedGroups.block) setGroupCollapsed('block', false);   // the text box lives in the (collapsed?) block group
+    if (state.session.collapsedGroups.text) setGroupCollapsed('text', false);   // the text box lives in the (collapsed?) text group
     const input = document.querySelector('#props .text-input');
     if (input) { input.focus(); input.select(); }
   });

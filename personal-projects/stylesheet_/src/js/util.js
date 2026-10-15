@@ -110,6 +110,10 @@ const SVG = {
   // center (collapse). Deliberately not the square maximize/restore icons of the top bar.
   expand: '<path d="M9.5 2.5h4v4M13.5 2.5L9.2 6.8M6.5 13.5h-4v-4M2.5 13.5L6.8 9.2"/>',
   collapse: '<path d="M9.2 3v3.8H13M9.2 6.8l4.3-4.3M6.8 13V9.2H3M6.8 9.2l-4.3 4.3"/>',
+  // Padding / margin link toggle: two chain links joined by a bar (linked = all four sides equal) or pulled apart
+  // with small break marks (unlinked = each side on its own slider).
+  link: '<path d="M6.6 9.4l2.8-2.8"/><path d="M7.5 4.6l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4l-1.2 1.2"/><path d="M8.5 11.4l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4l1.2-1.2"/>',
+  unlink: '<path d="M7.5 4.6l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4l-1.2 1.2"/><path d="M8.5 11.4l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4l1.2-1.2"/><path d="M10.6 12.6v1.4M12.6 10.6H14M5.4 3.4V2M3.4 5.4H2"/>',
 };
 
 // Returns an <svg> element for a named icon.
