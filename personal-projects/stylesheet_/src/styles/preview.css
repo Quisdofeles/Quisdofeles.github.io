@@ -104,10 +104,23 @@
 .block.hidden-block { display: none; }
 .block-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.15; }
 .block-text.is-empty { opacity: .4; }      /* cleared text shows the block's type name, faded */
+/* On-canvas text editing (startTextEdit() in preview.js): the page is user-select: none, so the edited block turns
+   text selection back on and shows the text cursor. Its tracking, line height, case, wrap... are inline (preview.js). */
+.block-text.editing { user-select: text; -webkit-user-select: text; cursor: text; outline-style: solid; }
 .block-group { display: flex; }
 .block-group.clips { overflow: hidden; }   /* any group that isn't fit × fit clips its content, like a board (preview.js) */
 .block-vector svg { display: block; height: auto; }
 .block-vector img, .block-image img { display: block; width: 100%; height: auto; }
+/* Palette block (renderPaletteBar() in preview.js): equal sections side by side (or stacked when vertical; the
+   direction, size and radius are inline). flex: none keeps its set size in a row or stack. */
+.block-palette { display: flex; overflow: hidden; flex: none; }
+.palette-section {
+  flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 1px;
+  padding: 4px 6px;
+  font-family: var(--font-ui); font-weight: 400; font-size: 10px; line-height: 1.2; letter-spacing: .5px; text-align: left;
+}
+.palette-section-label { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- Background layer (boards and groups; backgroundLayer() in preview.js) ----------
    Holds the background image and any fill images. isolation makes the board/group its own stacking context, so the
@@ -156,6 +169,9 @@
 .pick-layer, .pick-layer * {               /* vector layer: a copy of the layer drawn as accent outlines following its shapes */
   fill: none !important; stroke: var(--accent) !important; stroke-width: 2px !important;
   vector-effect: non-scaling-stroke; pointer-events: none;
+}
+.palette-section.pick-section {            /* one section of a palette block: a frame just inside its edge */
+  outline: 3px solid var(--accent); outline-offset: -3px;
 }
 
 /* ---------- Export sheet (built offscreen by export.js; light, client-friendly look) ---------- */

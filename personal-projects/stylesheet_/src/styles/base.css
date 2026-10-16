@@ -182,6 +182,13 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: 50%; background: var(--accent); border: 0;
 }
 
+/* Alpha slider row (alphaRow() in popover.js): the color picker and both color edit menus. Muted "alpha" label,
+   the shared slider, and the % value. */
+.alpha-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.alpha-row .alpha-label { flex: none; color: var(--muted); font-size: 11px; }
+.alpha-row input[type=range] { flex: 1; min-width: 0; }
+.alpha-row .alpha-val { flex: none; width: 4ch; text-align: right; color: var(--muted); font-size: 11px; }
+
 /* ---------- Icon toggle (transparent background checkerboard) ---------- */
 /* A square exactly as tall as the segmented toggle buttons (--toggle-h), so it matches the format toggle
    next to it. Smaller uses (library header eyedroppers, expand buttons...) set their own size. */

@@ -77,10 +77,10 @@ async function start() {
   subscribe((meta) => { if (!meta.view && !meta.exportSettings && !meta.live) drawBreadcrumb(); });
   drawBreadcrumb();
 
-  // Help: "?" key opens it (when not typing), and it shows automatically on first launch.
+  // Help: "?" key opens it (when not typing, including typing on a board), and it shows automatically on first launch.
   document.addEventListener('keydown', (e) => {
     const t = e.target;
-    if (e.key === '?' && !(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT'))) openHelp();
+    if (e.key === '?' && !(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable))) openHelp();
   });
   if (!state.session.helpSeen) openHelp();
 }

@@ -10,7 +10,7 @@ import { uid, clone, normalizeHex } from './util.js';
 import {
   createBlock, createCanvas, cloneWithNewIds, structureFromCanvas, canvasFromStructure,
   isContainer, isTextType, hasVisibleContent, BASE_NAME, groupingDefaults,
-  STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE,
+  STARTER_COLORS, STARTER_PALETTES, EMPTY_SIZE, SECTION_GRAY,
 } from './blocks.js';
 import { BUILTIN_FONTS } from './fonts.js';
 
@@ -478,18 +478,22 @@ export function setCanvasSizeMode(id, mode, current) {
 }
 
 // ---------- Colors (each colorable thing stores its own; a change never touches any other block) ----------
+// Every hex may carry an alpha ("#RRGGBBAA"; normalizeHex keeps it). The color setters take `opts.live` = true for
+// the color picker's alpha slider ticks, so one drag is one undo step (like the property sliders).
+const liveMeta = (opts) => (opts && opts.live ? { live: true } : {});
+
 // Sets a canvas's background color.
-export function setCanvasBackground(canvasId, hex) {
+export function setCanvasBackground(canvasId, hex, opts = {}) {
   const hit = findNode(canvasId);
   if (!hit || hit.node.type !== 'canvas') return;
-  change(() => { hit.node.background = normalizeHex(hex); });
+  change(() => { hit.node.background = normalizeHex(hex); }, liveMeta(opts));
 }
 
 // Sets a group's background color. hex = null makes it transparent ("none"; also what reset does).
-export function setGroupBackground(groupId, hex) {
+export function setGroupBackground(groupId, hex, opts = {}) {
   const hit = findNode(groupId);
   if (!hit || hit.node.type !== 'group') return;
-  change(() => { hit.node.background = hex ? normalizeHex(hex) : null; });
+  change(() => { hit.node.background = hex ? normalizeHex(hex) : null; }, liveMeta(opts));
 }
 
 // Sets (or swaps) the background image of a board or group, keeping its fit (cover for a new one). One undo step.
@@ -500,10 +504,10 @@ export function setBgImage(nodeId, mediaId) {
 }
 
 // Sets a text block's color.
-export function setTextColor(blockId, hex) {
+export function setTextColor(blockId, hex, opts = {}) {
   const hit = findNode(blockId);
   if (!hit || !isTextType(hit.node.type)) return;
-  change(() => { hit.node.color = normalizeHex(hex); });
+  change(() => { hit.node.color = normalizeHex(hex); }, liveMeta(opts));
 }
 
 // Sets the font of the given text blocks (their OWN font; nothing else changes), as one undo step.
@@ -516,13 +520,62 @@ export function setBlockFonts(ids, fontId) {
 
 // Gives ONE first-level layer of a vector block a color (the whole layer becomes that color).
 // hex = null resets the layer to the original colors from the file.
-export function setLayerColor(blockId, layer, hex) {
+export function setLayerColor(blockId, layer, hex, opts = {}) {
   const hit = findNode(blockId);
   if (!hit || hit.node.type !== 'vector') return;
   change(() => {
     if (!hit.node.layerColors) hit.node.layerColors = {};
     if (hex) hit.node.layerColors[layer] = normalizeHex(hex); else delete hit.node.layerColors[layer];
-  });
+  }, liveMeta(opts));
+}
+
+// ---------- Palette block sections ----------
+// Sets the color of ONE section of a palette block. opts.name: the library color's name when the color came from
+// the library (a library color dropped or picked), null when it was typed; left out (e.g. an alpha slider tick)
+// = keep the section's current name. opts.live: an alpha slider tick (one undo step per drag).
+export function setSectionColor(blockId, index, hex, opts = {}) {
+  const hit = findNode(blockId);
+  if (!hit || hit.node.type !== 'palette' || !hit.node.sections[index]) return;
+  change(() => {
+    const s = hit.node.sections[index];
+    s.hex = normalizeHex(hex);
+    if ('name' in opts) s.name = opts.name || null;
+  }, liveMeta(opts));
+}
+
+// "+ add section": a gray section at the end of a palette block. One undo step.
+export function addSection(blockId) {
+  const hit = findNode(blockId);
+  if (!hit || hit.node.type !== 'palette') return;
+  change(() => { hit.node.sections.push({ hex: SECTION_GRAY, name: null }); });
+}
+
+// The × of a section: removes it. A palette block always keeps at least one section.
+export function removeSection(blockId, index) {
+  const hit = findNode(blockId);
+  if (!hit || hit.node.type !== 'palette' || hit.node.sections.length <= 1) return;
+  change(() => { hit.node.sections.splice(index, 1); });
+}
+
+// The sections a library palette turns into: COPIES of its colors (hex + name), so later edits of the library
+// palette never change the block.
+function sectionsFrom(palette) {
+  return palette.colors.map((c) => ({ hex: normalizeHex(c.hex), name: c.name }));
+}
+
+// A library palette card dropped on a board or group: adds a palette block with copies of its colors at `index`.
+// The block is named after the palette (like a media block keeps its file name).
+export function addPaletteBlock(paletteId, parentId, index) {
+  const palette = state.library.palettes.find((p) => p.id === paletteId);
+  if (!palette || !palette.colors.length) return null;
+  return addBlock('palette', parentId, index, { name: palette.name, sections: sectionsFrom(palette) });
+}
+
+// A library palette card dropped on the empty dot grid: a new (dynamic) board containing the palette block.
+export function addPaletteToNewCanvas(paletteId) {
+  const palette = state.library.palettes.find((p) => p.id === paletteId);
+  if (!palette || !palette.colors.length) return null;
+  return addBlockToNewCanvas('palette', { name: palette.name, sections: sectionsFrom(palette) });
 }
 
 // The container whose BACKGROUND a color dropped on `node` changes: a group itself; an image block's own
@@ -544,6 +597,7 @@ export function dropColor(nodeId, hex, layer) {
   if (!hit) return;
   const node = hit.node;
   if (node.type === 'vector' && layer === undefined) return;
+  if (node.type === 'palette') return;      // a palette block's colors are set per section (setSectionColor)
   if (isTextType(node.type)) { setTextColor(node.id, hex); return; }
   if (node.type === 'vector') { setLayerColor(node.id, layer, hex); return; }
   const target = backgroundTargetOf(node.id);
@@ -748,7 +802,7 @@ export function addColor({ name, hex }) {
   return color;
 }
 
-// Edits a color's name/hex, whether it is a single color or a swatch inside a palette.
+// Edits a color's name/hex, whether it is a single color or a swatch inside a palette (the hex may carry an alpha).
 export function updateColor(id, patch) {
   const color = findColor(id);
   if (!color) return;

@@ -1,14 +1,16 @@
 // preview.js: the middle panel. Renders every visible canvas ("board" on screen) from state (auto grid, name labels,
-// each block's own colors, flex layout, gray placeholders), plus selection by clicking, zoom and pan.
+// each block's own colors, flex layout, gray placeholders, transforms, text styling), plus selection by clicking,
+// zoom and pan, and editing text in place on the board (double-click a text block).
 // renderCanvasElement() is also used by export.js, so the exported image is drawn by the same code.
 
-import { el, clear, $ } from './util.js';
+import { el, clear, $, cssColor, contrastColor, hexLabel } from './util.js';
 import {
-  state, subscribe, isFirstLaunch, visibleCanvases, selectNode, toggleSelect, selectIds, setGroupCollapsed, setView, getFont, getMedia, addCanvas,
+  state, subscribe, isFirstLaunch, visibleCanvases, selectNode, toggleSelect, selectIds, setView, getFont, getMedia, addCanvas,
+  findNode, updateNode, endGesture, requestRender,
 } from './state.js';
 import { fontCss, DEFAULT_FONT_ID } from './fonts.js';
 import { buildVectorSvg, mediaUrl } from './svg.js';
-import { isTextType, sidesCss, isFillImage, hasVisibleContent, groupClips, GROUP_EMPTY_MIN, EMPTY_SIZE } from './blocks.js';
+import { isTextType, sidesCss, isFillImage, hasVisibleContent, groupClips, opacityOf, blockTransform, GROUP_EMPTY_MIN, EMPTY_SIZE } from './blocks.js';
 
 const MIN_ZOOM = 0.25, MAX_ZOOM = 4;
 // Where the canvas grid's top-left sits inside the stage at pan (0, 0): below the floating top bar.
@@ -85,6 +87,7 @@ function backgroundLayer(container, fillImages, selectedIds) {
 // (data-id), so it can be clicked/selected; its width, margin and offset are not used.
 function renderFillImage(block, selectedIds) {
   const node = el('div', { class: 'block block-image fill-image' + (selectedIds.has(block.id) ? ' selected' : ''), dataset: { id: block.id } });
+  applyOpacity(node, block);
   const item = getMedia(block.mediaId);
   node.append(item
     ? el('img', { src: mediaUrl(item), alt: item.name, draggable: false })
@@ -137,14 +140,60 @@ function groupSizing(node, group, ctx) {
   };
 }
 
+// Opacity (every block, 0–100%): CSS opacity on the block's element, so the whole block fades, children included.
+// 100% sets nothing, so a fully opaque block renders exactly as before.
+function applyOpacity(node, block) {
+  const o = opacityOf(block);
+  if (o < 100) node.style.opacity = String(o / 100);
+}
+
+// A palette block: a bar of equal color sections (side by side, or stacked when vertical), clipped to its radius.
+// Each section is tagged data-section="<index>" so a color can be dropped on exactly one section (dragdrop.js) and
+// outlined (outline.js). Labels (the hex and/or the library name) use small IBM Plex Mono text in a dark or light
+// color that reads on the section (contrastColor; the alpha is ignored for that choice).
+function renderPaletteBar(node, block) {
+  Object.assign(node.style, {
+    width: `${block.width}px`, height: `${block.height}px`, borderRadius: `${block.radius}px`,
+    flexDirection: block.orientation === 'vertical' ? 'column' : 'row',
+  });
+  block.sections.forEach((s, i) => {
+    const sec = el('div', { class: 'palette-section', dataset: { section: String(i) }, style: { background: cssColor(s.hex), color: contrastColor(s.hex) } });
+    if (block.names && s.name) sec.append(el('span', { class: 'palette-section-label', text: s.name }));
+    if (block.hexLabels) sec.append(el('span', { class: 'palette-section-label', text: hexLabel(s.hex) }));
+    node.append(sec);
+  });
+}
+
+// The text styling of a text block as CSS: tracking (thousandths of an em -> letter-spacing), line height, alignment
+// of the lines, case (text-transform: display only, the stored text is unchanged), underline, and wrap:
+//   fit   = white-space: pre, no max width: one line per line break, never wraps (a board clips what sticks out);
+//   fixed = white-space: pre-wrap inside wrapWidth px (still capped at the container's width, like other blocks).
+const CASE_CSS = { none: 'none', upper: 'uppercase', lower: 'lowercase', title: 'capitalize' };
+function textStyleCss(b) {
+  const fixed = b.wrap === 'fixed';
+  return {
+    letterSpacing: `${(b.tracking || 0) / 1000}em`,
+    lineHeight: String(b.lineHeight || 1.2),
+    textAlign: b.textAlign || 'left',
+    textTransform: CASE_CSS[b.textCase] || 'none',
+    textDecoration: b.underline ? 'underline' : 'none',
+    whiteSpace: fixed ? 'pre-wrap' : 'pre',
+    width: fixed ? `${b.wrapWidth}px` : '',
+    maxWidth: fixed ? '100%' : 'none',
+  };
+}
+
 // Builds the DOM for one block. Colors and fonts are the block's own. `ctx` = its container (see groupSizing()).
 // Hidden blocks are filtered out by renderChildren(), so this always returns an element.
 function renderBlock(block, ctx, selectedIds) {
   const node = el('div', { class: `block block-${block.type}` + (selectedIds.has(block.id) ? ' selected' : ''), dataset: { id: block.id } });
-  // Spacing: margin is real layout space (pushes neighbours away in the stack/row); offset is a transform, so it only
-  // moves the block visually and never shifts neighbours or changes a dynamic canvas's size.
+  applyOpacity(node, block);
+  // Spacing: margin is real layout space (pushes neighbours away in the stack/row). Offset, rotation and mirror are
+  // one CSS transform (blockTransform() in blocks.js), so they only change how the block LOOKS: neighbours never
+  // move and a dynamic canvas keeps its size. Rotation turns around the block's center.
   node.style.margin = sidesCss(block.margin);
-  if (block.offset.x || block.offset.y) node.style.transform = `translate(${block.offset.x}px, ${block.offset.y}px)`;
+  const transform = blockTransform(block);
+  if (transform) node.style.transform = transform;
 
   if (isTextType(block.type)) {
     // Every text block has its own font. A font that was deleted from the library falls back to Space Grotesk (the default) so the
@@ -153,7 +202,7 @@ function renderBlock(block, ctx, selectedIds) {
     node.classList.add('block-text');
     node.textContent = block.text || block.type;
     if (!block.text) node.classList.add('is-empty');
-    Object.assign(node.style, { ...fontCss(font), fontSize: `${block.size}px`, color: block.color });
+    Object.assign(node.style, { ...fontCss(font), fontSize: `${block.size}px`, color: cssColor(block.color), ...textStyleCss(block) });
   } else if (block.type === 'vector') {
     // A layer with no stored color keeps the original colors from the file.
     const colorFor = (layer) => (block.layerColors || {})[layer] || null;
@@ -168,11 +217,13 @@ function renderBlock(block, ctx, selectedIds) {
     // Only a fit × fit group (e.g. one made with Ctrl+G) lets content stick out; any other group clips it.
     applyLayout(node, block.layout, 'center');
     Object.assign(node.style, {
-      background: block.background || 'transparent', borderRadius: `${block.radius}px`, padding: sidesCss(block.padding),
+      background: cssColor(block.background), borderRadius: `${block.radius}px`, padding: sidesCss(block.padding),   // cssColor(null) = transparent
     });
     if (groupClips(block)) node.classList.add('clips');
     const inner = groupSizing(node, block, ctx);
     renderChildren(block, node, node, inner, selectedIds);
+  } else if (block.type === 'palette') {
+    renderPaletteBar(node, block);
   }
   return node;
 }
@@ -181,7 +232,7 @@ function renderBlock(block, ctx, selectedIds) {
 export function renderCanvasElement(canvas, index, { interactive = true } = {}) {
   // Every selected node (canvas or block) gets the selected outline; a canvas is outlined only when it is itself selected.
   const selectedIds = new Set(interactive ? state.session.selection : []);
-  const bg = canvas.background;
+  const bg = cssColor(canvas.background);       // a background with alpha becomes rgba()
   // Fixed: the card is exactly width × height (content that doesn't fit is clipped by .canvas overflow: hidden).
   // Dynamic: no size is set; the card shrink-wraps its content plus padding (.canvas.dynamic in preview.css).
   // The corner radius is the canvas's own (canvas.radius); overflow: hidden clips the content and, in a transparent
@@ -306,6 +357,61 @@ function startZoomEdit() {
   input.addEventListener('blur', () => finish(true));
 }
 
+// ---------- On-canvas text editing ----------
+// Double-clicking a text block makes that block's element editable right where it is (contenteditable
+// "plaintext-only": a real blinking cursor and normal text selection, no formatting). Every keystroke updates the
+// block's text live (updateNode with live: true, so the WHOLE edit is ONE undo step) and the properties text box.
+//   Enter or clicking away -> commit;  Shift+Enter -> a new line;  Esc -> commit and stop editing.
+// While editing, the app's shortcuts ignore the keys (they all skip contenteditable targets), and a press inside the
+// block never starts a drag-select box. The preview is NOT redrawn on these live ticks (that would throw the cursor
+// away); it redraws once when the edit ends (requestRender), which also brings back the faded type name if the text
+// was cleared.
+let editing = null;      // { id, el } while a text block is being edited on the board
+
+function startTextEdit(id) {
+  const hit = findNode(id);
+  const elx = document.querySelector(`#canvas-grid .block-text[data-id="${id}"]`);
+  if (!hit || !elx) return;
+  const block = hit.node;
+  editing = { id, el: elx };
+  elx.classList.remove('is-empty');
+  elx.textContent = block.text;                       // a cleared block showed its faded type name: edit the real (empty) text
+  elx.classList.add('editing');
+  elx.style.minHeight = `${block.lineHeight || 1.2}em`;   // an empty line keeps its height, so the cursor stays visible
+  elx.contentEditable = 'plaintext-only';
+  elx.spellcheck = false;
+  elx.focus();
+  const range = document.createRange();               // start with all the text selected, so typing replaces it
+  range.selectNodeContents(elx);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  elx.addEventListener('input', () => {
+    const text = elx.textContent;
+    updateNode(id, { text }, { live: true });
+    const box = document.querySelector(`#props .text-input[data-block="${id}"]`);   // keep the properties box in sync
+    if (box) { box.value = text; box.rows = Math.min(4, Math.max(1, text.split('\n').length)); }
+  });
+  elx.addEventListener('keydown', (e) => {
+    e.stopPropagation();                              // nothing reaches the app shortcuts while typing here
+    if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); document.execCommand('insertLineBreak'); }   // a "\n" in plaintext-only
+    else if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); finishTextEdit(); }
+  });
+  elx.addEventListener('blur', finishTextEdit);       // clicking away commits
+}
+
+// Ends the edit: the text was already saved live, so this just closes the undo step and redraws.
+function finishTextEdit() {
+  if (!editing) return;
+  const { el: elx } = editing;
+  editing = null;
+  endGesture();
+  elx.contentEditable = 'false';
+  elx.blur();
+  requestRender();
+}
+
 // ---------- Interaction ----------
 const isTyping = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 
@@ -390,6 +496,7 @@ function initInteraction() {
   stage.addEventListener('pointerdown', (e) => {
     didMarquee = false;                                           // forget any drag from before
     if (e.button !== 0 || spaceDown || e.target.closest('button')) return;
+    if (editing && editing.el.contains(e.target)) return;         // inside the text being edited: select text, no box
     const startX = e.clientX, startY = e.clientY;
     let box = null;                                               // the dashed rectangle element once the drag starts
     const onMove = (ev) => {
@@ -410,20 +517,19 @@ function initInteraction() {
     window.addEventListener('pointercancel', onUp);
   });
 
-  // Double-click a text block: select it and put the cursor in the properties text box with the text selected, so you
-  // can type straight away (the text is edited in the properties panel, not on the canvas).
+  // Double-click a text block: select it and edit its text IN PLACE on the board (see startTextEdit below).
   stage.addEventListener('dblclick', (e) => {
     const textEl = e.target.closest('.block-text[data-id]');
     if (!textEl || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (editing && editing.id === textEl.dataset.id) return;     // already editing it: the double-click selects a word
     selectNode(textEl.dataset.id);
-    if (state.session.collapsedGroups.text) setGroupCollapsed('text', false);   // the text box lives in the (collapsed?) text group
-    const input = document.querySelector('#props .text-input');
-    if (input) { input.focus(); input.select(); }
+    startTextEdit(textEl.dataset.id);
   });
 
   // Click a block -> select it; click a canvas -> select the canvas; click the dot grid -> deselect.
   // Ctrl+click or Shift+click adds the block/canvas to the selection (or removes it if it is already in).
   stage.addEventListener('click', (e) => {
+    if (editing && editing.el.contains(e.target)) return;       // clicks inside the text being edited only move the cursor
     if (didMarquee) { didMarquee = false; return; }
     if (didPan) { didPan = false; return; }
     if (spaceDown) return;
@@ -449,10 +555,13 @@ export function initPreview() {
   subscribe((meta) => {
     if (meta.view) { applyView(); return; }
     if (meta.ui) return;
+    if (editing && meta.live) return;      // typing on the board: the edited element already shows the text (keeps the cursor)
     if (meta.exportSettings && state.session.export.canvasLabels === labelsShown) return;
     labelsShown = state.session.export.canvasLabels;
     renderGrid();
     applyView();
+    // Safety: something else redrew the board in the middle of an edit (the edited element is gone): end the edit.
+    if (editing && !document.contains(editing.el)) { editing = null; endGesture(); }
   });
   // The window can be resized; keep things where they are (no re-fit), but nothing else to do.
 }

@@ -98,6 +98,8 @@
 .hex-row input { flex: 1; height: 28px; }
 .hex-row input.invalid { border-color: var(--danger); }
 .hex-row .btn { height: 28px; }
+/* The color picker's alpha slider, under the hex input (live on the current color). */
+.pop-alpha { padding: 6px 4px 2px; }
 /* Palette swatch editor: hex input + eyedropper button on one line (the button matches the 28px inputs). */
 .edit-hex-row { display: flex; gap: 6px; }
 .edit-hex-row input { flex: 1; min-width: 0; }

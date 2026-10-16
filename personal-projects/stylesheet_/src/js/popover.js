@@ -1,10 +1,10 @@
 // popover.js: small floating panels anchored to a button or a point (an addition to the CLAUDE.md file list).
 // One popover is open at a time. Contains the generic popover + context menu, and the specific ones:
-// color picker (library colors, palettes, hex input), font picker (family + weight), block-type menu, media picker,
-// and the small name/hex editor used for palette swatches.
+// color picker (library colors, palettes, hex input, alpha slider), font picker (family + weight), block-type menu,
+// media picker, and the small name/hex/alpha editor used for palette swatches. alphaRow() is the shared alpha slider.
 
-import { el, clear, isHex, normalizeHex, slug, $, icon } from './util.js';
-import { state, allFonts } from './state.js';
+import { el, clear, isHex, normalizeHex, slug, $, icon, alphaOf, withAlpha, hexLabel, swatchBg } from './util.js';
+import { state, allFonts, endGesture, requestRender } from './state.js';
 import { sortBlockTypes, sortMedia } from './sorting.js';
 import { typeLabel } from './blocks.js';
 import { mediaUrl } from './svg.js';
@@ -83,11 +83,30 @@ export function openBlockMenu(anchor, onPick) {
   openPopover(anchor, list);
 }
 
+// ---------- Alpha slider ----------
+// A small "alpha" row (0–100%): label, slider, value. onInput(pct) fires on every tick; set(pct) moves the slider
+// without firing (e.g. when a hex is typed). Used by the color picker and both color edit menus (library color card,
+// palette swatch editor). `range` is the slider element, for callers that need its 'change' event.
+export function alphaRow(value, onInput) {
+  const range = el('input', { type: 'range', min: '0', max: '100', step: '1', title: 'alpha (100% = fully opaque)' });
+  const val = el('span', { class: 'alpha-val' });
+  const set = (pct) => { range.value = pct; range.style.setProperty('--pct', `${pct}%`); val.textContent = `${pct}%`; };
+  set(value);
+  range.addEventListener('input', () => { set(Number(range.value)); onInput(Number(range.value)); });
+  const row = el('div', { class: 'alpha-row' }, el('span', { class: 'alpha-label', text: 'alpha' }), range, val);
+  return { row, range, set };
+}
+
 // ---------- Color picker ----------
-// Lists library colors and palettes plus a hex input. onPick(hex) is called with an uppercase "#RRGGBB".
+// Lists library colors and palettes plus a hex input and an alpha slider. onPick(hex, opts) gets an uppercase
+// "#RRGGBB" or "#RRGGBBAA" (6 digits typed = opaque, 8 digits keep their alpha). opts:
+//   { name }       a library color/swatch was clicked (its name; the palette block shows it), the popover closes;
+//   { name: null } a hex was typed and applied, the popover closes;
+//   { live: true } the alpha slider moved: the CURRENT color gets that alpha right away and the popover stays open
+//                  (one undo step per drag; a library color's own alpha is used as stored when it is clicked).
 // `noneLabel` (optional, used by group backgrounds) adds a first row that calls onPick(null) = no color (transparent).
 export function openColorPicker(anchor, { current: currentHex, onPick, noneLabel = null }) {
-  const pick = (hex) => { closePopover(); onPick(normalizeHex(hex)); };
+  const pick = (hex, name = null) => { closePopover(); onPick(normalizeHex(hex), { name }); };
   const body = scroller();
   const lib = state.library;
   if (noneLabel) {
@@ -96,22 +115,37 @@ export function openColorPicker(anchor, { current: currentHex, onPick, noneLabel
   }
   if (lib.colors.length) {
     body.append(el('div', { class: 'pop-title', text: 'colors' }));
-    lib.colors.forEach((c) => body.append(el('button', { class: 'menu-item', on: { click: () => pick(c.hex) } },
-      el('span', { class: 'chip', style: { background: c.hex } }), c.name, el('span', { class: 'sub', text: c.hex }))));
+    lib.colors.forEach((c) => body.append(el('button', { class: 'menu-item', on: { click: () => pick(c.hex, c.name) } },
+      el('span', { class: 'chip', style: { background: swatchBg(c.hex) } }), c.name, el('span', { class: 'sub', text: hexLabel(c.hex) }))));
   }
   lib.palettes.forEach((p) => {
     body.append(el('div', { class: 'pop-title', text: p.name }));
     body.append(el('div', { class: 'pop-palette' }, p.colors.map((c) => el('button', {
-      class: 'chip-btn', title: `${c.name} ${c.hex}`, style: { background: c.hex }, on: { click: () => pick(c.hex) },
+      class: 'chip-btn', title: `${c.name} ${hexLabel(c.hex)}`, style: { background: swatchBg(c.hex) }, on: { click: () => pick(c.hex, c.name) },
     }))));
   });
 
   const input = el('input', { type: 'text', value: currentHex || '', placeholder: '#RRGGBB', spellcheck: false });
   const apply = () => { if (isHex(input.value)) pick(input.value); else input.classList.add('invalid'); };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') apply(); });
-  input.addEventListener('input', () => input.classList.remove('invalid'));
+  // Typing a hex moves the slider to its alpha (6 digits = 100%).
+  input.addEventListener('input', () => { input.classList.remove('invalid'); if (isHex(input.value)) alpha.set(alphaOf(input.value)); });
+
+  // Live alpha: the typed hex (or the current color) at the slider's alpha. With no color at all (a transparent
+  // group) there is nothing to fade, so the slider does nothing.
+  const alpha = alphaRow(currentHex && isHex(currentHex) ? alphaOf(currentHex) : 100, (pct) => {
+    const base = isHex(input.value) ? input.value : currentHex;
+    if (!base) return;
+    input.value = withAlpha(base, pct);
+    input.classList.remove('invalid');
+    onPick(normalizeHex(input.value), { live: true });
+  });
+  // Drag finished: the next drag is a new undo step, and the panels redraw (live ticks skip the properties panel).
+  alpha.range.addEventListener('change', () => { endGesture(); requestRender(); });
+
   const wrap = el('div', { style: { display: 'flex', flexDirection: 'column', minHeight: 0 } }, body,
-    el('div', { class: 'hex-row' }, input, el('button', { class: 'btn', text: 'apply', on: { click: apply } })));
+    el('div', { class: 'hex-row' }, input, el('button', { class: 'btn', text: 'apply', on: { click: apply } })),
+    el('div', { class: 'pop-alpha' }, alpha.row));
   openPopover(anchor, wrap);
   input.select();
 }
@@ -155,6 +189,14 @@ export function openMediaPicker(anchor, { currentId, onPick }) {
 export function openColorEditor(anchor, color, { onSave, onDelete, onEyedropper, draft }) {
   const name = el('input', { type: 'text', value: draft ? draft.name : color.name, spellcheck: false });
   const hex = el('input', { type: 'text', value: draft ? draft.hex : color.hex, spellcheck: false });
+  // Alpha: the slider rewrites the hex input (8 digits below 100%); typing a hex moves the slider (6 digits = 100%).
+  // Nothing is saved until "save" / Enter, like the name and hex.
+  const alpha = alphaRow(isHex(hex.value) ? alphaOf(hex.value) : 100, (pct) => {
+    if (!isHex(hex.value)) return;
+    hex.value = withAlpha(hex.value, pct);
+    hex.classList.remove('invalid');
+  });
+  hex.addEventListener('input', () => { if (isHex(hex.value)) alpha.set(alphaOf(hex.value)); });
   // Same icon + .icon-toggle look as the colors header eyedropper, sized to the 28px popover inputs.
   const eye = onEyedropper ? el('button', {
     class: 'icon-toggle tool-btn edit-eye eyedropper-btn', title: 'eyedropper: click a color in the preview to use it',
@@ -172,6 +214,7 @@ export function openColorEditor(anchor, color, { onSave, onDelete, onEyedropper,
   const body = el('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', padding: '2px' } },
     el('div', { class: 'pop-title', text: 'edit color' }), name,
     el('div', { class: 'edit-hex-row' }, hex, eye),
+    alpha.row,
     el('div', { style: { display: 'flex', gap: '6px', justifyContent: 'space-between' } },
       onDelete ? el('button', { class: 'btn', text: 'delete', on: { click: () => { closePopover(); onDelete(); } } }) : el('span'),
       el('button', { class: 'btn', style: { height: '28px' }, text: 'save', on: { click: save } })));

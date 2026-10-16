@@ -121,25 +121,25 @@ const HELP_TOP_MIN = 24;   // short windows only: the highest the row may move u
 // Each step card is a short list of points (one <li> each), so a lot of detail stays easy to scan.
 const HELP_CALLOUTS = [
   { title: '01 — LIBRARY', points: [
-    'Blocks: drag board, group, vector, image, heading or body into the preview. Presets you save show up here too.',
+    'Blocks: drag board, group, vector, image, heading, body or palette into the preview. Presets you save show up here too.',
     '+ import copies media (svg, png, jpg) and fonts into the app, so your originals can be moved or deleted.',
     'Colors: + add one, or use the eyedropper to pick any color straight off a board. Click a color to edit its name or hex.',
-    'Palettes: + add a palette, then + for more swatches. A swatch works exactly like a color.',
+    'Palettes: + add a palette, then + for more swatches. A swatch works like a color; drag the whole card for a palette block.',
     'Drag any card onto a board, a block or a layer. Right-click to delete; deleted items wait in settings → trash.',
   ] },
   { title: '02 — PREVIEW', points: [
-    'Start with + add board, or drop a block, media or preset on the empty grid.',
+    'Start with + add board, or drop a block, media, palette or preset on the empty grid.',
     'Each board is one option, labeled with its name (Board 1, 2…; rename it in layers). The grid lines them up, whatever their sizes.',
-    'Drop a color on text, on one part of a vector, or on a background: only that one thing changes. The lime outline shows what will change.',
-    'Click to select, Ctrl/Shift+click to add more, or drag a box to select several. Double-click text to edit it.',
+    'Drop a color on text, one part of a vector, one palette section or a background: only that changes. The lime outline shows what.',
+    'Click to select, Ctrl/Shift+click to add more, or drag a box. Double-click text to type on the board (Enter ends, Shift+Enter = new line).',
     'Scroll to zoom, hold space or the middle mouse button to pan, fit to see everything. Double-click the % to type a zoom.',
   ] },
   { title: '03 — EDITOR', points: [
     'Layers lists every board and its blocks. Drag rows to reorder or move them, double-click to rename, click the eye to hide.',
     '+ block adds a block to every selected board.',
     'Right-click a layer to copy, paste, duplicate, group, ungroup or delete. Keys: Ctrl+C / V, Ctrl+D, Ctrl+G, Delete.',
-    'Properties edits what is selected: colors, text and font, size, spacing (padding or margin, per side with the link button, and offsets) and layout. Double-click any number to type it.',
-    'Save as preset keeps a board\'s layout to reuse.',
+    'Properties edits what is selected: colors, opacity, text and font (B / I / U, tracking, case, wrap), rotate and mirror, size, spacing and layout. Double-click any number to type it.',
+    'Save as preset keeps a board\'s structure to reuse, without its colors, fonts, text or media.',
   ] },
   { title: '04 — EXPORT', points: [
     'Export saves every visible board as one image. Hidden boards are skipped.',
@@ -163,7 +163,7 @@ const HELP_TIPS = [
   ] },
   { title: 'FONTS', points: [
     'Use + import in fonts for .ttf, .otf, .woff or .woff2. Space Grotesk and IBM Plex Mono are built in.',
-    'Each file is one weight or style; files from one family share a card. Pick the weight in the font row in properties.',
+    'Each file is one weight or style; files from one family share a card. Pick the weight in the font row, or use B / I.',
     'Variable fonts import as one weight. Fonts are embedded in exports.',
   ] },
 ];

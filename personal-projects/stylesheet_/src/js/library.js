@@ -2,12 +2,14 @@
 // and handles importing files, adding colors/palettes, inline editing, and right-click delete.
 // Eyedroppers (eyedropper.js): the colors and palettes HEADERS create something new from a picked color; the color
 // card's edit mode and the palette swatch editor have their own eyedropper that changes the color being edited.
-// Drag-and-drop out of the library is wired generically in dragdrop.js through data-drag-* attributes.
+// Drag-and-drop out of the library is wired generically in dragdrop.js through data-drag-* attributes (a palette
+// card drags as a whole palette; its swatches drag as single colors).
+// Colors may carry an alpha (#RRGGBBAA): shown as "#D9FF43 · 40%" over a checkerboard swatch, edited with an alpha slider.
 // Every list is sorted for display only (see sorting.js); the saved data keeps its own order.
 // Any one section can be expanded to fill the panel (session.expandedSection), which also shows a search box that
 // filters that section's list (applyExpanded / buildSearch below).
 
-import { el, clear, $, uid, slug, isHex, normalizeHex, icon } from './util.js';
+import { el, clear, $, uid, slug, isHex, normalizeHex, icon, alphaOf, withAlpha, hexLabel, swatchBg } from './util.js';
 import { initEyedropper, addEyedropperButton, startEyedropper, stopEyedropper } from './eyedropper.js';
 import {
   state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor, findColor,
@@ -17,7 +19,7 @@ import { groupFamilies, familySummary, closestTo400, cssFamily, fontCss, registe
 import { processSvg, cacheMedia, buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
 import { libraryBlockCount, typeLabel } from './blocks.js';
 import { sortMedia, sortColors, sortPalettes, sortPresets, sortBlockTypes } from './sorting.js';
-import { openMenuAt, openColorEditor } from './popover.js';
+import { openMenuAt, openColorEditor, alphaRow } from './popover.js';
 import { confirmDialog, showToast } from './overlays.js';
 
 // Small bits of UI state that live only in this module (not saved).
@@ -174,20 +176,28 @@ function colorCard(color) {
   // In edit mode the card shows what is typed (colorDraft) when the edit came back from its eyedropper.
   const draft = editingColorId === color.id && colorDraft && colorDraft.id === color.id ? colorDraft : null;
   const shownHex = draft && isHex(draft.hex) ? normalizeHex(draft.hex) : color.hex;
-  const swatch = el('span', { class: 'swatch-sq', style: { background: shownHex } });
+  // swatchBg: a color with alpha is drawn over a small checkerboard; the text then reads "#D9FF43 · 40%".
+  const swatch = el('span', { class: 'swatch-sq', style: { background: swatchBg(shownHex) } });
   if (editingColorId !== color.id) {
     const card = el('div', {
       class: 'card-row', ...draggable('color', color.id),
       on: { click: () => { editingColorId = color.id; colorDraft = null; renderColors(); } },
     }, swatch, el('div', { class: 'card-text' },
       el('span', { class: 'card-title', text: color.name }),
-      el('span', { class: 'card-sub', text: color.hex })));
+      el('span', { class: 'card-sub', text: hexLabel(color.hex) })));
     return withDeleteMenu(card, 'color', [color.id], color.name);
   }
-  // Edit mode: two small inputs replace the text. Enter or leaving the card saves, Esc cancels.
+  // Edit mode: two small inputs replace the text, plus an alpha slider. Enter or leaving the card saves, Esc cancels.
   // The hex input has an eyedropper button next to it (same look as the header one, sized to the 22px inputs).
+  // The hex input accepts 6 digits (opaque) or 8 (with alpha); the alpha slider rewrites its last two digits.
   const nameInput = el('input', { type: 'text', value: draft ? draft.name : color.name, spellcheck: false });
   const hexInput = el('input', { type: 'text', value: draft ? draft.hex : color.hex, spellcheck: false });
+  const alpha = alphaRow(isHex(hexInput.value) ? alphaOf(hexInput.value) : 100, (pct) => {
+    if (!isHex(hexInput.value)) return;
+    hexInput.value = withAlpha(hexInput.value, pct);
+    hexInput.classList.remove('invalid');
+    swatch.style.background = swatchBg(hexInput.value);
+  });
   const eye = el('button', {
     class: 'icon-toggle tool-btn edit-eye eyedropper-btn' + (pickingColorId === color.id ? ' on' : ''),
     title: 'eyedropper: click a color in the preview to use it',
@@ -200,16 +210,19 @@ function colorCard(color) {
     else startColorPick(color, eye, nameInput, hexInput);
   });
   const card = el('div', { class: 'card-row', style: { cursor: 'default' } }, swatch,
-    el('div', { class: 'color-edit' }, nameInput, el('div', { class: 'color-edit-hex' }, hexInput, eye)));
-  for (const input of [nameInput, hexInput]) {
+    el('div', { class: 'color-edit' }, nameInput, el('div', { class: 'color-edit-hex' }, hexInput, eye), alpha.row));
+  // Enter / Esc also work while the alpha slider has the focus (it is part of the edit).
+  for (const input of [nameInput, hexInput, alpha.range]) {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') commitColorEdit(color, nameInput, hexInput);
       if (e.key === 'Escape') cancelColorEdit();
     });
+  }
+  for (const input of [nameInput, hexInput]) {
     input.addEventListener('input', () => {
       const ok = isHex(hexInput.value);
       hexInput.classList.toggle('invalid', !ok);
-      if (ok) swatch.style.background = normalizeHex(hexInput.value);
+      if (ok) { swatch.style.background = swatchBg(hexInput.value); alpha.set(alphaOf(hexInput.value)); }   // 6 digits = 100%
     });
   }
   // Leaving the card saves, except while its eyedropper runs (the click on the canvas moves the focus away) and
@@ -290,10 +303,11 @@ function renderPalettes() {
       }
 
       // Swatches act exactly like single colors: draggable, clickable (opens the editor), right-click delete.
+      // A swatch with alpha shows a small checkerboard behind its color.
       const grid = el('div', { class: 'palette-grid' });
       for (const color of pal.colors) {
         const swatch = el('button', {
-          class: 'palette-swatch', style: { background: color.hex }, ...draggable('color', color.id),
+          class: 'palette-swatch', style: { background: swatchBg(color.hex) }, ...draggable('color', color.id),
         });
         attachSwatchTip(swatch, color);   // name + hex on hover (swatches have no visible label)
         swatch.addEventListener('click', () => openSwatchEditor(swatch, color));
@@ -304,7 +318,14 @@ function renderPalettes() {
       grid.append(el('button', { class: 'palette-add', text: '+', title: 'add color', on: { click: () => { pendingSwatchEditId = addPaletteColor(pal.id).id; renderPalettes(); } } }));
 
       // data-palette-id makes the whole card a drop target for colors (dragdrop.js planPalette).
-      const card = el('div', { class: 'palette-card', dataset: { paletteId: pal.id } }, nameNode, grid);
+      // The card itself is draggable as a WHOLE palette (drag kind 'palette': dropped on a board/group it adds a
+      // palette block). Dragging a swatch still drags just that color: the swatch is the closest draggable element.
+      // Not draggable while its name is being renamed (so selecting text in the input works).
+      const renaming = renamingPaletteId === pal.id;
+      const card = el('div', {
+        class: 'palette-card', draggable: renaming ? 'false' : 'true',
+        dataset: renaming ? { paletteId: pal.id } : { paletteId: pal.id, dragKind: 'palette', dragId: pal.id },
+      }, nameNode, grid);
       list.append(withDeleteMenu(card, 'palette', [pal.id], pal.name));
     }
   });
@@ -430,7 +451,7 @@ function renderMeta() {
 let swatchTip = null;
 function showSwatchTip(swatch, color) {
   hideSwatchTip();
-  swatchTip = el('div', { class: 'swatch-tip' }, el('span', { text: color.name }), el('span', { class: 'swatch-tip-hex', text: color.hex }));
+  swatchTip = el('div', { class: 'swatch-tip' }, el('span', { text: color.name }), el('span', { class: 'swatch-tip-hex', text: hexLabel(color.hex) }));
   document.body.append(swatchTip);
   const r = swatch.getBoundingClientRect(), t = swatchTip.getBoundingClientRect();
   const left = Math.max(6, Math.min(window.innerWidth - t.width - 6, r.left + r.width / 2 - t.width / 2));

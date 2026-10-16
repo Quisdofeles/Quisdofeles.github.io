@@ -98,15 +98,19 @@
 .color-edit-hex { display: flex; gap: 4px; min-width: 0; }
 .color-edit-hex input { flex: 1; min-width: 0; }
 .icon-toggle.tool-btn.edit-eye { width: 22px; height: 22px; flex: none; }
+.color-edit .alpha-row input[type=range] { height: 14px; }   /* the alpha slider under the hex input (not a 22px text input) */
 
 /* ---------- Palettes ---------- */
-/* The palette card itself is NOT draggable, so it has no hover effect; only its swatches do. */
+/* The palette card is draggable as a whole palette (it adds a palette block), so it gets the same hover as the
+   other draggable cards (.card-row): a lighter border and the grab cursor. Its swatches keep their own accent hover. */
 .palette-card {
   padding: 8px 10px 10px;
   background: var(--card);
   border: 1px solid var(--card-line);
   border-radius: var(--radius);
 }
+.palette-card[draggable=true] { cursor: grab; }
+.palette-card[draggable=true]:hover { border-color: var(--line-2); }
 .palette-name { font-size: 12px; font-weight: 500; margin-bottom: 6px; display: block; }
 .palette-name-input { height: 22px; width: 100%; font-size: 12px; margin-bottom: 6px; }
 /* 6 columns of 26px squares (smaller than the 34px color-card swatch); wraps to new rows for any number of colors. */

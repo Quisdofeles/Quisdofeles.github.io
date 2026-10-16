@@ -3,7 +3,7 @@
 // zoom/pan), built with the same renderCanvasCell() the preview uses, then rasterized by html-to-image.
 // Optional "style labels" strip below the canvases lists every color, font and media item used (background images too).
 
-import { el, clear, $, checkerIcon, normalizeHex } from './util.js';
+import { el, clear, $, checkerIcon, normalizeHex, hexLabel, swatchBg } from './util.js';
 import { state, subscribe, setExport, visibleCanvases, getFont, getMedia } from './state.js';
 import { renderCanvasCell, applyGridLayout } from './preview.js';
 import { cssFamily, fontCss, fontUrl, fontLabel, DEFAULT_FONT_ID } from './fonts.js';
@@ -46,8 +46,8 @@ export function initExport() {
 // colors = one group per canvas: { label: <the canvas's name, e.g. 'Board 1'>, items: [{ name, colors: [hex, ...] }] }. Every colorable
 // thing is listed by name with the color it uses RIGHT NOW: the background, each group's background (by the
 // group's name; transparent groups are left out), each text block, and each first-level layer of each vector (a layer
-// still on its original colors lists every color the file uses in it). Background images (boards and groups) are
-// listed under media, like vector and image blocks.
+// still on its original colors lists every color the file uses in it), and each palette block (by its name, with all
+// its sections' colors). Background images (boards and groups) are listed under media, like vector and image blocks.
 function collectUsage(canvases) {
   const colors = [];
   const fonts = new Map();      // fontId -> font
@@ -74,6 +74,8 @@ function collectUsage(canvases) {
           if (used.length) items.push({ name: `${b.name} / ${layer.name}`, colors: used });
         });
       }
+      // A palette block: one entry under its own name, listing every section's color in order.
+      if (b.type === 'palette' && b.sections.length) items.push({ name: b.name, colors: b.sections.map((s) => normalizeHex(s.hex)) });
       if ((b.type === 'vector' || b.type === 'image') && getMedia(b.mediaId)) media.set(b.mediaId, getMedia(b.mediaId));
       if (b.children) walk(b.children);
     });
@@ -97,15 +99,16 @@ function buildStrip(usage, width) {
     el('div', { class: 'export-items' }, items));
 
   // Colors: a small heading per canvas, then one entry per colorable thing (name + its color chip(s) and hex(es);
-  // a hex that matches a library color also shows that color's name).
+  // a hex that matches a library color also shows that color's name). A color with alpha shows its % after the hex
+  // ("#D9FF43 · 40%", hexLabel) and its chip has a small checkerboard behind it (swatchBg).
   const colorItems = usage.colors.flatMap((group) => [
     el('div', { class: 'export-canvas-title', text: group.label }),
     ...group.items.map((item) => el('div', { class: 'export-item' },
       el('div', { class: 'export-chips' + (item.colors.length > 1 ? ' multi' : '') },
-        item.colors.map((hex) => el('span', { class: 'export-chip', style: { background: hex } }))),
+        item.colors.map((hex) => el('span', { class: 'export-chip', style: { background: swatchBg(hex) } }))),
       el('div', { class: 'export-text' },
         el('span', { text: item.name }),
-        item.colors.map((hex) => el('span', { class: 'export-sub', text: libraryColorName(hex) ? `${libraryColorName(hex)} ${hex}` : hex }))))),
+        item.colors.map((hex) => el('span', { class: 'export-sub', text: libraryColorName(hex) ? `${libraryColorName(hex)} ${hexLabel(hex)}` : hexLabel(hex) }))))),
   ]);
 
   const fontItems = [...usage.fonts.values()].map((f) => el('div', { class: 'export-item' },

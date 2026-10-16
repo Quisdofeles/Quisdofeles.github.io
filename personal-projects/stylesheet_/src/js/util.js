@@ -1,7 +1,7 @@
 // util.js: small helpers shared by every module (this file is an addition to the CLAUDE.md file list).
 // - el(): builds DOM elements without writing innerHTML strings
 // - icon(): the inline SVG icons used across the UI
-// - color helpers (hex validation, contrast), ids, naming, debounce
+// - color helpers (hex validation incl. alpha, CSS colors, swatch backgrounds, contrast), ids, naming, debounce
 
 // Builds an element. props: class, text, dataset {}, on {event: fn}, style {} or string; anything else becomes an attribute.
 // children can be elements, strings, arrays, or null/false (skipped).
@@ -65,16 +65,65 @@ export function debounce(fn, ms) {
 }
 
 // ---------- Colors ----------
-export const isHex = (text) => /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(text).trim());
+// Every color in the app is a hex string: "#RRGGBB" (fully opaque) or "#RRGGBBAA" (the last two digits = alpha).
+// Typing 3 or 6 digits means opaque; 4 or 8 digits carries an alpha. An alpha of FF is stored as plain #RRGGBB,
+// so an opaque color always looks exactly like it did before alpha existed.
+export const isHex = (text) => /^#?([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(String(text).trim());
 
-// "abc" / "#ABC" / "aabbcc" -> "#AABBCC"
+// "abc" / "#ABC" / "aabbcc" -> "#AABBCC";  "abcd" / "aabbccdd" -> "#AABBCCDD";  "#AABBCCFF" -> "#AABBCC"
 export function normalizeHex(text) {
   let h = String(text).trim().replace('#', '');
-  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-  return '#' + h.toUpperCase();
+  if (h.length === 3 || h.length === 4) h = h.split('').map((c) => c + c).join('');
+  h = h.toUpperCase();
+  if (h.length === 8 && h.endsWith('FF')) h = h.slice(0, 6);      // fully opaque: store the short form
+  return '#' + h;
 }
 
-// Picks a readable label color (dark or light) for text sitting on `hex`.
+// The color without its alpha: "#D9FF4366" -> "#D9FF43".
+export const rgbHex = (hex) => normalizeHex(hex).slice(0, 7);
+
+// The alpha of a hex as a whole percent (0–100). A 6-digit hex is 100.
+export function alphaOf(hex) {
+  const h = normalizeHex(hex);
+  return h.length === 9 ? Math.round((parseInt(h.slice(7), 16) / 255) * 100) : 100;
+}
+
+// The same color at `pct` percent alpha: 100 gives "#RRGGBB", anything less "#RRGGBBAA".
+export function withAlpha(hex, pct) {
+  const rgb = rgbHex(hex);
+  if (pct >= 100) return rgb;
+  const a = Math.round((Math.max(0, pct) / 100) * 255);
+  return rgb + a.toString(16).padStart(2, '0').toUpperCase();
+}
+
+// What a stored hex looks like in CSS: an opaque color stays "#RRGGBB"; a color with alpha becomes
+// "rgba(r, g, b, a)" (works everywhere: backgrounds, text, and SVG fill/stroke). null -> "transparent".
+export function cssColor(hex) {
+  if (!hex || !isHex(hex)) return 'transparent';
+  const h = normalizeHex(hex);
+  if (h.length !== 9) return h;
+  const [r, g, b, a] = [1, 3, 5, 7].map((i) => parseInt(h.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${+(a / 255).toFixed(3)})`;
+}
+
+// The text shown for a color: "#D9FF43" when opaque, "#D9FF43 · 40%" when it has alpha.
+export function hexLabel(hex) {
+  if (!hex || !isHex(hex)) return '';
+  const a = alphaOf(hex);
+  return a < 100 ? `${rgbHex(hex)} · ${a}%` : rgbHex(hex);
+}
+
+// A CSS background for a color swatch/chip: the flat color when opaque; with alpha, the color drawn over a small
+// gray checkerboard, so you can see it is see-through. (Used for swatches only, never for real content.)
+const CHECKER = 'repeating-conic-gradient(#BDBDC2 0% 25%, #7C7C84 0% 50%) 50% / 8px 8px';
+export function swatchBg(hex) {
+  if (!hex || !isHex(hex)) return 'transparent';
+  if (alphaOf(hex) >= 100) return rgbHex(hex);
+  const c = cssColor(hex);
+  return `linear-gradient(${c}, ${c}), ${CHECKER}`;
+}
+
+// Picks a readable label color (dark or light) for text sitting on `hex` (its alpha is ignored).
 export function contrastColor(hex) {
   const h = normalizeHex(hex).slice(1);
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -114,6 +163,10 @@ const SVG = {
   // with small break marks (unlinked = each side on its own slider).
   link: '<path d="M6.6 9.4l2.8-2.8"/><path d="M7.5 4.6l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4l-1.2 1.2"/><path d="M8.5 11.4l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4l1.2-1.2"/>',
   unlink: '<path d="M7.5 4.6l1.2-1.2a2.4 2.4 0 0 1 3.4 3.4l-1.2 1.2"/><path d="M8.5 11.4l-1.2 1.2a2.4 2.4 0 0 1-3.4-3.4l1.2-1.2"/><path d="M10.6 12.6v1.4M12.6 10.6H14M5.4 3.4V2M3.4 5.4H2"/>',
+  // Mirror toggles (transform group): a dashed axis with a solid triangle on one side and an outlined one on the
+  // other. flipH = mirror left↔right (vertical axis); flipV = mirror top↔bottom (horizontal axis).
+  flipH: '<path d="M8 2v12" stroke-dasharray="1.5 1.5"/><path d="M6 4L2 12h4z" fill="currentColor"/><path d="M10 4l4 8h-4z"/>',
+  flipV: '<path d="M2 8h12" stroke-dasharray="1.5 1.5"/><path d="M4 6L12 2v4z" fill="currentColor"/><path d="M4 10l8 4v-4z"/>',
 };
 
 // Returns an <svg> element for a named icon.

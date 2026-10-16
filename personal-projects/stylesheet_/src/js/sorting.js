@@ -5,7 +5,7 @@
 import { BLOCK_TYPES, OFFERED_BLOCKS } from './blocks.js';
 
 // The order the default blocks appear in the library AND the "+ block" menu: the offered blocks, in the order of
-// OFFERED_BLOCKS in blocks.js (canvas = "board" on screen, group, vector, image, heading, body; edit that list to change it).
+// OFFERED_BLOCKS in blocks.js (canvas = "board" on screen, group, vector, image, heading, body, palette; edit that list to change it).
 export const BLOCK_ORDER = OFFERED_BLOCKS;
 
 // The offered block type entries, in BLOCK_ORDER. Types that exist but aren't offered (title, subheading, caption)
@@ -37,9 +37,9 @@ export const sortPresets = (presets) => [...presets].sort((a, b) => (b.addedAt |
 const GRAY_SATURATION = 0.10;   // below this saturation a color counts as a gray/brown and goes in the last group
 const HUE_BUCKET = 15;          // degrees; hues within one bucket sort by lightness instead of by exact hue
 
-// "#RRGGBB" -> { h: 0-360, s: 0-1, l: 0-1 }
+// "#RRGGBB" (or "#RRGGBBAA": the alpha is ignored) -> { h: 0-360, s: 0-1, l: 0-1 }
 export function hexToHsl(hex) {
-  const n = parseInt(hex.replace('#', ''), 16);
+  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
   const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
   const l = (max + min) / 2;
@@ -55,8 +55,9 @@ export function hexToHsl(hex) {
 }
 
 // Group number for a color: 0 = pure black, 1 = pure white, 2 = chromatic (by hue), 3 = grays/browns (dark to light).
+// A color with alpha sorts by its RGB part (a see-through black still counts as black).
 function colorGroup(hex, hsl) {
-  const up = hex.toUpperCase();
+  const up = hex.toUpperCase().slice(0, 7);
   if (up === '#000000') return 0;
   if (up === '#FFFFFF') return 1;
   return hsl.s < GRAY_SATURATION ? 3 : 2;

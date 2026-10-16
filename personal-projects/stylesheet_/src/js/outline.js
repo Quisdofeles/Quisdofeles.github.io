@@ -9,13 +9,14 @@
 //   { type: 'text',   blockId }                -> the glyphs of that text block
 //   { type: 'text',   blockIds: [...] }        -> the glyphs of several text blocks at once (a font dropped on a multi-selection)
 //   { type: 'layer',  blockId, layer }         -> the shapes of one first-level layer of a vector block
+//   { type: 'section', blockId, section }      -> one section (by index) of a palette block
 
 import { $ } from './util.js';
 
 let active = null;     // { key, node, undo } for the outline currently shown (node = the element carrying it)
 
 // A string that identifies a target (so asking for the same outline again does nothing).
-const keyOf = (t) => `${t.type}:${t.canvasId || ''}:${t.blockId || (t.blockIds || []).join(',')}:${t.layer === undefined ? '' : t.layer}`;
+const keyOf = (t) => `${t.type}:${t.canvasId || ''}:${t.blockId || (t.blockIds || []).join(',')}:${t.layer === undefined ? '' : t.layer}:${t.section === undefined ? '' : t.section}`;
 
 const grid = () => $('#canvas-grid');
 
@@ -73,6 +74,13 @@ function apply(t) {
     copy.classList.add('pick-layer');
     layer.after(copy);
     return { node: copy, undo: () => copy.remove() };
+  }
+
+  if (t.type === 'section') {
+    const sec = block.querySelector(`.palette-section[data-section="${t.section}"]`);
+    if (!sec) return null;
+    sec.classList.add('pick-section');                 // an accent frame just inside that one section (preview.css)
+    return { node: sec, undo: () => sec.classList.remove('pick-section') };
   }
   return null;
 }

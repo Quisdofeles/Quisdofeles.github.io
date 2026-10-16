@@ -1,7 +1,7 @@
 // fonts.js: imported fonts.
 //  - reads family / weight / style out of a font file (TTF, OTF, WOFF directly; WOFF2 falls back to the file name)
 //  - registers each file with the FontFace API under its own unique CSS family name (via ssfile://)
-//  - helpers for labels ("Space Grotesk 700"), grouping by family, and "closest to 400" picking
+//  - helpers for labels ("Space Grotesk 700"), grouping by family, "closest to 400" picking, and the B / I targets
 
 const registered = new Set();   // font ids already added to document.fonts
 
@@ -73,6 +73,24 @@ export function closestTo400(list) {
     const da = Math.abs(a.weight - 400), db = Math.abs(b.weight - 400);
     return da - db || (a.style === 'italic') - (b.style === 'italic') || b.weight - a.weight;
   })[0] || null;
+}
+
+// ---------- B / I toggles (text properties) ----------
+// B and I never fake a style: they switch to ANOTHER FILE of the same family. `fam` = every file of that family.
+export const BOLD_MIN = 600;      // a weight of 600 or more counts as bold
+const byDistance = (target) => (a, b) => Math.abs(a.weight - target) - Math.abs(b.weight - target) || b.weight - a.weight;
+
+// The file B switches to, or null when the family has none. Not bold yet -> the bold file (weight ≥ 600) nearest to
+// 700, in the same style (normal/italic). Already bold -> back to the non-bold file closest to 400, same style.
+export function boldTarget(font, fam) {
+  const same = fam.filter((f) => f.style === font.style);
+  if (font.weight >= BOLD_MIN) return closestTo400(same.filter((f) => f.weight < BOLD_MIN));
+  return [...same.filter((f) => f.weight >= BOLD_MIN)].sort(byDistance(700))[0] || null;
+}
+
+// The file I switches to, or null: the other style (italic <-> normal) at the weight nearest to the current one.
+export function italicTarget(font, fam) {
+  return [...fam.filter((f) => f.style !== font.style)].sort(byDistance(font.weight))[0] || null;
 }
 
 // ---------- Reading font files ----------

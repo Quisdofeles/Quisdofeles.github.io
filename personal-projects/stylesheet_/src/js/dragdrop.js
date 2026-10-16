@@ -9,13 +9,14 @@
 // (el is null), not a box around the whole block.
 // A plan may also carry `insert` (palette drops only): where the accent insertion line goes between swatches.
 //
-// Payload kinds: font | color | media | block | preset | node (a row in the layers tree).
+// Payload kinds: font | color | media | block | preset | palette (a whole library palette card) | node (a row in the layers tree).
 
 import { $ } from './util.js';
 import {
   state, findNode, getMedia, findColor, addBlock, addBlockToNewCanvas, addCanvas, addCanvasFromPreset,
   addMediaBlock, addMediaToNewCanvas, swapMedia, setBlockFonts, fontTargets, dropColor, setCanvasBackground, setTextColor, setLayerColor, moveNode,
   insertPaletteColor, movePaletteColor, setGroupBackground, backgroundTargetOf, setBgImage,
+  setSectionColor, addPaletteBlock, addPaletteToNewCanvas,
 } from './state.js';
 import { isContainer, isTextType } from './blocks.js';
 import { showOutline } from './outline.js';
@@ -46,6 +47,8 @@ function flowIndex(containerEl, e) {
 }
 
 const hexOf = (id) => (findColor(id) || {}).hex;
+const nameOf = (id) => (findColor(id) || {}).name || null;       // a library color's name (a palette section keeps it)
+const paletteExists = (id) => state.library.palettes.some((p) => p.id === id && p.colors.length);
 
 // ---------- Planning: drops on the preview ----------
 function planPreview(e) {
@@ -76,6 +79,14 @@ function planPreview(e) {
       const index = flowIndex(containerEl, e);
       return { el: containerEl, cls: 'drop-target', run: () => addMediaBlock(drag.id, containerEl.dataset.id, index) };
     }
+    case 'palette': {
+      // A whole library palette: a palette block with copies of its colors, in the board/group under the pointer
+      // (at the drop position in the flow), or a new (dynamic) board when dropped on the empty dot grid.
+      if (!paletteExists(drag.id)) return null;
+      if (!canvasEl) return { el: stage, cls: 'drop-target', run: () => addPaletteToNewCanvas(drag.id) };
+      const index = flowIndex(containerEl, e);
+      return { el: containerEl, cls: 'drop-target', run: () => addPaletteBlock(drag.id, containerEl.dataset.id, index) };
+    }
     case 'font': {
       if (!blockNode || !isTextType(blockNode.node.type)) return null;
       // Sets the font of that block, or of ALL selected text blocks when it is one of several selected. The outline marks every text it will change.
@@ -95,6 +106,14 @@ function planPreview(e) {
         if (!layerEl) return null;                                   // pointer is over empty space inside the vector
         const layer = layerEl.getAttribute('data-layer');
         return { el: null, outline: { type: 'layer', blockId: blockNode.node.id, layer }, run: () => dropColor(blockNode.node.id, hex, layer) };
+      }
+      if (blockNode && blockNode.node.type === 'palette') {
+        // ONE section of a palette block: the one under the pointer (it also takes the library color's name).
+        const secEl = e.target.closest && e.target.closest('[data-section]');
+        if (!secEl) return null;
+        const section = Number(secEl.dataset.section);
+        const id = blockNode.node.id, name = nameOf(drag.id);
+        return { el: null, outline: { type: 'section', blockId: id, section }, run: () => setSectionColor(id, section, hex, { name }) };
       }
       const targetId = blockNode ? blockNode.node.id : canvasEl.dataset.id;
       return { el: null, outline: bgOutline(backgroundTargetOf(targetId)), run: () => dropColor(targetId, hex) };
@@ -147,6 +166,10 @@ function planRow(rowEl, e) {
       }
       return { el: rowEl, cls: into.cls, run: () => addMediaBlock(drag.id, into.parentId, into.index) };
     }
+    case 'palette':
+      // Same as a block: into a board/group row, or right after a leaf row.
+      if (!paletteExists(drag.id)) return null;
+      return { el: rowEl, cls: into.cls, run: () => addPaletteBlock(drag.id, into.parentId, into.index) };
     case 'font':
       if (!isTextType(node.type)) return null;
       {
@@ -157,7 +180,7 @@ function planRow(rowEl, e) {
       const hex = hexOf(drag.id);
       if (!hex) return null;
       if (isTextType(node.type)) return { el: rowEl, cls: 'drop-into', outline: { type: 'text', blockId: node.id }, run: () => dropColor(node.id, hex) };
-      if (node.type === 'vector') return null;                       // a vector has several layers: drop on one in the preview or in its colors section
+      if (node.type === 'vector' || node.type === 'palette') return null;   // several layers / sections: drop on one in the preview or in its colors section
       // A group row -> that group's background; an image row -> its container's; a board (or other) row -> the board's.
       return { el: rowEl, cls: 'drop-into', outline: bgOutline(backgroundTargetOf(node.id)), run: () => dropColor(node.id, hex) };
     }
@@ -239,7 +262,11 @@ function planDrop(e) {
   if (colorEl) {
     const hex = drag.kind === 'color' ? hexOf(drag.id) : null;
     if (!hex) return null;
-    const { dropColor: what, nodeId, layerKey: layer } = colorEl.dataset;       // what = 'canvas' | 'group' | 'text' | 'layer'
+    const { dropColor: what, nodeId, layerKey: layer } = colorEl.dataset;       // what = 'canvas' | 'group' | 'text' | 'layer' | 'section'
+    if (what === 'section') {
+      const section = Number(layer), name = nameOf(drag.id);                   // a palette block section (layerKey = its index)
+      return { el: colorEl, cls: 'drop-target', outline: { type: 'section', blockId: nodeId, section }, run: () => setSectionColor(nodeId, section, hex, { name }) };
+    }
     if (what === 'canvas') return { el: colorEl, cls: 'drop-target', outline: { type: 'canvas', canvasId: nodeId }, run: () => setCanvasBackground(nodeId, hex) };
     if (what === 'group') return { el: colorEl, cls: 'drop-target', outline: { type: 'group', blockId: nodeId }, run: () => setGroupBackground(nodeId, hex) };
     if (what === 'text') return { el: colorEl, cls: 'drop-target', outline: { type: 'text', blockId: nodeId }, run: () => setTextColor(nodeId, hex) };

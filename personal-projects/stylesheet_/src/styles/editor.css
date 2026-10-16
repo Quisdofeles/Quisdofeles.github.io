@@ -122,7 +122,8 @@ button.prop-row { width: 100%; text-align: left; }   /* look comes from the shar
 .bgimg-btn .bg-thumb { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; object-fit: cover; }
 .bgimg-btn .bg-thumb.empty { background: rgba(128,128,128,.4); }   /* a slot without media (preset, deleted item): gray */
 .bgimg-btn .hex { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.clear-link { font-size: 14px; text-decoration: none; }   /* the × that removes a background image */
+.clear-link { font-size: 14px; text-decoration: none; }   /* the × that removes a background image or a palette section */
+.add-section { align-self: flex-start; padding: 2px 2px 0; font-size: 12px; }   /* "+ add section" under a palette block's colors */
 .split-row { display: flex; gap: 4px; }
 .split-row .seg:first-child { flex: 2; }
 .split-row .seg:last-child { flex: 3; }
@@ -140,6 +141,9 @@ button.prop-row { width: 100%; text-align: left; }   /* look comes from the shar
 .reset-link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 0; font-size: 11px; }
 .reset-link:hover { color: var(--accent); }
 .text-input { width: 100%; height: var(--row-h); }
+/* The text block's text box is a textarea (it can hold line breaks): one row tall per line of text (rows set in
+   properties.js, max 4), never shorter than a normal row, no resize handle. */
+textarea.text-input { height: auto; min-height: var(--row-h); padding: 8px; line-height: 1.3; resize: none; display: block; }
 .mini-select { height: 24px; font-size: 12px; }
 .mini-select:hover:not(:disabled) { border-color: var(--accent); }   /* weight picker matches the shared button hover */
 

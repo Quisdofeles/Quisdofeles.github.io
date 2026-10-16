@@ -5,6 +5,8 @@
 //  - building the <svg> element the preview, library tiles and export all use. A layer keeps its original
 //    colors until a color is given for it; then the whole layer becomes that one color.
 
+import { cssColor } from './util.js';
+
 const cache = new Map();   // media id -> { markup: prepared SVG string, layers: [{ name, colors, ids }] }
 
 // Ids Illustrator invents when a layer was never named ("Layer_1", "Artboard_2", "XMLID_3_", "_x31_").
@@ -207,10 +209,12 @@ export function buildVectorSvg(mediaId, colorFor, widthPx) {
   svg.querySelectorAll('[data-layer]').forEach((layer) => {
     const hex = colorFor(layer.getAttribute('data-layer'));
     if (!hex) return;
+    // A color with alpha is written as rgba() (cssColor), so the fill/stroke is see-through like everywhere else.
+    const paint = cssColor(hex);
     // Only elements that really had a fill (data-f) or stroke (data-s) are repainted, so fill:none stays none.
     for (const node of [layer, ...layer.querySelectorAll('[data-f], [data-s]')]) {
-      if (node.hasAttribute('data-f')) node.style.fill = hex;
-      if (node.hasAttribute('data-s')) node.style.stroke = hex;
+      if (node.hasAttribute('data-f')) node.style.fill = paint;
+      if (node.hasAttribute('data-s')) node.style.stroke = paint;
     }
   });
   if (widthPx) { svg.style.width = `${widthPx}px`; svg.style.height = 'auto'; }
