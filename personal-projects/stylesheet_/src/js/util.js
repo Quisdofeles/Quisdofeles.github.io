@@ -33,6 +33,19 @@ function appendChildren(node, children) {
 // Shortcut for document.querySelector.
 export const $ = (selector, root = document) => root.querySelector(selector);
 
+// True only while the user is EDITING TEXT: a text-like <input> (text, search, number, email, url, tel, password),
+// a <textarea>, or text being edited on a board (contenteditable). The app's global shortcuts (undo/redo, delete,
+// duplicate, copy/paste, group, Esc, the project keys, "?") step aside only then, so the browser's own Ctrl+Z keeps
+// undoing the typing. Sliders, checkboxes, buttons/toggles, <select>s and cards keep the focus after a click but are
+// NOT text editing, so they never block the shortcuts. (Checking just the tag name, as before, made a clicked slider
+// or checkbox swallow Ctrl+Z until something unfocusable, like the preview, was clicked.)
+const TEXT_INPUT_TYPES = new Set(['text', 'search', 'number', 'email', 'url', 'tel', 'password']);
+export function isEditingText(t) {
+  if (!t || !(t instanceof Element)) return false;
+  if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
+  return t.tagName === 'INPUT' && TEXT_INPUT_TYPES.has(t.type);   // input.type is 'text' when the attribute is missing
+}
+
 // Removes all children of a node (used before a full re-render of a panel).
 export function clear(node) {
   while (node.firstChild) node.removeChild(node.firstChild);

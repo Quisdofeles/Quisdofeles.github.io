@@ -1,7 +1,7 @@
 {
   "name": "stylesheet",
   "productName": "Stylesheet_",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Stylesheet_ by HALFWIT Studios: a fast brand sketchbook.",
   "author": "HALFWIT Studios",
   "private": true,
@@ -34,6 +34,15 @@
       "target": "nsis",
       "icon": "build/icon.ico"
     },
+    "fileAssociations": [
+      {
+        "ext": "S_",
+        "name": "Stylesheet_.Project",
+        "description": "Stylesheet_ Project",
+        "icon": "file-icon.ico",
+        "role": "Editor"
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,

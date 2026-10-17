@@ -109,6 +109,34 @@ export function confirmDialog({ title, message, confirmLabel = 'confirm', danger
   });
 }
 
+// ---------- Choice dialog (more than two buttons) ----------
+// Same look as the confirm dialog, with any number of buttons, left to right in the given order.
+// choices: [{ label, value, primary }]. Resolves the clicked choice's value. Enter = the primary choice;
+// Esc and clicking outside = `cancelValue`. Used by "save changes to <name>?" and the missing-assets prompt.
+export function choiceDialog({ title, message, choices, cancelValue = 'cancel' }) {
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      document.removeEventListener('keydown', onKey, true);
+      backdrop.remove();
+      resolve(value);
+    };
+    const primary = choices.find((c) => c.primary) || choices[0];
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(cancelValue); }
+      else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); finish(primary.value); }
+    };
+    const buttons = choices.map((c) => el('button', { class: 'btn', style: { height: '32px' }, text: c.label, on: { click: () => finish(c.value) } }));
+    const backdrop = el('div', { class: 'modal-backdrop', on: { mousedown: (e) => { if (e.target === backdrop) finish(cancelValue); } } },
+      el('div', { class: 'modal', style: { width: '400px' }, role: 'dialog' },
+        el('div', { class: 'modal-head' }, el('span', { class: 'section-label', text: title })),
+        el('div', { class: 'modal-body' }, el('p', { class: 'modal-text', text: message })),
+        el('div', { class: 'modal-actions' }, buttons)));
+    $('#overlay-root').append(backdrop);
+    document.addEventListener('keydown', onKey, true);
+    buttons[choices.indexOf(primary)].focus();
+  });
+}
+
 // ---------- Help overlay ----------
 // Dims the app and shows four step cards in ONE centered row, always in the order 01, 02, 03, 04.
 // The cards are no longer tied to the panels they describe; the row (flex, equal gaps, equal widths) is
@@ -147,6 +175,7 @@ const HELP_CALLOUTS = [
     'PNG and WebP can have a transparent background (the checkerboard button). JPEG is always solid.',
     'Use 1× to share quickly, 2× or 4× for a sharper reference.',
     'The arrow button above export opens your recent notifications.',
+    'The project button (top right) has new, open, save (Ctrl+S) and recent projects. A .S_ file holds the fonts and media it uses, so you can share it; double-click or drop one on the window to open it.',
   ] },
 ];
 // The three columns of the IMPORT TIPS box under the step cards (also lists of points).
@@ -157,7 +186,7 @@ const HELP_TIPS = [
     'Drop a media card on a vector or image block to swap it.',
   ] },
   { title: 'SVG SETUP', points: [
-    'Each top-level layer or group becomes one part you can recolor; no naming needed. The Stylesheet_ logo in media is an example: background, S and underscore are three parts.',
+    'Each top-level layer or group becomes one part you can recolor; no naming needed. The Stylesheet_ logo in media is an example: the S and the underscore are two parts.',
     'Parts keep their original colors until you change one; then that part becomes one solid color.',
     'Fit the artboard tightly to the artwork and convert text to outlines.',
   ] },
@@ -182,7 +211,7 @@ export function openHelp() {
     el('div', { class: 'help-tips-cols' },
       HELP_TIPS.map((t) => el('div', {}, el('h4', { text: t.title }), pointList(t.points)))));
   const stack = el('div', { class: 'help-stack', style: { top: `${top}px` } }, row, tips);
-  const footer = el('div', { class: 'help-footer', text: 'everything saves automatically · ctrl+z to undo · press ? anytime to reopen this · click anywhere to close' });
+  const footer = el('div', { class: 'help-footer', text: 'your work saves automatically · ctrl+s saves the project file · ctrl+z to undo · press ? to reopen this · click anywhere to close' });
   overlay.append(stack, footer);
   const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); setHelpSeen(); };
   const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };

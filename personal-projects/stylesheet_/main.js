@@ -1,15 +1,25 @@
 // main.js: Electron main process for Stylesheet_.
 // Owns everything that needs Node: the window, file dialogs, the library folder on disk,
-// atomic JSON saving, the ssfile:// protocol, the trash folder, and the "flush before quit" handshake.
+// atomic JSON saving, the ssfile:// protocol, the trash folder, the "flush before quit" handshake (which may be
+// cancelled by the unsaved-changes prompt), SHA-256 hashes of library files, .S_ project files (save, read, import
+// their assets, recent projects), and single-instance handling (a double-clicked .S_ file opens in the running app).
 // The renderer (src/) never touches Node; it only talks to this file through preload.js.
 
 const { app, BrowserWindow, ipcMain, dialog, protocol, shell, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const fsp = fs.promises;
+const crypto = require('crypto');
 
 // Dev/testing only: lets me point the app at a throwaway data folder so tests never touch real data.
 if (process.env.STYLESHEET_USERDATA) app.setPath('userData', process.env.STYLESHEET_USERDATA);
+
+// ---------- One app at a time ----------
+// Double-clicking a .S_ file while the app is open must open it in the running window, not start a second copy.
+// The second copy asks for the lock, doesn't get it, hands its command line to the first one ('second-instance'
+// below) and quits. (The lock is per data folder, so a test run with STYLESHEET_USERDATA never blocks the real app.)
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) app.quit();
 
 // ssfile:// must be declared "privileged" BEFORE the app is ready.
 // corsEnabled is added on top of the spec so fetch() from the file:// page can read imported fonts/SVGs.
@@ -113,6 +123,16 @@ function writeJsonAtomic(name, text) {
   return next;
 }
 
+// Same idea for any file outside userData (a .S_ project file): write a .tmp next to it, then rename it over.
+async function writeFileAtomic(target, text) {
+  const tmp = target + '.tmp';
+  await fsp.writeFile(tmp, text, 'utf8');
+  await fsp.rename(tmp, target);
+}
+
+// The SHA-256 hash (hex) of a file's bytes. Assets are always compared by CONTENT, never by name.
+const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest('hex');
+
 // Reads a JSON file; returns null if it doesn't exist or can't be parsed (first launch / corrupt file).
 async function readJson(name) {
   try {
@@ -124,10 +144,13 @@ async function readJson(name) {
 
 // ---------- App settings (settings.json) ----------
 // A tiny file separate from session.json because main needs the "on launch" value BEFORE the window exists.
-// It also remembers the last folder each file dialog used (fonts import, media import, export).
+// It also remembers the last folder each file dialog used (fonts import, media import, export, projects = open/save
+// of .S_ files) and the last RECENT_MAX project files opened or saved (newest first).
 // Returns a complete settings object; anything missing or invalid falls back to the default
-// (maximized, and no remembered folders), so a bad file can never break startup.
-const FOLDER_KEYS = ['fonts', 'media', 'export'];
+// (maximized, no remembered folders, no recent projects), so a bad file can never break startup.
+const FOLDER_KEYS = ['fonts', 'media', 'export', 'projects'];
+const RECENT_MAX = 5;
+const isAbsPath = (p) => typeof p === 'string' && p.length < 4096 && path.isAbsolute(p);
 function cleanSettings(raw) {
   const launch = raw && raw.launch === 'windowed' ? 'windowed' : 'maximized';
   const lastFolders = {};
@@ -136,10 +159,25 @@ function cleanSettings(raw) {
     for (const key of FOLDER_KEYS) {
       const dir = src[key];
       // Only plain absolute paths are kept; anything else is dropped (= default dialog location).
-      if (typeof dir === 'string' && dir.length < 4096 && path.isAbsolute(dir)) lastFolders[key] = dir;
+      if (isAbsPath(dir)) lastFolders[key] = dir;
     }
   }
-  return { launch, lastFolders };
+  const recentProjects = (raw && Array.isArray(raw.recentProjects) ? raw.recentProjects : []).filter(isAbsPath).slice(0, RECENT_MAX);
+  return { launch, lastFolders, recentProjects };
+}
+
+// Puts a project file at the top of the recent list (no duplicates; Windows paths ignore case), max RECENT_MAX.
+async function addRecent(file) {
+  const current = await getSettings();
+  const others = current.recentProjects.filter((p) => p.toLowerCase() !== file.toLowerCase());
+  settings = cleanSettings({ ...current, recentProjects: [file, ...others] });
+  await saveSettingsFile();
+}
+// Takes a project file off the recent list (it no longer exists).
+async function removeRecent(file) {
+  const current = await getSettings();
+  settings = cleanSettings({ ...current, recentProjects: current.recentProjects.filter((p) => p.toLowerCase() !== String(file).toLowerCase()) });
+  await saveSettingsFile();
 }
 async function loadSettings() {
   return cleanSettings(await readJson('settings.json'));
@@ -213,18 +251,34 @@ function createWindow(settings) {
 
   // Flush-before-close: hold the close until the renderer says its autosave is written
   // (or 2 seconds pass, so a hung renderer can never trap the app open).
+  // The renderer may first ask "save changes to <name>?" (unsaved project). While that prompt is open it sends
+  // 'app:close-wait', which stops the 2-second fallback (the user may take their time). Its answer comes back with
+  // 'app:flush-done': ok = false means "cancel", and the window simply stays open.
   let flushed = false;
+  let asking = false;              // a close is already being handled (a second click on close is ignored)
   win.on('close', (event) => {
     if (flushed) return;
     event.preventDefault();
-    const finish = () => {
-      if (flushed) return;
+    if (asking) return;
+    asking = true;
+    let timer = null;
+    const cleanup = () => {
+      clearTimeout(timer);
+      ipcMain.removeListener('app:flush-done', onDone);
+      ipcMain.removeListener('app:close-wait', onWait);
+      asking = false;
+    };
+    const onDone = (e, ok) => {
+      cleanup();
+      if (ok === false) return;                      // the user cancelled: keep the window open
       flushed = true;
       if (win && !win.isDestroyed()) win.close();
     };
-    ipcMain.once('app:flush-done', finish);
+    const onWait = () => clearTimeout(timer);
+    ipcMain.on('app:flush-done', onDone);
+    ipcMain.on('app:close-wait', onWait);
     if (!win.webContents.isDestroyed()) win.webContents.send('app:before-quit');
-    setTimeout(finish, 2000);
+    timer = setTimeout(() => onDone(null, true), 2000);
   });
   win.on('closed', () => { win = null; });
 
@@ -272,6 +326,10 @@ ipcMain.handle('settings:save', async (e, data) => {
 });
 
 // ---------- IPC: importing files ----------
+// The name a file gets inside the library folder: a unique prefix + the original name, so two files called
+// "logo.svg" never overwrite each other. (Unsafe characters in the original name become "_".)
+const storedName = (safe) => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}_${safe}`;
+
 // Opens a file dialog, copies each chosen file into library/fonts or library/media,
 // and returns metadata the renderer uses to build library entries.
 // `type` is 'font' or 'media': each library section has its own import button, and the dialog
@@ -300,10 +358,12 @@ ipcMain.handle('files:import', async (e, type) => {
     const subdir = kind === 'font' ? 'fonts' : 'media';
     // Unique stored name so two files called "logo.svg" never overwrite each other.
     const safe = path.basename(source).replace(/[^\w.\-]+/g, '_');
-    const fileName = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}_${safe}`;
+    const fileName = storedName(safe);
     await fsp.mkdir(path.join(libraryDir(), subdir), { recursive: true });
     await fsp.copyFile(source, path.join(libraryDir(), subdir, fileName));
-    imported.push({ kind, subdir, fileName, originalName: path.basename(source), ext });
+    // The hash is how .S_ project files find this file again (by its contents, never by its name).
+    const hash = sha256(await fsp.readFile(path.join(libraryDir(), subdir, fileName)));
+    imported.push({ kind, subdir, fileName, originalName: path.basename(source), ext, hash });
   }
   // Remember where the files came from so the next import of this type opens there (only if something was imported).
   if (imported.length) await rememberFolder(folderKey, path.dirname(result.filePaths[0]));
@@ -313,22 +373,219 @@ ipcMain.handle('files:import', async (e, type) => {
 // First launch: copies the default media that ships with the app (src/defaults/media) into library/media and returns
 // the same metadata as an import, in this fixed order (the renderer gives the first one the newest addedAt).
 // Files are read and written (not copyFile) because in the installed app they live inside app.asar.
-const DEFAULT_MEDIA = ['Stylesheet_Logo.svg', 'Stylesheet_Wordmark.svg'];
+// v1.2.2: the new logo and wordmark (no dark background, no empty artboard space: padding comes from the app). The
+// names (with a space) are what a fresh install shows on the media cards.
+const DEFAULT_MEDIA = ['Stylesheet_ Logo.svg', 'Stylesheet_ Wordmark.svg'];
 ipcMain.handle('defaults:installMedia', async () => {
   const dir = path.join(libraryDir(), 'media');
   await fsp.mkdir(dir, { recursive: true });
   const installed = [];
   for (const name of DEFAULT_MEDIA) {
     const data = await fsp.readFile(path.join(__dirname, 'src', 'defaults', 'media', name));
-    const fileName = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}_${name}`;   // same pattern as imports
+    const fileName = storedName(name);   // same pattern as imports
     await fsp.writeFile(path.join(dir, fileName), data);
-    installed.push({ kind: 'media', subdir: 'media', fileName, originalName: name, ext: '.svg' });
+    installed.push({ kind: 'media', subdir: 'media', fileName, originalName: name, ext: '.svg', hash: sha256(data) });
   }
   return installed;
 });
 
 // Returns a library file's text (used for SVG contents).
 ipcMain.handle('files:read', async (e, rel) => fsp.readFile(resolveLibraryPath(rel), 'utf8'));
+
+// SHA-256 hashes of library files: files = [{ subdir: 'fonts' | 'media', fileName }] -> [hash or null (missing)].
+// Used once to give an existing library its hashes (the upgrade), and whenever an entry has none yet.
+ipcMain.handle('files:hash', async (e, files) => {
+  const out = [];
+  for (const f of Array.isArray(files) ? files : []) {
+    try { out.push(sha256(await fsp.readFile(resolveLibraryPath(`${f.subdir}/${path.basename(String(f.fileName))}`)))); }
+    catch { out.push(null); }
+  }
+  return out;
+});
+
+// ---------- IPC: .S_ project files ----------
+// A project file is ONE readable JSON file with the extension ".S_" (always a capital S). It holds the app name +
+// version, dataVersion, the project name, every board (all layers and properties), the export settings, every color
+// used (hex + library name when known), and ONLY the assets the boards use, embedded as base64: each font file (family,
+// weight, style, original file name) and each media file (name, kind), each with the SHA-256 hash of its contents.
+// The renderer builds the boards/colors/asset LIST (payload); main reads the asset files, hashes and embeds them.
+const PROJECT_EXT = '.S_';
+const PROJECT_FILTERS = [{ name: 'Stylesheet_ Project', extensions: ['S_'] }];
+const isProjectPath = (p) => isAbsPath(p) && /\.s_$/i.test(p);
+// "C:\work\saturn_coffee.S_" -> "saturn_coffee"
+const projectNameOf = (p) => path.basename(p).replace(/\.s_$/i, '');
+// Always ends in ".S_" with a capital S (a typed ".s_" or a missing extension are fixed).
+const withProjectExt = (p) => (/\.s_$/i.test(p) ? p.slice(0, -3) : p) + PROJECT_EXT;
+// A project name usable as a Windows file name (the default name in the save dialog).
+const safeFileName = (name) => String(name || 'untitled').replace(/[<>:"/\\|?*\x00-\x1f]+/g, '_').trim() || 'untitled';
+// The original name of a library file: its stored name without the unique prefix ("lk3j9a2b_Brand.ttf" -> "Brand.ttf").
+const originalNameOf = (fileName) => String(fileName).replace(/^[0-9a-z]+_/, '');
+
+// Save / Save As. filePath null = Save As (the dialog, starting in the remembered projects folder, default name =
+// the project name; Windows itself asks before replacing an existing file). Returns { saved, filePath, fontCount }.
+ipcMain.handle('project:save', async (e, { filePath, defaultName, payload }) => {
+  let target = isAbsPath(filePath) ? filePath : null;
+  if (!target) {
+    const folder = (await rememberedFolder('projects')) || app.getPath('documents');
+    // Dev-only shortcut so automated tests can save without a dialog (never active in a packaged build).
+    const scripted = !app.isPackaged && process.env.STYLESHEET_PROJECT_PATH;
+    const result = scripted
+      ? { canceled: false, filePath: process.env.STYLESHEET_PROJECT_PATH }
+      : await dialog.showSaveDialog(win, {
+        title: 'Save project',
+        defaultPath: path.join(folder, safeFileName(defaultName) + PROJECT_EXT),
+        filters: PROJECT_FILTERS,
+      });
+    if (result.canceled || !result.filePath) return { saved: false };
+    target = result.filePath;
+  }
+  target = withProjectExt(target);
+
+  // Embed each asset the renderer listed: read it from the library, hash it, base64 it. A file that can't be read
+  // (e.g. it was deleted outside the app) is left out; its blocks then show their gray placeholder when opened.
+  const embed = async (subdir, list, describe) => {
+    const out = [];
+    for (const item of Array.isArray(list) ? list : []) {
+      try {
+        const data = await fsp.readFile(resolveLibraryPath(`${subdir}/${path.basename(String(item.fileName))}`));
+        out.push({ ...describe(item), hash: sha256(data), data: data.toString('base64') });
+      } catch { /* missing on disk: skip */ }
+    }
+    return out;
+  };
+  const fonts = await embed('fonts', payload.fonts, (f) => ({ id: f.id, family: f.family, weight: f.weight, style: f.style, originalName: originalNameOf(f.fileName) }));
+  const media = await embed('media', payload.media, (m) => ({ id: m.id, name: m.name, kind: m.kind }));
+  const file = {
+    app: 'Stylesheet_',
+    appVersion: app.getVersion(),
+    dataVersion: DATA_VERSION,
+    name: projectNameOf(target),
+    savedAt: new Date().toISOString(),
+    boards: payload.boards,
+    export: payload.export,
+    colors: payload.colors,
+    assets: { fonts, media },
+  };
+  await writeFileAtomic(target, JSON.stringify(file, null, 2));   // indented: readable in any text editor
+  await rememberFolder('projects', path.dirname(target));
+  await addRecent(target);
+  return { saved: true, filePath: target, fontCount: fonts.length };
+});
+
+// The open dialog for .S_ files (starts in the remembered projects folder). Returns the chosen path or null.
+ipcMain.handle('project:openDialog', async () => {
+  const startIn = await rememberedFolder('projects');
+  // Dev-only shortcut so automated tests can open without a dialog (never active in a packaged build).
+  const scripted = !app.isPackaged && process.env.STYLESHEET_OPEN_PATH;
+  const result = scripted
+    ? { canceled: false, filePaths: [process.env.STYLESHEET_OPEN_PATH] }
+    : await dialog.showOpenDialog(win, {
+      title: 'Open project',
+      ...(startIn ? { defaultPath: startIn } : {}),
+      properties: ['openFile'],
+      filters: PROJECT_FILTERS,
+    });
+  if (result.canceled || !result.filePaths.length) return null;
+  await rememberFolder('projects', path.dirname(result.filePaths[0]));
+  return result.filePaths[0];
+});
+
+// Reads and checks a .S_ file WITHOUT its embedded file data (that stays here until "import assets").
+// Returns { ok: true, filePath, name, project: { boards, export, colors, fonts, media } } where every font/media entry
+// carries `index` (its place in the file) and `hash` (recomputed from the embedded bytes: the contents are the truth),
+// or { ok: false, error: 'missing' | 'invalid' | 'newer' }.
+async function readProjectFile(filePath) {
+  if (!isProjectPath(filePath)) return { ok: false, error: 'invalid' };
+  let text;
+  try { text = await fsp.readFile(filePath, 'utf8'); } catch { return { ok: false, error: 'missing' }; }
+  let data;
+  try { data = JSON.parse(text); } catch { return { ok: false, error: 'invalid' }; }
+  if (!data || data.app !== 'Stylesheet_' || typeof data.dataVersion !== 'number' || !Array.isArray(data.boards)) return { ok: false, error: 'invalid' };
+  if (data.dataVersion > DATA_VERSION) return { ok: false, error: 'newer' };
+  return { ok: true, data };
+}
+ipcMain.handle('project:read', async (e, filePath) => {
+  const res = await readProjectFile(filePath);
+  if (!res.ok) return res;
+  const { data } = res;
+  const assets = data.assets || {};
+  const describe = (list) => (Array.isArray(list) ? list : [])
+    .map((a, index) => ({ a, index }))
+    .filter(({ a }) => a && typeof a.data === 'string')
+    .map(({ a, index }) => {
+      const { data: bytes, ...meta } = a;
+      return { ...meta, index, hash: sha256(Buffer.from(bytes, 'base64')) };
+    });
+  return {
+    ok: true,
+    filePath,
+    name: projectNameOf(filePath),
+    project: {
+      boards: data.boards,
+      export: data.export && typeof data.export === 'object' ? data.export : null,
+      colors: Array.isArray(data.colors) ? data.colors : [],
+      fonts: describe(assets.fonts),
+      media: describe(assets.media),
+    },
+  };
+});
+
+// "import assets": writes the chosen embedded files (by their index in the file) into library/fonts and library/media
+// under new unique stored names. Returns [{ kind: 'font' | 'media', index, fileName, hash }] for the files written.
+ipcMain.handle('project:importAssets', async (e, filePath, wanted) => {
+  const res = await readProjectFile(filePath);
+  if (!res.ok) throw new Error('could not read the project file');
+  const assets = res.data.assets || {};
+  const written = [];
+  const write = async (kind, list, indexes, nameOf, allowed) => {
+    const subdir = kind === 'font' ? 'fonts' : 'media';
+    await fsp.mkdir(path.join(libraryDir(), subdir), { recursive: true });
+    for (const index of Array.isArray(indexes) ? indexes : []) {
+      const a = (Array.isArray(list) ? list : [])[index];
+      if (!a || typeof a.data !== 'string') continue;
+      const original = path.basename(String(nameOf(a) || ''));
+      if (!allowed.includes(path.extname(original).toLowerCase())) continue;   // only real font / media files
+      const bytes = Buffer.from(a.data, 'base64');
+      const fileName = storedName(original.replace(/[^\w.\-]+/g, '_'));
+      await fsp.writeFile(path.join(libraryDir(), subdir, fileName), bytes);
+      written.push({ kind, index, fileName, hash: sha256(bytes) });
+    }
+  };
+  await write('font', assets.fonts, wanted && wanted.fonts, (a) => a.originalName, FONT_EXT);
+  await write('media', assets.media, wanted && wanted.media, (a) => a.name, MEDIA_EXT);
+  return written;
+});
+
+// Recent projects (newest first), each with the name shown in the menu.
+ipcMain.handle('project:recent', async () => (await getSettings()).recentProjects.map((p) => ({ path: p, name: projectNameOf(p) })));
+ipcMain.handle('project:addRecent', (e, p) => (isProjectPath(p) ? addRecent(p) : null));
+ipcMain.handle('project:removeRecent', (e, p) => removeRecent(p));
+
+// A .S_ file the app was started with (double-click in Explorer). The renderer asks once, after it has started; from
+// then on, files from a second launch are sent straight to it ('project:open-file').
+let launchFile = null;
+let rendererReady = false;
+// The first .S_ path on a command line (Explorer passes the file as an argument), or null.
+const projectArg = (argv) => (argv || []).find((a) => isProjectPath(a) && fs.existsSync(a)) || null;
+ipcMain.handle('project:takeLaunchFile', () => {
+  rendererReady = true;
+  const file = launchFile;
+  launchFile = null;
+  return file;
+});
+
+// A second copy of the app was started (e.g. a .S_ file was double-clicked while the app is open): bring this window
+// to the front and open the file in it (the renderer still asks about unsaved changes first).
+app.on('second-instance', (event, argv) => {
+  const file = projectArg(argv);
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  }
+  if (!file) return;
+  if (win && rendererReady) win.webContents.send('project:open-file', file);
+  else launchFile = file;   // the window is still starting: it picks the file up when it asks
+});
 
 // ---------- IPC: trash ----------
 // The renderer sends the list of files that SHOULD be in the trash folder. We make the disk match:
@@ -420,6 +677,8 @@ ipcMain.handle('window:isMaximized', () => !!win && win.isMaximized());
 
 // ---------- App lifecycle ----------
 app.whenReady().then(async () => {
+  if (!gotLock) return;               // a second copy: it already handed its file to the first one and is quitting
+  launchFile = projectArg(process.argv);   // started by double-clicking a .S_ file
   registerProtocol();
   // Old-format data (no dataVersion, or an older one) is moved into a backup folder so the app starts fresh.
   // If that fails, quit instead of loading (and later overwriting) data this version can't read.

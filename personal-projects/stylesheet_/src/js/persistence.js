@@ -38,8 +38,15 @@ export function startPersistence() {
     if (meta.session) saveSessionSoon();
   });
 
-  // On close, main waits for this to finish before the window actually closes.
+  // On close, main waits for this to finish before the window actually closes. The quit guard (project.js: "save
+  // changes to <name>?") runs first; if it says no (cancel), nothing is flushed and the window stays open.
   window.api.onBeforeQuit(async () => {
+    if (quitGuard && !(await quitGuard())) return false;
     await Promise.all([saveSession(), saveLibrary()]);
+    return true;
   });
 }
+
+// Something to ask before the app closes: an async function that returns false to keep the window open.
+let quitGuard = null;
+export function setQuitGuard(fn) { quitGuard = fn; }

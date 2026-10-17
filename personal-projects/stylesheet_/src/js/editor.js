@@ -3,7 +3,7 @@
 // tree rows (copy / paste / duplicate / delete), and undo/redo.
 // The tree and the preview are two views of the same state: both call the same state.js functions.
 
-import { el, clear, $, icon } from './util.js';
+import { el, clear, $, icon, isEditingText } from './util.js';
 import {
   state, subscribe, selectNode, toggleSelect, selectRange, clearSelection, isSelected, toggleHidden, updateNode,
   setNodeCollapsed, removeNodes, duplicateNodes, copyNodes, pasteClipboard, hasClipboard, groupNodes, ungroupNodes,
@@ -131,11 +131,11 @@ function expandAncestorsOfSelection() {
 }
 
 // ---------- Keyboard shortcuts ----------
-const isTyping = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-
+// They work wherever the user last clicked (a slider, checkbox, toggle, select, card...), EXCEPT while text is being
+// edited (isEditingText in util.js): there the browser's own keys, including its own Ctrl+Z, win.
 function initShortcuts() {
   document.addEventListener('keydown', (e) => {
-    if (isTyping(e.target)) return;                                  // let inputs keep their own keys
+    if (isEditingText(e.target)) return;                             // typing text: let the field keep its own keys
     if ($('.modal-backdrop') || $('.help-overlay')) return;           // overlays own the keyboard
     const ctrl = e.ctrlKey || e.metaKey;
     const key = e.key.toLowerCase();

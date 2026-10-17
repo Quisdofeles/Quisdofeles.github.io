@@ -340,7 +340,8 @@ function renderPalettes() {
 // ---------- Blocks + presets (one section) ----------
 // Default blocks first (fixed order), then the saved presets (newest first).
 // Both are single-column .card-row cards (same as fonts/colors): icon in a 34px slot, name, muted second line.
-// Blocks show what kind of block they are ("text", "container", "media"...); presets show "preset" and a dashed border.
+// Blocks show what kind of block they are ("text", "container", "media"...); presets show "preset" (plus the board count
+// when it holds more than one) and a dashed border.
 // The card shows typeLabel() ("board" for the canvas type); the drag payload keeps the real type name.
 function renderBlocks() {
   redraw($('#list-blocks'), (list) => {
@@ -360,7 +361,8 @@ function renderBlocks() {
         el('span', { class: 'icon-slot', text: '▣' }),
         el('div', { class: 'card-text' },
           el('span', { class: 'card-title', text: p.name }),
-          el('span', { class: 'card-sub', text: 'preset' })));
+          // A preset can hold several boards: the count shows when there is more than one ("preset · 3 boards").
+          el('span', { class: 'card-sub', text: p.boards.length > 1 ? `preset · ${p.boards.length} boards` : 'preset' })));
       list.append(withDeleteMenu(card, 'preset', [p.id], p.name));
     }
   });
@@ -494,18 +496,19 @@ async function importFlow(type) {
     if (f.kind === 'font') {
       const res = await fetch(`ssfile://lib/fonts/${encodeURIComponent(f.fileName)}`);
       const info = await describeFont(await res.arrayBuffer(), f.originalName);
-      fontEntries.push({ id: uid('f'), family: info.family, fileName: f.fileName, style: info.style, weight: info.weight });
+      // `hash` (SHA-256 of the file, from main) is how .S_ project files recognize this font by its contents.
+      fontEntries.push({ id: uid('f'), family: info.family, fileName: f.fileName, style: info.style, weight: info.weight, hash: f.hash });
     } else if (f.ext === '.svg') {
       const id = uid('v');
       try {
         const text = await window.api.readLibraryFile(`media/${f.fileName}`);
         cacheMedia(id, processSvg(text, id));   // sanitizes + reads the first-level layers and their colors
-        mediaEntries.push({ id, name: f.originalName, fileName: f.fileName, kind: 'svg', addedAt: now + i });
+        mediaEntries.push({ id, name: f.originalName, fileName: f.fileName, kind: 'svg', addedAt: now + i, hash: f.hash });
       } catch {
         showToast(`${f.originalName} isn't a valid svg and was skipped.`, { warn: true });
       }
     } else {
-      mediaEntries.push({ id: uid('m'), name: f.originalName, fileName: f.fileName, kind: 'image', addedAt: now + i });
+      mediaEntries.push({ id: uid('m'), name: f.originalName, fileName: f.fileName, kind: 'image', addedAt: now + i, hash: f.hash });
     }
   }
 

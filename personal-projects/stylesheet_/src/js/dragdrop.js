@@ -20,6 +20,7 @@ import {
 } from './state.js';
 import { isContainer, isTextType } from './blocks.js';
 import { showOutline } from './outline.js';
+import { openDroppedFiles } from './project.js';
 
 // The accent outline for a board's or group's background: its edge.
 const bgOutline = (node) => (node.type === 'group' ? { type: 'group', blockId: node.id } : { type: 'canvas', canvasId: node.id });
@@ -332,6 +333,9 @@ export function initDragDrop() {
 
   document.addEventListener('dragover', (e) => {
     e.preventDefault();                       // also stops files dragged from Explorer from navigating the window
+    // Files from Explorer: only a .S_ project file does something (it opens). The file names can't be read until
+    // the drop, so any file drag shows the "copy" cursor; other files are simply ignored on drop.
+    if (!drag && e.dataTransfer.types.includes('Files')) { e.dataTransfer.dropEffect = 'copy'; return; }
     const plan = drag ? planDrop(e) : null;
     e.dataTransfer.dropEffect = plan ? (plan.effect || (drag.kind === 'node' ? 'move' : 'copy')) : 'none';
     setHot(plan);
@@ -341,6 +345,8 @@ export function initDragDrop() {
 
   document.addEventListener('drop', (e) => {
     e.preventDefault();
+    // A .S_ file dropped from Explorer opens as the project (after the unsaved-changes prompt); other files are ignored.
+    if (!drag && e.dataTransfer.files.length) { openDroppedFiles(e.dataTransfer.files); return; }
     const plan = drag ? planDrop(e) : null;
     // Run the action BEFORE clearing `drag`: the planned closures read the dragged id lazily.
     try { if (plan) plan.run(); } finally { endDrag(); }

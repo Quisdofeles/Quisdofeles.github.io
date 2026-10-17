@@ -1,10 +1,11 @@
 // state.js: THE single source of truth.
 // All app data lives in the one `state` object below. Other modules READ it and render from it;
 // they CHANGE it only by calling the functions exported here, which then notify subscribers.
-// Also holds the undo/redo history (snapshots of canvases + library, max 50).
+// Also holds the undo/redo history (snapshots of canvases + library, max 50), the open project's state (its .S_ file
+// path and the unsaved-changes flag, session.project) and the load-time upgrade of older saved libraries.
 //
 // Notification meta (what changed), passed to every subscriber:
-//   { library, session, live, view, selection, history }
+//   { library, session, live, view, selection, history, project }
 
 import { uid, clone, normalizeHex } from './util.js';
 import {
@@ -62,7 +63,25 @@ function defaultSession() {
     collapsedNodes: {},      // layers-tree nodes the user collapsed
     expandedSection: null,   // the library section filling the whole panel ('blocks' | 'media' | 'fonts' | 'colors' | 'palettes'), or null
     helpSeen: false,
+    // The one open project: the .S_ file it was last saved to / opened from (null = never saved: "untitled"), and
+    // whether the boards changed since then (the "*"). Saved with the session, so a restart reopens the same project.
+    project: { filePath: null, dirty: false },
   };
+}
+
+// ---------- Upgrade of older saved data (REMOVABLE LATER) ----------
+// The project-files batch changed how presets are saved: { structure } (one board) became { boards: [structure, ...] }.
+// Saved libraries (and preset entries waiting in the trash) are upgraded here on load, in place; the upgraded shape is
+// written back by the next library save. The other half of this upgrade (adding a `hash` to every library font and
+// media file) needs the main process and lives in project.js ensureHashes(). DATA_VERSION stays 2 on purpose (main.js
+// would otherwise move the whole library into a backup folder). Once every saved library has been upgraded, this
+// function and its call in initState() can be deleted.
+function upgradeLibrary(library) {
+  const upgradePreset = (p) => {
+    if (p && p.structure && !p.boards) { p.boards = [p.structure]; delete p.structure; }
+  };
+  library.presets.forEach(upgradePreset);
+  library.trash.filter((t) => t.kind === 'preset').forEach((t) => upgradePreset(t.item));
 }
 
 // Fills in any top-level key missing from a loaded file with its default (a safety net for a hand-edited or partly
@@ -87,7 +106,8 @@ function fixEmptyDynamicCanvases() {
 export function initState(library, session) {
   isFirstLaunch = !library && !session;
   state.library = normalize(library, defaultLibrary());
-  state.session = normalize(session, defaultSession());
+  upgradeLibrary(state.library);             // old single-board presets -> { boards: [...] } (removable later)
+  state.session = normalize(session, defaultSession());   // a session from before project files gets project: untitled, saved
   state.session.export = { ...defaultSession().export, ...state.session.export };
   state.session.selection = cleanSelection(state.session.selection);
   fixEmptyDynamicCanvases();
@@ -113,19 +133,86 @@ function restore(snap) {
 
 export function undo() {
   if (!undoStack.length) return false;
+  const before = JSON.stringify(state.session.canvases);
   redoStack.push(snapshot());
   restore(undoStack.pop());
   gestureOpen = false;
+  if (JSON.stringify(state.session.canvases) !== before) markDirty();   // undoing a library-only step changes no board
   notify({ session: true, library: true, history: true });
   return true;
 }
 export function redo() {
   if (!redoStack.length) return false;
+  const before = JSON.stringify(state.session.canvases);
   undoStack.push(snapshot());
   restore(redoStack.pop());
   gestureOpen = false;
+  if (JSON.stringify(state.session.canvases) !== before) markDirty();
   notify({ session: true, library: true, history: true });
   return true;
+}
+
+// ---------- Project (the one open .S_ file) ----------
+// The project's name = its file name without ".S_"; a workspace that was never saved is "untitled".
+export function projectName() {
+  const file = state.session.project.filePath;
+  return file ? file.split(/[\\/]/).pop().replace(/\.s_$/i, '') : 'untitled';
+}
+export const isProjectDirty = () => !!state.session.project.dirty;
+
+// Unsaved changes: set by every change to the BOARDS (any undoable step that isn't library-only, an undo/redo that
+// changes the boards) and by the export settings (they are saved in the file). Library-only changes (imports, library
+// colors, presets) don't count: they aren't part of the project. Cleared by save / open (markSaved, loadProject).
+function markDirty() { state.session.project.dirty = true; }
+
+// After a successful save: this file is now the project's file and nothing is unsaved.
+export function markSaved(filePath) {
+  state.session.project = { filePath, dirty: false };
+  notify({ session: true, ui: true, project: true });
+}
+
+// Replaces the workspace with a project's boards (open, "new project", "open as preset"). Clears the selection, the
+// layers-tree collapse state and the undo history (an undo must never bring back the previous project's boards).
+// `exportSettings` (optional) replaces the export settings; `filePath` null = untitled; `dirty` = starts unsaved.
+export function loadProject({ canvases, exportSettings = null, filePath = null, dirty = false }) {
+  state.session.canvases = canvases;
+  state.session.selection = [];
+  state.session.collapsedNodes = {};
+  if (exportSettings) state.session.export = { ...defaultSession().export, ...exportSettings };
+  state.session.project = { filePath, dirty };
+  anchorId = null;
+  fixEmptyDynamicCanvases();
+  undoStack = [];
+  redoStack = [];
+  gestureOpen = false;
+  notify({ session: true, library: true, history: true, project: true });
+}
+
+// "new project": a fresh untitled workspace with one empty "Board 1" (like clear boards). The library is untouched;
+// the export settings are kept (they are the user's own defaults until a file brings its own).
+export function newProject() {
+  loadProject({ canvases: [createCanvas({ name: `${BASE_NAME} 1` })] });
+}
+
+// Stores the SHA-256 hash of library font/media files (computed by the main process). Not an undo step and not a board
+// change; the library is saved like after any other library change. entries: [{ kind: 'font' | 'media', id, hash }].
+export function setAssetHashes(entries) {
+  let changed = false;
+  for (const { kind, id, hash } of entries) {
+    const item = (kind === 'font' ? state.library.fonts : state.library.media).find((x) => x.id === id);
+    if (item && hash && item.hash !== hash) { item.hash = hash; changed = true; }
+  }
+  if (changed) notify({ library: true });
+}
+
+// "import assets" of a .S_ file: adds the missing fonts and media (already copied into the library folder) and,
+// optionally, the project's colors as one palette. One library change (the opened project then clears the history).
+export function addImportedAssets({ fonts = [], media = [], palette = null }) {
+  change(() => {
+    state.library.fonts.push(...fonts);
+    state.library.media.push(...media);
+    if (palette) state.library.palettes.push(palette);
+  }, { library: true });
 }
 
 // Slider drags call this when the drag ends ('change' event), so the NEXT drag starts a new history entry.
@@ -140,6 +227,7 @@ function change(fn, meta = {}) {
   }
   fn();
   fixEmptyDynamicCanvases();       // an emptied dynamic canvas falls back to fixed 160×160 (same undo step)
+  if (!meta.noHistory && !meta.library) markDirty();   // a board change: the project now has unsaved changes
   notify({ session: true, ...meta });
 }
 
@@ -298,6 +386,7 @@ export function setView(zoom, pan) {
 }
 export function setExport(patch) {
   Object.assign(state.session.export, patch);
+  markDirty();                     // the export settings are saved in the project file
   notify({ session: true, exportSettings: true });
 }
 export function setGroupCollapsed(name, collapsed) {
@@ -364,9 +453,23 @@ export function addCanvas({ structure, index } = {}) {
   return canvas;
 }
 
+// A preset dropped in the preview / layers: adds ALL of its boards, in the preset's order, at `index` (the end when
+// left out), as ONE undo step. Each board gets the next free "Board N" name; the new boards become the selection.
 export function addCanvasFromPreset(presetId, index) {
   const preset = state.library.presets.find((p) => p.id === presetId);
-  return preset ? addCanvas({ structure: preset.structure, index }) : null;
+  if (!preset || !preset.boards.length) return null;
+  const added = [];
+  change(() => {
+    const list = state.session.canvases;
+    let at = index === undefined ? list.length : index;
+    for (const structure of preset.boards) {
+      const canvas = canvasFromStructure(structure, nextCanvasName());   // named after the boards added so far
+      list.splice(at++, 0, canvas);
+      added.push(canvas.id);
+    }
+    pick(added);
+  });
+  return added;
 }
 
 // Adds a block of `type` into a container (canvas/group) at `index`. Returns the block.
@@ -879,10 +982,20 @@ export function seedMedia(entries) {
   notify({ library: true });
 }
 
-export function savePreset(canvasId, name) {
-  const hit = findNode(canvasId);
-  if (!hit || hit.node.type !== 'canvas') return null;
-  const preset = { id: uid('pr'), name, addedAt: Date.now(), structure: structureFromCanvas(hit.node) };
+// "save as preset": stores the STRUCTURE of one or more boards (`canvasIds`), in the order they have in the preview
+// and layers tree (not the order they were clicked). preset = { id, name, addedAt, boards: [structure, ...] }.
+export function savePreset(canvasIds, name) {
+  const ids = new Set(canvasIds);
+  const boards = state.session.canvases.filter((c) => ids.has(c.id));
+  if (!boards.length) return null;
+  const preset = { id: uid('pr'), name, addedAt: Date.now(), boards: boards.map(structureFromCanvas) };
+  change(() => state.library.presets.push(preset), { library: true });
+  return preset;
+}
+
+// Adds a ready-made preset to the library (used by "open as preset" for a .S_ file). One undo step.
+export function addPreset(name, boards) {
+  const preset = { id: uid('pr'), name, addedAt: Date.now(), boards };
   change(() => state.library.presets.push(preset), { library: true });
   return preset;
 }

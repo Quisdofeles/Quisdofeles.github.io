@@ -87,6 +87,12 @@
 .menu-item.danger { color: #ff6b5e; }
 .menu-item .glyph { color: var(--accent); width: 14px; text-align: center; }
 .menu-item .sub { margin-left: auto; color: var(--muted); font-size: 11px; }
+/* Dropdown menu (openMenu() in popover.js, the project menu): long labels end with an ellipsis, a thin divider line,
+   and a muted non-clickable note row ("no recent projects"). */
+.menu-item .menu-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-item .menu-label + .sub { flex: none; padding-left: 12px; }   /* shortcut hints never squeeze or touch the label */
+.menu-divider { flex: none; height: 1px; margin: 3px 4px; background: var(--line); }
+.menu-note { flex: none; height: 30px; display: flex; align-items: center; padding: 0 8px; color: var(--muted); font-size: 12px; }
 .menu-item .chip { width: 16px; height: 16px; border-radius: 3px; border: 1px solid rgba(255,255,255,.12); flex: none; }
 /* Media picker (background images): a small thumbnail instead of a color chip, and a name that truncates. */
 .menu-item .media-chip { object-fit: contain; background: rgba(128,128,128,.22); }

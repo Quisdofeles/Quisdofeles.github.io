@@ -3,7 +3,11 @@
 
 * { box-sizing: border-box; }
 
-/* The window never scrolls. Only list areas inside sections are allowed to (see .scroll-area). */
+/* The window never scrolls. Only list areas inside sections are allowed to (see .scroll-area).
+   Why "clip" and not "hidden": an overflow: hidden element is still a scroll container, so the browser can scroll it
+   from code, e.g. to keep a text cursor in view while typing (that is what shifted the whole app sideways when long
+   text was typed on a board). overflow: clip clips the same way but can never be scrolled. The root element (html)
+   can't use clip (the browser treats it as hidden there), so app.js lockScrolling() resets any scroll of the window. */
 html, body {
   height: 100%;
   margin: 0;
@@ -15,14 +19,18 @@ html, body {
   user-select: none;
 }
 
+body { overflow: clip; }   /* (see above) body, #app, #columns, the panels and the preview clip without being scrollable */
+
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 input, textarea { user-select: text; }
 
-#app { display: flex; flex-direction: column; height: 100%; }
+#app { display: flex; flex-direction: column; height: 100%; overflow: clip; }
 
-/* Three columns between the top bar and status bar. min-height:0 lets children shrink instead of overflowing. */
-#columns { flex: 1; min-height: 0; display: flex; }
+/* Three columns between the top bar and status bar. min-height:0 lets children shrink instead of overflowing.
+   overflow: clip cuts off anything that runs past the window edge (a wide board under the glass editor panel)
+   without ever becoming scrollable. */
+#columns { flex: 1; min-height: 0; display: flex; overflow: clip; }
 
 .panel {
   flex: none;
@@ -30,11 +38,13 @@ input, textarea { user-select: text; }
   flex-direction: column;
   min-height: 0;
   background: var(--panel);
-  overflow: hidden;       /* panels never scroll as a whole */
+  overflow: clip;         /* panels never scroll as a whole (clip: not even from code; their list areas still scroll) */
 }
 #library { width: 280px; border-right: 1px solid var(--line); }
 #editor { width: 320px; border-left: 1px solid var(--line); }
-#preview { flex: 1; min-width: 0; position: relative; overflow: hidden; background: var(--bg); }
+/* The preview clips its boards to its own box (clip, so the browser can't scroll it to follow a text cursor).
+   With the glass panels on, preview.css lets boards continue sideways under the panels instead. */
+#preview { flex: 1; min-width: 0; position: relative; overflow: clip; background: var(--bg); }
 
 .panel-head {
   flex: none;
@@ -54,6 +64,25 @@ input, textarea { user-select: text; }
   letter-spacing: 2px;
   color: var(--muted);
 }
+
+/* ---------- Unsaved-changes asterisk ----------
+   The "*" after the project name (preview bar and the top bar's project button). It is the original IBM Plex Mono
+   asterisk (the app's UI font, bundled): a large 5-point star, the SAME size as the name (1em). Plex Mono draws it low
+   (its top at 7/13 of the font size, the capitals reach 9/13), so it is raised by .16em: its top then lines up with the
+   top of the capitals and it sits at the top right of the name, like a superscript. The parent lines it up on the
+   name's baseline first (a flex row with align-items: baseline). `top` is a relative offset and line-height: 1 keeps
+   its own line box inside the name's, so neither bar gets taller. 1.5px gap after the name.
+   flex: none keeps it visible when the name ends with an ellipsis. Empty (nothing unsaved) = not there at all. */
+.unsaved-star {
+  flex: none;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: 1em;
+  line-height: 1;
+  position: relative; top: -.16em;
+  margin-left: 1.5px;
+}
+.unsaved-star:empty { display: none; }
 
 /* ---------- Scroll areas ---------- */
 /* 6px scrollbar. The thumb is gray at rest AND on hover; it only turns lime while it is being

@@ -1,6 +1,17 @@
 /* topbar.css: the custom top bar (the app is frameless, so this is also the window's drag handle). */
 
 #topbar {
+  /* Spacing around the two dividers in the right-hand group (project | ? settings | min max close).
+     --divider-gap is THE one value: the visible space on each side of a divider, measured to what you actually see
+     (an icon's glyph, or the project card's border). Icon buttons are --win-btn-w wide around a --win-icon icon, so
+     each carries --icon-inset of invisible space; the divider margin subtracts it (and the flex gap), and the project
+     card adds the same inset on its right. Result: project card → divider → ? icon uses exactly the same gaps as
+     settings icon → divider → minimize. */
+  --divider-gap: 26px;
+  --top-actions-gap: 4px;
+  --win-btn-w: 40px;
+  --win-icon: 16px;
+  --icon-inset: calc((var(--win-btn-w) - var(--win-icon)) / 2);
   flex: none;
   height: 48px;
   display: flex;
@@ -26,28 +37,44 @@
   color: var(--accent)
 }
 
-/* Breadcrumb of the current selection: parents muted, last item white. */
+/* Breadcrumb of the current selection: parents muted, last item white.
+   It only gets the space between the wordmark and the project button (flex: 0 1 auto + min-width: 0), so it can never
+   overlap them. When it doesn't fit, topbar.js first collapses the MIDDLE segments to "…" (first and last stay); if
+   even that is too long, the crumbs themselves end with an ellipsis. */
 #breadcrumb {
+  flex: 0 1 auto;
   display: flex; align-items: center; gap: 8px;
   margin-left: 22px;
   color: var(--muted);
   min-width: 0; white-space: nowrap; overflow: hidden;
 }
-#breadcrumb .crumb { background: none; border: 0; padding: 2px 0; color: var(--muted); }
+#breadcrumb .crumb { background: none; border: 0; padding: 2px 0; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 #breadcrumb .crumb:hover { color: var(--text); }
 #breadcrumb .crumb.last { color: var(--text); font-weight: 500; }
-#breadcrumb .sep { color: var(--muted); }
+#breadcrumb .sep, #breadcrumb .crumb-gap { flex: none; color: var(--muted); }
+/* While topbar.js measures whether the full breadcrumb fits, nothing may shrink (shrinking would hide the overflow). */
+#breadcrumb.measuring > * { flex-shrink: 0; }
+.brand, .top-actions { flex: none; }
 
-.top-actions { display: flex; align-items: center; gap: 4px; }
-.top-divider { width: 1px; height: 22px; background: var(--line); margin: 0 10px; }
+.top-actions { display: flex; align-items: center; gap: var(--top-actions-gap); margin-left: 16px; }   /* margin = the least space between a long breadcrumb and the project button */
+
+/* The project button: a small card in the shared button look (.btn) with the project name and a "*" when unsaved.
+   At most ~200px wide: the name ends with an ellipsis (the full name is the tooltip); the "*" always stays visible. */
+.project-btn { display: flex; align-items: center; max-width: 200px; min-width: 0; font-size: 12px;
+  margin-right: var(--icon-inset); }   /* the same invisible inset an icon button has, so its divider gap matches the other divider's */
+/* Name + "*" share one baseline inside this label (the button itself centers the label vertically). */
+.project-btn-label { display: flex; align-items: baseline; min-width: 0; }
+.project-btn-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The divider sits --divider-gap away from the visible edge on both sides (see the variables on #topbar). */
+.top-divider { width: 1px; height: 22px; background: var(--line); margin: 0 calc(var(--divider-gap) - var(--icon-inset) - var(--top-actions-gap)); }
 
 /* Bare icon buttons: no box, muted, hover background #1A1A1E. Close turns red. */
 .win-btn {
-  width: 40px; height: 36px;
+  width: var(--win-btn-w); height: 36px;
   display: grid; place-items: center;
   background: transparent; border: 0; border-radius: var(--radius);
   color: var(--muted); padding: 0;
 }
 .win-btn:hover { background: var(--hover); color: var(--text); }
 .win-btn.win-close:hover { background: var(--danger); color: #fff; }
-.win-btn svg { width: 16px; height: 16px; pointer-events: none; }
+.win-btn svg { width: var(--win-icon); height: var(--win-icon); pointer-events: none; }

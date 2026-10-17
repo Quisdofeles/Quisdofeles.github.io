@@ -3,7 +3,7 @@
 
 #stage {
   position: absolute; inset: 0;
-  overflow: hidden;
+  overflow: clip;                  /* clip, not hidden: the browser can never scroll the stage (e.g. to follow a text cursor) */
   /* Dot grid; JS updates size/position so the dots zoom and pan with the canvases. */
   background-color: var(--bg);
   background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
@@ -22,8 +22,12 @@
   position: absolute; left: 0; top: 0;
   display: grid;
   transform-origin: 0 0;           /* zoom around the grid's top-left; JS adjusts translate to zoom around the cursor */
-  will-change: transform;
 }
+/* Crisp zoom: will-change: transform makes Chromium paint the grid ONCE into a GPU layer and then only stretch that
+   picture when the scale changes (fast, but blurry when zoomed in). So the hint is only on WHILE the view is moving
+   (applyView() in preview.js adds .view-moving on every zoom/pan and removes it ~150ms after the last change). Once
+   it is gone, Chromium repaints the boards at the real zoom, so vectors and text are sharp at any zoom. */
+#canvas-grid.view-moving { will-change: transform; }
 
 /* Preset-save ripple (playRipple() in preview.js): a temporary canvas laid exactly over the dot grid while it plays.
    It is opaque, so it hides the real dots under it, and draws the dots itself (moving like water). Its size and left
@@ -52,6 +56,17 @@
   z-index: 5;
 }
 #preview-bar { top: 24px; height: 56px; }
+/* Left side of the preview bar: "02 — PREVIEW" (11px) and the project info (13px). The bar centers its items
+   vertically, which put the two different font sizes on different baselines; inside this wrapper they share ONE
+   baseline. The wrapper is the only thing in the bar that may shrink (min-width: 0): it takes just the space left
+   between the label and the zoom controls, so it can never overlap them. */
+.bar-title { flex: 0 1 auto; min-width: 0; display: flex; align-items: baseline; gap: 14px; }
+.bar-title .section-label { flex: none; }
+#preview-bar > :not(.bar-title):not(.grow) { flex: none; }   /* zoom label, zoom control and fit never shrink */
+/* "saturn_coffee* · 3 boards": only the name truncates (ellipsis); the "*" and "· N boards" always stay visible. */
+.project-info { display: flex; align-items: baseline; min-width: 0; white-space: nowrap; }   /* baseline: the smaller "*" sits on the name's baseline (base.css .unsaved-star) */
+.project-info-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#project-info-dirty, #grid-info { flex: none; }
 /* Export bar: two columns, each two stacked rows. Column 1: the style labels / board labels checkboxes.
    Column 2: format + transparent toggle, then scale. The export button sits top right.
    Height = 10px padding + 34px row + 8px gap + 34px row + 10px padding (+ border).
@@ -213,7 +228,8 @@ body.glass-panels .panel {
   backdrop-filter: blur(6px);
 }
 /* Let the canvases spill sideways under the panels, but still clip them above (top bar) and below (status bar).
-   overflow-y: clip (not hidden) is what allows the other axis to stay visible. */
+   overflow-y: clip (not hidden) is what allows the other axis to stay visible. Past the window's left/right edge
+   they are clipped by #columns (overflow: clip in base.css), which can't be scrolled either. */
 body.glass-panels #preview { overflow-x: visible; overflow-y: clip; }
 /* The stage keeps its normal box; its own dot background is swapped for the wider layer below. */
 body.glass-panels #stage { overflow: visible; background: none; }

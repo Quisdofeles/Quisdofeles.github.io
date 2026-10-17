@@ -31,6 +31,10 @@
       <nav id="breadcrumb" aria-label="selection"></nav>
       <div class="grow"></div>
       <div class="top-actions">
+        <!-- The project button: the open project's name (+ "*" when unsaved); opens the project menu (topbar.js / project.js). -->
+        <!-- .project-btn-label lines the name and the small raised "*" up on one baseline (the button centers the label). -->
+        <button class="btn project-btn" id="btn-project"><span class="project-btn-label"><span class="project-btn-name" id="project-btn-name">untitled</span><span class="unsaved-star" id="project-btn-dirty"></span></span></button>
+        <span class="top-divider"></span>
         <button class="win-btn" id="btn-help" title="help (?)"></button>
         <button class="win-btn" id="btn-settings" title="settings"></button>
         <span class="top-divider"></span>
@@ -86,8 +90,14 @@
         </div>
 
         <div class="float-bar" id="preview-bar">
-          <span class="section-label">02 — PREVIEW</span>
-          <span class="muted" id="grid-info">auto grid · 0 boards</span>
+          <!-- .bar-title lines "02 — PREVIEW" (11px) and the project info (13px) up on ONE text baseline. The project
+               name truncates with an ellipsis; the "*" (unsaved) and "· N boards" always stay visible (preview.js). -->
+          <div class="bar-title">
+            <span class="section-label">02 — PREVIEW</span>
+            <span class="muted project-info" id="project-info">
+              <span class="project-info-name" id="project-info-name">untitled</span><span class="unsaved-star" id="project-info-dirty"></span><span id="grid-info">&nbsp;· 0 boards</span>
+            </span>
+          </div>
           <span class="grow"></span>
           <span class="muted">zoom</span>
           <div class="seg">
@@ -171,7 +181,7 @@
     <footer id="statusbar">
       <span id="status-counts">library: 0 blocks · 0 media · 0 fonts · 0 colors · 0 palettes</span>
       <!-- The version is filled in from package.json at startup (app.js); this text is only the fallback. -->
-      <span id="status-brand">Stylesheet_ by HALFWIT Studios · v1.1.0</span>
+      <span id="status-brand">Stylesheet_ by HALFWIT Studios · v1.2.2</span>
     </footer>
   </div>
 

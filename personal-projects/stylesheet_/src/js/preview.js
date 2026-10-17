@@ -6,7 +6,7 @@
 import { el, clear, $, cssColor, contrastColor, hexLabel } from './util.js';
 import {
   state, subscribe, isFirstLaunch, visibleCanvases, selectNode, toggleSelect, selectIds, setView, getFont, getMedia, addCanvas,
-  findNode, updateNode, endGesture, requestRender,
+  findNode, updateNode, endGesture, requestRender, projectName, isProjectDirty,
 } from './state.js';
 import { fontCss, DEFAULT_FONT_ID } from './fonts.js';
 import { buildVectorSvg, mediaUrl } from './svg.js';
@@ -267,6 +267,17 @@ export function renderCanvasCell(canvas, index, opts = {}) {
 }
 
 // ---------- Grid + view ----------
+// The project info in the preview bar (display only): "saturn_coffee · 3 boards", with a "*" after the name while
+// there are unsaved changes. Only the name truncates (preview.css); the "*" and the board count always stay visible.
+function renderProjectInfo() {
+  const n = visibleCanvases().length;
+  const name = projectName();
+  $('#project-info-name').textContent = name;
+  $('#project-info').title = `${name}${isProjectDirty() ? ' (unsaved changes)' : ''}`;
+  $('#project-info-dirty').textContent = isProjectDirty() ? '*' : '';
+  $('#grid-info').textContent = ` · ${n} board${n === 1 ? '' : 's'}`;   //   keeps the space before the "·"
+}
+
 let lastCount = null;
 let zoomEditing = false;   // true while the zoom percent is an input
 
@@ -276,18 +287,36 @@ function renderGrid() {
   applyGridLayout(grid, visible.length);
   clear(grid);
   visible.forEach((cv, i) => grid.append(renderCanvasCell(cv, i)));
-  $('#grid-info').textContent = `auto grid · ${visible.length} board${visible.length === 1 ? '' : 's'}`;
+  renderProjectInfo();
   $('#stage-empty').style.display = visible.length ? 'none' : 'block';
   // When canvases are added/removed the grid changes shape, so re-fit it (not on ordinary edits).
   if (lastCount !== null && lastCount !== visible.length) fit();
   lastCount = visible.length;
 }
 
+// Crisp zoom: how long after the last zoom/pan change the grid stays a "moving" GPU layer (see .view-moving in
+// preview.css). While it is on, zooming is a cheap stretch of the last picture (smooth, briefly soft); when it
+// goes off, Chromium repaints the boards at the real zoom, so vectors and text snap sharp.
+const SETTLE_MS = 150;
+let settleTimer = null;
+let lastTransform = '';
+
 // Applies zoom + pan to the grid and to the dot-grid background (dots scale and move with the canvases).
 function applyView() {
   const { zoom, pan } = state.session;
   const x = ORIGIN.x + pan.x, y = ORIGIN.y + pan.y;
-  $('#canvas-grid').style.transform = `translate(${x}px, ${y}px) scale(${zoom})`;
+  const grid = $('#canvas-grid');
+  const transform = `translate(${x}px, ${y}px) scale(${zoom})`;
+  // Only a real change of the view counts as movement (applyView also runs after ordinary redraws).
+  if (transform !== lastTransform) {
+    if (lastTransform) {
+      grid.classList.add('view-moving');
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => grid.classList.remove('view-moving'), SETTLE_MS);
+    }
+    lastTransform = transform;
+  }
+  grid.style.transform = transform;
   const stage = $('#stage');
   stage.style.backgroundSize = `${18 * zoom}px ${18 * zoom}px`;
   stage.style.backgroundPosition = `${x}px ${y}px`;
@@ -337,7 +366,9 @@ function stopRipple() {
 const rgbOf = (hex) => { const h = hex.trim().replace('#', ''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
 const mixRgb = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
 
-export function playRipple(canvasId) {
+// `canvasIds` = the saved board(s): the droplet lands on the center of the box around all of them (with one board,
+// simply its center).
+export function playRipple(canvasIds) {
   // ---- Tuning (all of the ripple's look and timing lives here) ----
   const DURATION = 3000;       // ms, the whole effect, until the pool is still again
   const SPEED = 380;           // px per second: how fast the rings travel outward (on screen)
@@ -360,8 +391,8 @@ export function playRipple(canvasId) {
   stopRipple();                                                   // a new save restarts it
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const stage = $('#stage');
-  const board = stage.querySelector(`.canvas[data-id="${canvasId}"]`);
-  if (!board) return;                                             // hidden boards aren't drawn: nothing to ripple from
+  const boards = canvasIds.map((id) => stage.querySelector(`.canvas[data-id="${id}"]`)).filter(Boolean);
+  if (!boards.length) return;                                     // hidden boards aren't drawn: nothing to ripple from
 
   // The app's own colors, so the canvas matches the CSS dots exactly.
   const tokens = getComputedStyle(document.documentElement);
@@ -369,11 +400,16 @@ export function playRipple(canvasId) {
   const ACCENT = rgbOf(tokens.getPropertyValue('--accent')), BG_RGB = rgbOf(BG);
   const dpr = window.devicePixelRatio || 1;
 
-  // The droplet lands on the board's center. It is kept in board ("world") coordinates, so a zoom/pan while the
-  // ripple plays keeps it on the board.
+  // The droplet lands on the center of the bounding box of the saved boards (one board: its own center). It is kept
+  // in board ("world") coordinates, so a zoom/pan while the ripple plays keeps it on the boards.
   const view0 = () => ({ zoom: state.session.zoom, x: ORIGIN.x + state.session.pan.x, y: ORIGIN.y + state.session.pan.y });
-  const s0 = stage.getBoundingClientRect(), b = board.getBoundingClientRect(), v0 = view0();
-  const world = { x: (b.left + b.width / 2 - s0.left - v0.x) / v0.zoom, y: (b.top + b.height / 2 - s0.top - v0.y) / v0.zoom };
+  const rects = boards.map((bd) => bd.getBoundingClientRect());
+  const b = {
+    left: Math.min(...rects.map((r) => r.left)), right: Math.max(...rects.map((r) => r.right)),
+    top: Math.min(...rects.map((r) => r.top)), bottom: Math.max(...rects.map((r) => r.bottom)),
+  };
+  const s0 = stage.getBoundingClientRect(), v0 = view0();
+  const world = { x: ((b.left + b.right) / 2 - s0.left - v0.x) / v0.zoom, y: ((b.top + b.bottom) / 2 - s0.top - v0.y) / v0.zoom };
 
   // Pre-drawn dots: level 0 = full trough, the middle = a normal dot, the last = full crest. Each is a small canvas
   // with a soft-edged circle like the CSS dot (solid to its radius, fading out over DOT_EDGE).
@@ -559,6 +595,56 @@ function startZoomEdit() {
 // was cleared.
 let editing = null;      // { id, el } while a text block is being edited on the board
 
+// Caret follow: while typing on a board, if the text cursor leaves the visible part of the preview (the stage
+// between the two floating bars), the view PANS (never zooms) just enough to bring it back, plus this much room,
+// like Figma. The browser can't do this itself any more (nothing in the app can be scrolled), and it would have
+// scrolled the wrong thing anyway.
+const CARET_ROOM = 24;   // px of space kept between the cursor and the visible edge
+
+// The screen rectangle of the text cursor (or of the end of the selection), or null when it can't be measured.
+function caretRect() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return null;
+  const range = sel.getRangeAt(0).cloneRange();
+  range.collapse(false);                              // the end where the cursor blinks while typing
+  const r = range.getClientRects()[0] || range.getBoundingClientRect();
+  // Right after a line break a collapsed range can measure as 0×0 at (0, 0): no usable position, so skip.
+  if (!r || (!r.width && !r.height)) return null;
+  return r;
+}
+
+// Pans the view so the cursor of the text being edited stays inside the visible preview area.
+function followCaret() {
+  if (!editing) return;
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !editing.el.contains(sel.getRangeAt(0).endContainer)) return;   // cursor isn't in the edited block
+  // Only a blinking cursor is followed, not a selection: editing starts with ALL the text selected, and jumping to
+  // the end of a long text before anything is typed would be surprising. The first keystroke collapses it.
+  if (!sel.isCollapsed) return;
+  const r = caretRect();
+  if (!r) return;
+  // A fixed board clips text that runs past its edge, so a cursor out there is invisible: follow the board's edge
+  // instead of sliding the board away after it. (A dynamic board grows, so its cursor is always inside it.)
+  const b = editing.el.closest('.canvas').getBoundingClientRect();
+  const clampX = (v) => Math.min(b.right, Math.max(b.left, v)), clampY = (v) => Math.min(b.bottom, Math.max(b.top, v));
+  const c = { left: clampX(r.left), right: clampX(r.right), top: clampY(r.top), bottom: clampY(r.bottom) };
+  const stage = $('#stage').getBoundingClientRect();
+  const view = {                                      // the visible part: the stage, between the floating bars
+    left: stage.left + CARET_ROOM,
+    right: stage.right - CARET_ROOM,
+    top: $('#preview-bar').getBoundingClientRect().bottom + CARET_ROOM,
+    bottom: $('#export-bar').getBoundingClientRect().top - CARET_ROOM,
+  };
+  let dx = 0, dy = 0;
+  if (c.right > view.right) dx = view.right - c.right;
+  else if (c.left < view.left) dx = view.left - c.left;
+  if (c.bottom > view.bottom) dy = view.bottom - c.bottom;
+  else if (c.top < view.top) dy = view.top - c.top;
+  if (!dx && !dy) return;
+  const { zoom, pan } = state.session;
+  setView(zoom, { x: pan.x + dx, y: pan.y + dy });   // only redraws the view (applyView), never the boards
+}
+
 function startTextEdit(id) {
   const hit = findNode(id);
   const elx = document.querySelector(`#canvas-grid .block-text[data-id="${id}"]`);
@@ -590,6 +676,9 @@ function startTextEdit(id) {
     else if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); finishTextEdit(); }
   });
   elx.addEventListener('blur', finishTextEdit);       // clicking away commits
+  // Typing, arrow keys and clicks all move the cursor and fire selectionchange: keep the cursor in view each time.
+  // Removed again in finishTextEdit(), so panning stops when editing ends.
+  document.addEventListener('selectionchange', followCaret);
 }
 
 // Ends the edit: the text was already saved live, so this just closes the undo step and redraws.
@@ -597,6 +686,7 @@ function finishTextEdit() {
   if (!editing) return;
   const { el: elx } = editing;
   editing = null;
+  document.removeEventListener('selectionchange', followCaret);   // no more caret-follow panning
   endGesture();
   elx.contentEditable = 'false';
   elx.blur();
@@ -745,6 +835,7 @@ export function initPreview() {
   let labelsShown = state.session.export.canvasLabels;
   subscribe((meta) => {
     if (meta.view) { applyView(); return; }
+    renderProjectInfo();                   // cheap: the name, the "*" and the board count (e.g. after a save)
     if (meta.ui) return;
     if (editing && meta.live) return;      // typing on the board: the edited element already shows the text (keeps the cursor)
     if (meta.exportSettings && state.session.export.canvasLabels === labelsShown) return;
@@ -752,7 +843,11 @@ export function initPreview() {
     renderGrid();
     applyView();
     // Safety: something else redrew the board in the middle of an edit (the edited element is gone): end the edit.
-    if (editing && !document.contains(editing.el)) { editing = null; endGesture(); }
+    if (editing && !document.contains(editing.el)) {
+      editing = null;
+      document.removeEventListener('selectionchange', followCaret);
+      endGesture();
+    }
   });
   // The window can be resized; keep things where they are (no re-fit), but nothing else to do.
 }

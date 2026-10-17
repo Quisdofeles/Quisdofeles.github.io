@@ -1,7 +1,10 @@
-// make-icon.js: turns build/icon.svg (the source) into build/icon.ico (generated; never edit it by hand).
-// Run with `npm run icon` whenever icon.svg changes. It uses Electron itself (already a devDependency), so no
-// extra package is needed: a hidden window draws the SVG onto a <canvas> at each size (Chromium rasterizes the
-// vector fresh at every size, so the small sizes stay sharp), and this script packs the results into one .ico.
+// make-icon.js: turns the icon SVGs (the sources) into .ico files (generated; never edit them by hand):
+//   build/icon.svg      -> build/icon.ico       the app icon (exe, installer, uninstaller, window, taskbar)
+//   build/file-icon.svg -> build/file-icon.ico  the document icon of .S_ project files (Explorer)
+// Run with `npm run icon` whenever one of the SVGs changes (it always rebuilds both). It uses Electron itself (already
+// a devDependency), so no extra package is needed: a hidden window draws each SVG onto a <canvas> at each size
+// (Chromium rasterizes the vector fresh at every size, so the small sizes stay sharp), and this script packs the
+// results into one .ico per SVG.
 // Not part of the app: it is not in package.json "files", so it never ships in the installer.
 
 const { app, BrowserWindow } = require('electron');
@@ -9,8 +12,10 @@ const fs = require('fs');
 const path = require('path');
 
 const SIZES = [16, 24, 32, 48, 64, 128, 256];
-const SVG_PATH = path.join(__dirname, 'icon.svg');
-const ICO_PATH = path.join(__dirname, 'icon.ico');
+const ICONS = [
+  { svg: path.join(__dirname, 'icon.svg'), ico: path.join(__dirname, 'icon.ico') },
+  { svg: path.join(__dirname, 'file-icon.svg'), ico: path.join(__dirname, 'file-icon.ico') },
+];
 
 // Runs inside the hidden window: draws the SVG at every size and returns, per size, the raw RGBA pixels
 // (for the small sizes) and a PNG (for 256). Everything outside the rounded square stays transparent.
@@ -28,7 +33,7 @@ function renderInPage(svgBase64, sizes) {
         png: canvas.toDataURL('image/png').split(',')[1],
       };
     }));
-    img.onerror = () => reject(new Error('could not load icon.svg'));
+    img.onerror = () => reject(new Error('could not load the icon svg'));
     img.src = `data:image/svg+xml;base64,${svgBase64}`;
   });
 }
@@ -89,10 +94,12 @@ app.whenReady().then(async () => {
   try {
     const win = new BrowserWindow({ show: false });
     await win.loadURL('about:blank');
-    const svg = fs.readFileSync(SVG_PATH).toString('base64');
-    const images = await win.webContents.executeJavaScript(`(${renderInPage.toString()})(${JSON.stringify(svg)}, ${JSON.stringify(SIZES)})`);
-    fs.writeFileSync(ICO_PATH, buildIco(images));
-    console.log(`wrote ${ICO_PATH} (${SIZES.join(', ')} px)`);
+    for (const { svg: svgPath, ico } of ICONS) {
+      const svg = fs.readFileSync(svgPath).toString('base64');
+      const images = await win.webContents.executeJavaScript(`(${renderInPage.toString()})(${JSON.stringify(svg)}, ${JSON.stringify(SIZES)})`);
+      fs.writeFileSync(ico, buildIco(images));
+      console.log(`wrote ${ico} (${SIZES.join(', ')} px)`);
+    }
   } catch (err) {
     console.error('make-icon failed:', err);
     process.exitCode = 1;

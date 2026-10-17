@@ -72,6 +72,23 @@ export function openMenuAt(x, y, items) {
   openPopover(null, list, { x, y });
 }
 
+// ---------- Dropdown menu under a button (the top bar's project menu) ----------
+// items: [{ label, onClick, sub, title }] plus { divider: true } for a thin line and { note: 'text' } for a muted,
+// non-clickable row. `sub` is shown on the right (shortcut hints); long labels end with an ellipsis (`title` = tooltip).
+export function openMenu(anchor, items) {
+  const list = el('div', { class: 'pop-scroll' }, items.map((item) => {
+    if (item.divider) return el('div', { class: 'menu-divider' });
+    if (item.note) return el('div', { class: 'menu-note', text: item.note });
+    return el('button', {
+      class: 'menu-item', title: item.title || null,
+      on: { click: () => { closePopover(); item.onClick(); } },
+    }, el('span', { class: 'menu-label', text: item.label }), item.sub ? el('span', { class: 'sub', text: item.sub }) : null);
+  }));
+  const pop = openPopover(anchor, list);
+  // Right-aligned under the button (the project button sits near the window's right edge).
+  if (pop) pop.style.left = `${Math.max(8, anchor.getBoundingClientRect().right - pop.getBoundingClientRect().width)}px`;
+}
+
 // ---------- Block type menu (the "+ block" button) ----------
 // Offers exactly the blocks the library offers, in the same order (sortBlockTypes() in sorting.js).
 // Shows typeLabel() ("board" for the canvas type) but hands the real type name to onPick.

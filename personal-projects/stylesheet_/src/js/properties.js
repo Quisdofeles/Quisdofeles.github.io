@@ -562,19 +562,22 @@ function renderProps() {
 // The pinned "save as preset" button; turns into a name input when clicked.
 function renderPresetFoot() {
   const foot = clear($('#preset-foot'));
-  // Only available when exactly one canvas is selected.
+  // Available when one or more BOARDS are selected (boards only: a selection is never a mix of boards and blocks).
   const nodes = selectedNodes();
-  const canvas = nodes.length === 1 && nodes[0].type === 'canvas' ? nodes[0] : null;
-  if (!(namingPreset && canvas)) {
+  const boards = nodes.length && nodes.every((n) => n.type === 'canvas') ? nodes : [];
+  if (!(namingPreset && boards.length)) {
     namingPreset = false;
     foot.append(el('button', {
-      class: 'dashed-btn', text: 'save as preset ▣', disabled: !canvas,
-      title: canvas ? 'save this board structure as a preset' : 'select exactly one board',
+      class: 'dashed-btn', text: 'save as preset ▣', disabled: !boards.length,
+      title: boards.length > 1 ? `save the structure of these ${boards.length} boards as one preset`
+        : boards.length ? 'save this board structure as a preset' : 'select one or more boards',
       on: { click: () => { namingPreset = true; renderPresetFoot(); } },
     }));
     return;
   }
-  const input = el('input', { type: 'text', placeholder: 'preset_name', value: slug(canvas.name), spellcheck: false });
+  // The suggested name comes from the first board in the preview's order.
+  const first = state.session.canvases.find((c) => boards.includes(c)) || boards[0];
+  const input = el('input', { type: 'text', placeholder: 'preset_name', value: slug(first.name), spellcheck: false });
   const finish = (save) => {
     // Runs once: saving redraws this footer, which removes the focused input and fires its blur -> finish again.
     // Without this guard that second call redrew the footer in the middle of the first redraw (a console error).
@@ -582,10 +585,12 @@ function renderPresetFoot() {
     namingPreset = false;
     if (save && input.value.trim()) {
       const name = slug(input.value);
-      // Saved: a notice, plus a ring of accent dots rippling out from the saved board (skipped with reduce motion).
-      if (savePreset(canvas.id, name)) {
+      // Saved: a notice, plus a ring of accent dots rippling out from the center of the saved board(s) (skipped with
+      // reduce motion).
+      const ids = boards.map((b) => b.id);
+      if (savePreset(ids, name)) {
         showToast(`saved preset ${name}`);
-        playRipple(canvas.id);
+        playRipple(ids);
       }
     }
     renderPresetFoot();
