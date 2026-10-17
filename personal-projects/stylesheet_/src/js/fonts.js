@@ -29,19 +29,63 @@ export function fontLabel(font) {
 }
 
 // ---------- Registering ----------
+// Returns true only when the font was newly loaded (so the caller can redraw things that measure fonts).
 export async function registerFont(font) {
-  if (registered.has(font.id)) return;
+  if (registered.has(font.id)) return false;
   registered.add(font.id);
   try {
     const face = new FontFace(cssFamily(font), `url("${fontUrl(font)}")`);
     await face.load();
     document.fonts.add(face);
+    return true;
   } catch (err) {
     registered.delete(font.id);
     console.warn('could not load font', font.family, err);
+    return false;
   }
 }
 export const registerFonts = (fonts) => Promise.all(fonts.map(registerFont));
+
+// ---------- Font samples that always fit their box ----------
+// Some fonts (display fonts with huge built-in metrics) draw their glyphs far bigger than their font-size, or far
+// away from where the line box expects them, so a sample written in its own typeface can spill over its neighbors.
+// fitFontSample() measures the REAL glyph outlines ("ink") with a canvas and, only when they would not fit, scales
+// the text down and centers the ink in the box. Fonts that already fit are left exactly as the CSS draws them.
+//   slot  = the box element (gets position: relative + overflow: hidden when fitted, so leftovers are clipped)
+//   inner = the element holding the text, inside the slot (gets absolute position + a smaller font-size when fitted)
+//   size  = the CSS font-size of the sample; boxH = the box's height (the line box the text is centered in)
+//   boxW  = the box's width when the text is centered in a fixed-width slot (the library card); 0 = text starts at
+//           the left and only the height is fitted (picker rows, the export strip)
+//   pad   = px of breathing room kept around the ink when it has to be scaled down
+const measureCtx = document.createElement('canvas').getContext('2d');
+export function fitFontSample(slot, inner, font, { size, boxH, boxW = 0, pad = 0 }) {
+  const css = fontCss(font);
+  measureCtx.font = `${css.fontStyle} ${css.fontWeight} ${size}px ${css.fontFamily}`;
+  const m = measureCtx.measureText(inner.textContent);
+  // The ink box, x from where the text starts, y from the baseline (up is negative).
+  const inkL = -m.actualBoundingBoxLeft, inkR = m.actualBoundingBoxRight;
+  const inkT = -m.actualBoundingBoxAscent, inkB = m.actualBoundingBoxDescent;
+  const inkW = inkR - inkL, inkH = inkB - inkT;
+  if (!(inkW > 0 && inkH > 0)) return;                            // nothing drawn (or nothing measurable): leave it
+  // Where CSS puts the baseline in a line box of boxH px: half of the leftover space above the font's own
+  // ascent + descent, then the ascent. k = the scale (1 = the normal size).
+  const A = m.fontBoundingBoxAscent, D = m.fontBoundingBoxDescent;
+  const baseline = (k) => (boxH - (A + D) * k) / 2 + A * k;
+  const startX = boxW ? (boxW - m.width) / 2 : 0;                 // centered text starts here (text-align: center)
+  const fitsV = baseline(1) + inkT >= 0 && baseline(1) + inkB <= boxH;
+  const fitsH = !boxW || (startX + inkL >= 0 && startX + inkR <= boxW);
+  if (fitsV && fitsH) return;                                     // a normal font: keep the normal look
+
+  const k = Math.min(1, (boxH - 2 * pad) / inkH, boxW ? (boxW - 2 * pad) / inkW : 1);
+  const top = boxH / 2 - (baseline(k) + ((inkT + inkB) / 2) * k); // moves the ink's middle to the box's middle
+  const left = boxW ? boxW / 2 - ((inkL + inkR) / 2) * k : 0;
+  Object.assign(slot.style, { position: 'relative', overflow: 'hidden', height: `${boxH}px` });
+  if (!boxW) slot.style.width = `${Math.ceil(m.width * k)}px`;   // the absolute text no longer gives the slot a width
+  Object.assign(inner.style, {
+    position: 'absolute', left: `${left}px`, top: `${top}px`,
+    fontSize: `${size * k}px`, lineHeight: `${boxH}px`, whiteSpace: 'nowrap',
+  });
+}
 
 // ---------- Grouping and picking ----------
 // [{ family, fonts: [entries sorted by weight, normal before italic] }], families A-Z.

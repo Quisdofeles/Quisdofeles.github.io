@@ -16,7 +16,7 @@ import {
   state, findNode, getMedia, findColor, addBlock, addBlockToNewCanvas, addCanvas, addCanvasFromPreset,
   addMediaBlock, addMediaToNewCanvas, swapMedia, setBlockFonts, fontTargets, dropColor, setCanvasBackground, setTextColor, setLayerColor, moveNode,
   insertPaletteColor, movePaletteColor, setGroupBackground, backgroundTargetOf, setBgImage,
-  setSectionColor, addPaletteBlock, addPaletteToNewCanvas,
+  setSectionColor, addPaletteBlock, addPaletteToNewCanvas, getFont, addFontHeading, addFontHeadingToNewCanvas,
 } from './state.js';
 import { isContainer, isTextType } from './blocks.js';
 import { showOutline } from './outline.js';
@@ -88,10 +88,21 @@ function planPreview(e) {
       return { el: containerEl, cls: 'drop-target', run: () => addPaletteBlock(drag.id, containerEl.dataset.id, index) };
     }
     case 'font': {
-      if (!blockNode || !isTextType(blockNode.node.type)) return null;
-      // Sets the font of that block, or of ALL selected text blocks when it is one of several selected. The outline marks every text it will change.
-      const targets = fontTargets(blockNode.node.id);
-      return { el: null, outline: { type: 'text', blockIds: targets }, run: () => setBlockFonts(targets, drag.id) };
+      if (!getFont(drag.id)) return null;
+      // On a text block: sets the font of that block, or of ALL selected text blocks when it is one of several
+      // selected. The outline marks every text it will change.
+      if (blockNode && isTextType(blockNode.node.type)) {
+        const targets = fontTargets(blockNode.node.id);
+        return { el: null, outline: { type: 'text', blockIds: targets }, run: () => setBlockFonts(targets, drag.id) };
+      }
+      // On top of any other block (vector, image incl. a fill image, palette): nothing. A group is not "a block on
+      // top" here: its empty space counts as empty space inside a container (below).
+      if (blockNode && blockNode.node.type !== 'group') return null;
+      // Empty dot grid: a new (dynamic) board with a heading in this font. Empty space inside a board/group: a
+      // heading in this font at the drop position in the flow.
+      if (!canvasEl) return { el: stage, cls: 'drop-target', run: () => addFontHeadingToNewCanvas(drag.id) };
+      const index = flowIndex(containerEl, e);
+      return { el: containerEl, cls: 'drop-target', run: () => addFontHeading(drag.id, containerEl.dataset.id, index) };
     }
     case 'color': {
       // A color changes exactly one thing: a text block, ONE vector layer (the one under the pointer), or one

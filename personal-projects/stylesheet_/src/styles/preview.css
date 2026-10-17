@@ -25,6 +25,12 @@
   will-change: transform;
 }
 
+/* Preset-save ripple (playRipple() in preview.js): a temporary canvas laid exactly over the dot grid while it plays.
+   It is opaque, so it hides the real dots under it, and draws the dots itself (moving like water). Its size and left
+   edge are set by JS (wider under the glass panels). It sits under the canvas grid (first child of #stage), never
+   takes the pointer, and only exists in the live preview, never in an export. */
+.ripple-canvas { position: absolute; top: 0; display: block; pointer-events: none; }
+
 #stage-empty {
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%);
@@ -106,7 +112,10 @@
 .block-text.is-empty { opacity: .4; }      /* cleared text shows the block's type name, faded */
 /* On-canvas text editing (startTextEdit() in preview.js): the page is user-select: none, so the edited block turns
    text selection back on and shows the text cursor. Its tracking, line height, case, wrap... are inline (preview.js). */
-.block-text.editing { user-select: text; -webkit-user-select: text; cursor: text; outline-style: solid; }
+.block-text.editing { user-select: text; -webkit-user-select: text; cursor: text; outline-style: solid; caret-color: var(--accent); }
+/* While editing: selected text is accent with near-black text (readable on any color), not the default blue.
+   Only the live .editing element gets it; the export builds its own DOM, so it never shows up there. */
+.block-text.editing::selection { background: var(--accent); color: #0A0A0B; }
 .block-group { display: flex; }
 .block-group.clips { overflow: hidden; }   /* any group that isn't fit × fit clips its content, like a board (preview.js) */
 .block-vector svg { display: block; height: auto; }

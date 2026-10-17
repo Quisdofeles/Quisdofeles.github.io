@@ -6,7 +6,7 @@
 import { el, clear, $, checkerIcon, normalizeHex, hexLabel, swatchBg } from './util.js';
 import { state, subscribe, setExport, visibleCanvases, getFont, getMedia } from './state.js';
 import { renderCanvasCell, applyGridLayout } from './preview.js';
-import { cssFamily, fontCss, fontUrl, fontLabel, DEFAULT_FONT_ID } from './fonts.js';
+import { cssFamily, fontCss, fontUrl, fontLabel, DEFAULT_FONT_ID, fitFontSample } from './fonts.js';
 import { buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
 import { isTextType } from './blocks.js';
 import { showToast } from './overlays.js';
@@ -111,8 +111,14 @@ function buildStrip(usage, width) {
         item.colors.map((hex) => el('span', { class: 'export-sub', text: libraryColorName(hex) ? `${libraryColorName(hex)} ${hexLabel(hex)}` : hexLabel(hex) }))))),
   ]);
 
-  const fontItems = [...usage.fonts.values()].map((f) => el('div', { class: 'export-item' },
-    el('span', { class: 'export-font', style: fontCss(f), text: fontLabel(f) })));
+  // Each font written in its own typeface (17px, line-height 1.2 = a 20.4px line). A font whose glyphs would spill
+  // out of that line (huge built-in metrics) is scaled down to fit and centered in it (fitFontSample in fonts.js).
+  const fontItems = [...usage.fonts.values()].map((f) => {
+    const text = el('span', { text: fontLabel(f) });
+    const sample = el('span', { class: 'export-font', style: fontCss(f) }, text);
+    fitFontSample(sample, text, f, { size: 17, boxH: 17 * 1.2 });
+    return el('div', { class: 'export-item' }, sample);
+  });
 
   const mediaItems = [...usage.media.values()].map((v) => {
     // A one-color black version of the media item, with its name beside it.

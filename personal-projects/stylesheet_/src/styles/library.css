@@ -76,7 +76,13 @@
 .icon-slot { width: 34px; height: 34px; flex: none; display: grid; place-items: center; color: var(--accent); font-size: 16px; line-height: 1; }
 .card-row.preset-card { border-style: dashed; border-color: var(--line-2); }   /* presets: dashed border */
 .card-row.preset-card:hover { border-color: var(--muted); }
-.font-aa { width: 34px; text-align: center; font-size: 20px; line-height: 1; flex: none; }
+/* The "Aa" font sample: a 34px square slot (like the color swatch) with the text centered in it. A font whose glyphs
+   would spill out is scaled down and centered by fitFontSample() in fonts.js; the slot clips whatever is left over. */
+.font-aa {
+  width: 34px; height: 34px; flex: none; position: relative; overflow: hidden;
+  display: grid; place-items: center; text-align: center;
+  font-size: 20px; line-height: 1; white-space: nowrap;
+}
 
 .swatch-sq { width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,.08); flex: none; }
 

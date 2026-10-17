@@ -15,7 +15,7 @@ import {
   state, subscribe, addColor, updateColor, addPalette, renamePalette, addPaletteColor, findColor,
   addFonts, addMedia, trashItems, usageCount, allFonts, setExpandedSection,
 } from './state.js';
-import { groupFamilies, familySummary, closestTo400, cssFamily, fontCss, registerFonts, describeFont } from './fonts.js';
+import { groupFamilies, familySummary, closestTo400, cssFamily, fontCss, registerFonts, describeFont, fitFontSample } from './fonts.js';
 import { processSvg, cacheMedia, buildVectorSvg, mediaUrl, layerInfo } from './svg.js';
 import { libraryBlockCount, typeLabel } from './blocks.js';
 import { sortMedia, sortColors, sortPalettes, sortPresets, sortBlockTypes } from './sorting.js';
@@ -115,6 +115,7 @@ function renderMedia() {
 // ---------- Fonts ----------
 // The built-in fonts (Space Grotesk, IBM Plex Mono) are shown as cards too, sorted in with the imported ones.
 // They can be dragged like any font, but have no right-click menu: they can't be deleted.
+const AA_SLOT = 34, AA_SIZE = 20;   // the "Aa" slot (same size as a color swatch) and its normal font-size (library.css .font-aa)
 function renderFonts() {
   redraw($('#list-fonts'), (list) => {
     const families = groupFamilies(allFonts());   // built-in + library, already alphabetical, case-insensitive
@@ -126,11 +127,16 @@ function renderFonts() {
       // A built-in font is drawn with its real family + font-weight (fontCss); an imported one by its own CSS family.
       const aaStyle = sample.builtin ? fontCss(sample) : { fontFamily: `'${cssFamily(sample)}'` };
       const deletable = fam.fonts.filter((f) => !f.builtin);   // only imported files can go to the trash
+      // The "Aa" sits in a 34px square slot. Fonts whose glyphs would spill out of it (huge built-in metrics) are
+      // measured, scaled down and centered; anything still sticking out is clipped (fitFontSample in fonts.js).
+      const aaText = el('span', { text: 'Aa' });
+      const aa = el('span', { class: 'font-aa', style: aaStyle }, aaText);
+      fitFontSample(aa, aaText, sample, { size: AA_SIZE, boxH: AA_SLOT, boxW: AA_SLOT, pad: 2 });
       const card = el('div', {
         class: 'card-row', title: deletable.length ? fam.family : `${fam.family} (built-in font, can't be deleted)`,
         ...draggable('font', sample.id),
       },
-      el('span', { class: 'font-aa', text: 'Aa', style: aaStyle }),
+      aa,
       el('div', { class: 'card-text' },
         el('span', { class: 'card-title', text: fam.family }),
         el('span', { class: 'card-sub', text: familySummary(fam.fonts) })));

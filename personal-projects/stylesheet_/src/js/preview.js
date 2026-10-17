@@ -1,6 +1,6 @@
 // preview.js: the middle panel. Renders every visible canvas ("board" on screen) from state (auto grid, name labels,
 // each block's own colors, flex layout, gray placeholders, transforms, text styling), plus selection by clicking,
-// zoom and pan, and editing text in place on the board (double-click a text block).
+// zoom and pan, editing text in place on the board (double-click a text block), and the preset-save dot ripple.
 // renderCanvasElement() is also used by export.js, so the exported image is drawn by the same code.
 
 import { el, clear, $, cssColor, contrastColor, hexLabel } from './util.js';
@@ -307,6 +307,197 @@ function zoomAt(newZoom, cx, cy) {
 }
 
 const stageCenter = () => { const r = $('#stage').getBoundingClientRect(); return { x: r.width / 2, y: r.height / 2 }; };
+
+// ---------- Preset-save ripple (a water droplet on the dot grid) ----------
+// When a preset is saved, the dot grid behaves like a still pool hit by a droplet at the center of the saved board:
+// a short bright accent splash, then a few concentric rings that travel outward slowly and die down (damped) until
+// the pool is still again. On a crest the dots grow, turn toward the accent color and bunch together (they are pushed
+// radially toward the crest); in a trough they shrink, darken a little below their normal gray and spread apart.
+//
+// How: while it plays, a temporary <canvas> (.ripple-canvas, first child of #stage, so under the boards) lies exactly
+// over the dot grid. It is opaque (the app background), so it hides the real CSS dots under it, and it draws every
+// dot itself at the same spacing (18px × zoom) and zoom/pan position as the real ones, so the switch is invisible.
+// To stay fast at 60fps, the still grid is drawn ONCE into an offscreen "base" canvas; each frame copies the base,
+// then only the dots the wave is moving are erased from their home spot and redrawn moved/resized/recolored (from
+// pre-drawn dot images, one per wave height). Dots outside the wave stay exactly as normal.
+// When it ends the canvas is removed and the real dots show again. It ignores the pointer (clicks, drags, wheel zoom
+// and pan all work); a zoom/pan while it plays simply redraws the base so the dots stay aligned. Preview DOM only
+// (never in an export), skipped when Windows' "reduce motion" is on, and a new save restarts it.
+let ripple = null;           // { canvas, raf } while a ripple plays
+
+// Stops a playing ripple at once (removes its canvas, so the real dots show again).
+function stopRipple() {
+  if (!ripple) return;
+  cancelAnimationFrame(ripple.raf);
+  ripple.canvas.remove();
+  ripple = null;
+}
+
+// "#2C2C33" -> [44, 44, 51]
+const rgbOf = (hex) => { const h = hex.trim().replace('#', ''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
+const mixRgb = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
+
+export function playRipple(canvasId) {
+  // ---- Tuning (all of the ripple's look and timing lives here) ----
+  const DURATION = 3000;       // ms, the whole effect, until the pool is still again
+  const SPEED = 380;           // px per second: how fast the rings travel outward (on screen)
+  const RINGS = 4;             // how many crests the droplet sends out
+  const FREQ = 1.9;            // waves per second at one spot (wavelength = SPEED / FREQ = 200px)
+  const DAMP_TIME = 1.15;      // s: amplitude shrinks by e (≈ 63%) every this many seconds (damping over time)
+  const DAMP_DIST = 520;       // px: amplitude halves this far from the center (damping over distance)
+  const END_FADE = 0.2;        // the last 20% of the duration eases the remaining motion to exactly zero
+  const CREST_GROW = 2.3;      // a dot on a full crest is (1 + this) × its normal radius
+  const TROUGH_SHRINK = 0.45;  // a dot in a full trough loses this share of its radius
+  const TROUGH_DARK = 0.45;    // how far a trough dot goes from the dot gray toward the background (0-1)
+  const DISPLACE = 5;          // px: how far dots move toward a crest (bunching) / away from a trough (spreading)
+  const SPLASH_MS = 420;       // ms: the bright accent splash at the impact point
+  const SPLASH_SIZE = 46;      // px: how far the splash glow spreads
+  const LEVELS = 41;           // pre-drawn dot images, from full trough to full crest (smoothness of size/color)
+  const DOT_R = 1;             // px: the real grid's dot radius (radial-gradient(var(--dot) 1px, transparent 1.2px))
+  const DOT_EDGE = 0.2;        // px: its soft edge
+  const TILE = 18;             // px: the real grid's spacing at 100% zoom (applyView())
+
+  stopRipple();                                                   // a new save restarts it
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const stage = $('#stage');
+  const board = stage.querySelector(`.canvas[data-id="${canvasId}"]`);
+  if (!board) return;                                             // hidden boards aren't drawn: nothing to ripple from
+
+  // The app's own colors, so the canvas matches the CSS dots exactly.
+  const tokens = getComputedStyle(document.documentElement);
+  const BG = tokens.getPropertyValue('--bg').trim(), DOT = rgbOf(tokens.getPropertyValue('--dot'));
+  const ACCENT = rgbOf(tokens.getPropertyValue('--accent')), BG_RGB = rgbOf(BG);
+  const dpr = window.devicePixelRatio || 1;
+
+  // The droplet lands on the board's center. It is kept in board ("world") coordinates, so a zoom/pan while the
+  // ripple plays keeps it on the board.
+  const view0 = () => ({ zoom: state.session.zoom, x: ORIGIN.x + state.session.pan.x, y: ORIGIN.y + state.session.pan.y });
+  const s0 = stage.getBoundingClientRect(), b = board.getBoundingClientRect(), v0 = view0();
+  const world = { x: (b.left + b.width / 2 - s0.left - v0.x) / v0.zoom, y: (b.top + b.height / 2 - s0.top - v0.y) / v0.zoom };
+
+  // Pre-drawn dots: level 0 = full trough, the middle = a normal dot, the last = full crest. Each is a small canvas
+  // with a soft-edged circle like the CSS dot (solid to its radius, fading out over DOT_EDGE).
+  const maxR = DOT_R * (1 + CREST_GROW) + DOT_EDGE;
+  const SPRITE = Math.ceil(maxR * 2 + 2);                         // css px per side
+  const sprites = [];
+  for (let i = 0; i < LEVELS; i++) {
+    const h = (i / (LEVELS - 1)) * 2 - 1;                         // -1 (trough) .. 0 (still) .. 1 (crest)
+    const r = h >= 0 ? DOT_R * (1 + CREST_GROW * h) : DOT_R * (1 - TROUGH_SHRINK * -h);
+    const color = h >= 0 ? mixRgb(DOT, ACCENT, Math.pow(h, 0.8)) : mixRgb(DOT, BG_RGB, TROUGH_DARK * -h);
+    const c = document.createElement('canvas');
+    c.width = c.height = Math.ceil(SPRITE * dpr);
+    const g = c.getContext('2d');
+    g.scale(dpr, dpr);
+    const mid = SPRITE / 2;
+    const grad = g.createRadialGradient(mid, mid, 0, mid, mid, r + DOT_EDGE);
+    grad.addColorStop(0, color);
+    grad.addColorStop(r / (r + DOT_EDGE), color);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, SPRITE, SPRITE);
+    sprites.push(c);
+  }
+  const STILL = sprites[(LEVELS - 1) / 2];
+  const half = SPRITE / 2;
+
+  // The canvas covers exactly what the dot grid covers: the stage, and with the glass panels on, the wider layer
+  // that runs under both panels (281px left, 321px right; see the end of preview.css).
+  const canvas = el('canvas', { class: 'ripple-canvas' });
+  stage.prepend(canvas);                                          // first child: under the boards
+  const ctx = canvas.getContext('2d');
+  const base = document.createElement('canvas');                  // the still grid, redrawn only when the view changes
+  const bctx = base.getContext('2d');
+  let geo = null;                                                 // { w, h, ox, zoom, x, y, tile, cx, cy } of the current view
+
+  // Sizes the canvases and draws the still grid into `base` for the current view (zoom, pan, stage size).
+  const layout = () => {
+    const glass = document.body.classList.contains('glass-panels');
+    const ox = glass ? -281 : 0;                                  // canvas left edge, in stage pixels
+    const w = stage.clientWidth + (glass ? 281 + 321 : 0), h = stage.clientHeight;
+    const v = view0(), tile = TILE * v.zoom;
+    geo = { w, h, ox, sw: stage.clientWidth, zoom: v.zoom, x: v.x, y: v.y, tile, cx: v.x + world.x * v.zoom - ox, cy: v.y + world.y * v.zoom };
+    for (const c of [canvas, base]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    Object.assign(canvas.style, { left: `${ox}px`, width: `${w}px`, height: `${h}px` });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bctx.fillStyle = BG;
+    bctx.fillRect(0, 0, w, h);
+    // The CSS grid puts a dot in the middle of every tile, tiles starting at the pan offset.
+    geo.x0 = (((v.x - ox + tile / 2) % tile) + tile) % tile;
+    geo.y0 = (((v.y + tile / 2) % tile) + tile) % tile;
+    for (let y = geo.y0; y < h + tile; y += tile) {
+      for (let x = geo.x0; x < w + tile; x += tile) bctx.drawImage(STILL, x - half, y - half, SPRITE, SPRITE);
+    }
+  };
+  const viewChanged = () => {
+    const v = view0();
+    return v.zoom !== geo.zoom || v.x !== geo.x || v.y !== geo.y || stage.clientWidth !== geo.sw || stage.clientHeight !== geo.h;
+  };
+  layout();
+
+  const W = RINGS / FREQ;                                         // s: how long the droplet keeps sending out waves
+  const moved = [];                                               // reused per frame: dots the wave is moving
+  const start = performance.now();
+  const frame = (now) => {
+    // Seconds since the save. The first frame's timestamp can be a moment BEFORE `start` (it is when the frame
+    // began), so clamp at 0: a negative time would make the splash size NaN and stop the animation.
+    const t = Math.max(0, (now - start) / 1000);
+    if (t * 1000 >= DURATION) { stopRipple(); return; }           // the pool is still: real dots again
+    if (viewChanged()) layout();                                  // zoom/pan/resize while playing: keep the dots aligned
+    const { w, h, tile, cx, cy, x0, y0 } = geo;
+    ctx.drawImage(base, 0, 0, w, h);                              // the still pool
+
+    const fade = Math.min(1, (DURATION / 1000 - t) / (DURATION / 1000 * END_FADE));   // 1, then down to 0 at the end
+    const timeDamp = Math.exp(-t / DAMP_TIME) * fade;
+    // Only dots between the oldest ring and the wave front can move; everything else stays still.
+    const outer = SPEED * t, inner = Math.max(0, SPEED * (t - W));
+    moved.length = 0;
+    const iy0 = Math.max(0, Math.ceil((cy - outer - y0) / tile)), iy1 = Math.floor((Math.min(h, cy + outer) - y0) / tile);
+    const ix0 = Math.max(0, Math.ceil((cx - outer - x0) / tile)), ix1 = Math.floor((Math.min(w, cx + outer) - x0) / tile);
+    for (let iy = iy0; iy <= iy1; iy++) {
+      const y = y0 + iy * tile, dy = y - cy;
+      for (let ix = ix0; ix <= ix1; ix++) {
+        const x = x0 + ix * tile, dx = x - cx;
+        const d = Math.hypot(dx, dy);
+        if (d > outer || d < inner) continue;
+        const tau = t - d / SPEED;                                // how long ago the front passed this dot
+        // The droplet's "voice" at this dot: rises over the first quarter wave, then dies off over the RINGS waves.
+        const env = Math.min(1, tau * FREQ * 4) * (1 - tau / W);
+        const amp = env * timeDamp / (1 + d / DAMP_DIST);
+        if (amp < 0.02) continue;                                 // too small to see: leave the dot as it is
+        const phase = 2 * Math.PI * FREQ * tau;
+        const height = amp * Math.sin(phase);                     // +crest / -trough
+        // Toward the crest: the surface's slope pushes dots in (just outside a crest) or out (just inside one).
+        const push = -DISPLACE * amp * Math.cos(phase);
+        const k = d > 0.001 ? push / d : 0;
+        moved.push(x, y, x + dx * k, y + dy * k, height);
+      }
+    }
+    // First erase every moving dot from its home spot (a small background square), then draw them all moved. Two
+    // passes, so an erase can never wipe out a neighbor that was already drawn in its new spot.
+    ctx.fillStyle = BG;
+    for (let i = 0; i < moved.length; i += 5) ctx.fillRect(moved[i] - 2, moved[i + 1] - 2, 4, 4);
+    for (let i = 0; i < moved.length; i += 5) {
+      const level = Math.round(((Math.max(-1, Math.min(1, moved[i + 4])) + 1) / 2) * (LEVELS - 1));
+      ctx.drawImage(sprites[level], moved[i + 2] - half, moved[i + 3] - half, SPRITE, SPRITE);
+    }
+
+    // The impact: a short bright accent splash at the center that spreads a little and fades.
+    const p = (t * 1000) / SPLASH_MS;
+    if (p < 1) {
+      const r = 6 + SPLASH_SIZE * Math.sqrt(p);
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      const a = Math.pow(1 - p, 2);
+      glow.addColorStop(0, `rgba(${ACCENT.join(',')},${0.95 * a})`);
+      glow.addColorStop(0.35, `rgba(${ACCENT.join(',')},${0.45 * a})`);
+      glow.addColorStop(1, `rgba(${ACCENT.join(',')},0)`);
+      ctx.fillStyle = glow;
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    }
+    ripple.raf = requestAnimationFrame(frame);
+  };
+  ripple = { canvas, raf: requestAnimationFrame(frame) };
+}
 
 // Scales and centers the grid so every canvas is visible between the floating bars (never zooms past 100%).
 export function fit() {

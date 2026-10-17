@@ -420,6 +420,19 @@ export function addMediaToNewCanvas(mediaId) {
   return addBlockToNewCanvas(item.kind === 'image' ? 'image' : 'vector', { mediaId, name: item.name });
 }
 
+// A font card dropped on empty space inside a board/group: a heading block in that font (the card's own file, the
+// weight closest to 400), at `index` in the flow. Normal heading defaults and naming ("heading 1"...). One undo step.
+export function addFontHeading(fontId, parentId, index) {
+  if (!getFont(fontId)) return null;
+  return addBlock('heading', parentId, index, { font: fontId });
+}
+
+// A font card dropped on the empty dot grid: a new (dynamic) board containing one heading block in that font.
+export function addFontHeadingToNewCanvas(fontId) {
+  if (!getFont(fontId)) return null;
+  return addBlockToNewCanvas('heading', { font: fontId });
+}
+
 // Drops a block type onto empty space: a new canvas containing that block (or just a canvas).
 // A canvas created WITH content starts dynamic (it shrink-wraps the block plus padding 24).
 export function addBlockToNewCanvas(type, extra = {}) {

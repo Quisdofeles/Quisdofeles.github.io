@@ -29,9 +29,11 @@ function renderStatus() {
 async function syncLoadedFiles() {
   const missingMedia = state.library.media.some((m) => m.kind === 'svg' && !hasMediaMarkup(m.id));
   await whenTrashSynced();    // a restored file may still be moving back out of the trash folder
-  await registerFonts(state.library.fonts);
+  // A font that just finished loading must redraw the panels: the library's "Aa" samples are measured in their
+  // own font (fitFontSample), and before the font loaded they were measured in a fallback font.
+  const newFonts = (await registerFonts(state.library.fonts)).some(Boolean);
   await ensureMediaLoaded(state.library.media);
-  if (missingMedia) requestRender();
+  if (missingMedia || newFonts) requestRender();
 }
 
 // First launch only: copies the default media (src/defaults/media: the Stylesheet_ logo and wordmark) into the

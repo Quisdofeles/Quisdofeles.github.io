@@ -8,7 +8,7 @@ import { state, allFonts, endGesture, requestRender } from './state.js';
 import { sortBlockTypes, sortMedia } from './sorting.js';
 import { typeLabel } from './blocks.js';
 import { mediaUrl } from './svg.js';
-import { groupFamilies, cssFamily, closestTo400, familySummary } from './fonts.js';
+import { groupFamilies, closestTo400, familySummary, fontCss, fitFontSample } from './fonts.js';
 
 let current = null;               // { pop, cleanup }
 let lastToggle = { anchor: null, at: 0 };
@@ -162,8 +162,13 @@ export function openFontPicker(anchor, { currentId, onPick, noneLabel = null }) 
   const families = groupFamilies(allFonts());
   families.forEach((fam) => {
     const sample = closestTo400(fam.fonts);
+    // The family name in its own typeface. A font whose glyphs would spill out of the 30px row (huge built-in
+    // metrics) is scaled down to fit and centered in it (fitFontSample in fonts.js; menu text is 13px).
+    const nameText = el('span', { text: fam.family });
+    const name = el('span', { style: fontCss(sample) }, nameText);
+    fitFontSample(name, nameText, sample, { size: 13, boxH: 30 });
     body.append(el('button', { class: 'menu-item', on: { click: () => pick(sample.id) } },
-      el('span', { style: { fontFamily: `'${cssFamily(sample)}'` }, text: fam.family }),
+      name,
       fam.family === currentFamily ? el('span', { class: 'sub', text: '✓' }) : el('span', { class: 'sub', text: familySummary(fam.fonts) })));
   });
   openPopover(anchor, body);

@@ -20,6 +20,7 @@ import { layerInfo, mediaUrl } from './svg.js';
 import { showOutline, clearOutline } from './outline.js';
 import { openColorPicker, openFontPicker, openMediaPicker } from './popover.js';
 import { showToast } from './overlays.js';
+import { playRipple } from './preview.js';
 
 let namingPreset = false;   // true while the "save as preset" name input is showing
 
@@ -581,8 +582,11 @@ function renderPresetFoot() {
     namingPreset = false;
     if (save && input.value.trim()) {
       const name = slug(input.value);
-      savePreset(canvas.id, name);
-      showToast(`saved preset ${name}`);
+      // Saved: a notice, plus a ring of accent dots rippling out from the saved board (skipped with reduce motion).
+      if (savePreset(canvas.id, name)) {
+        showToast(`saved preset ${name}`);
+        playRipple(canvas.id);
+      }
     }
     renderPresetFoot();
   };
